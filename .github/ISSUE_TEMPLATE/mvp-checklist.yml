@@ -1,0 +1,217 @@
+name: "MVP Checklist"
+description: "Track MVP completion for OSS Semrush-core (Hybrid Audit + Integrations + Common Crawl Backlinks)."
+title: "MVP Checklist: <epic/milestone>"
+labels: ["mvp", "tracking"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this checklist to track MVP completion. Keep it updated as items are delivered.
+        Recommended workflow:
+        - Create one checklist per milestone/epic (Integrations, Audit, Common Crawl, Backlinks, Reports)
+        - Link supporting issues/PRs next to each checkbox
+
+  - type: input
+    id: owner
+    attributes:
+      label: Owner
+      placeholder: "@your-handle"
+    validations:
+      required: true
+
+  - type: input
+    id: milestone
+    attributes:
+      label: Milestone
+      placeholder: "MVP Phase 1"
+    validations:
+      required: false
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope / Notes
+      placeholder: |
+        Links:
+        - PRD.md
+        - docs/ARCHITECTURE.md
+        - openapi.yaml
+    validations:
+      required: false
+
+  - type: markdown
+    attributes:
+      value: "## Phase 0 — Skeleton"
+
+  - type: checkboxes
+    id: phase0
+    attributes:
+      label: Platform skeleton
+      options:
+        - label: FastAPI bootstrapped (`apps/api`) with auth scaffolding
+        - label: Postgres schema + migrations framework in place
+        - label: Redis queue wired + worker runner skeleton
+        - label: Docker Compose boots core services (api, postgres, redis, minio)
+        - label: Health endpoints (`/healthz`, `/readyz`) implemented
+        - label: Basic Projects CRUD endpoints implemented
+        - label: OpenAPI served (or generated) and matches `openapi.yaml` baseline
+
+  - type: markdown
+    attributes:
+      value: "## Phase 0b — Project Settings (Scope/Budgets/Retention)"
+
+  - type: checkboxes
+    id: phase0b
+    attributes:
+      label: Project settings
+      options:
+        - label: Settings model implemented (include/exclude regex, query param policy, budgets, retention, schedules)
+        - label: Settings endpoints implemented (`GET/PUT /projects/{id}/settings`)
+        - label: Settings enforced by crawler scope (allowed hosts, include/exclude, query params)
+        - label: Settings snapshot stored per crawl_run for reproducibility
+
+  - type: markdown
+    attributes:
+      value: "## Phase 1 — Integrations + Normalization (MVP Core)"
+
+  - type: checkboxes
+    id: phase1
+    attributes:
+      label: Integrations
+      options:
+        - label: OAuth connect/callback flows implemented for providers
+        - label: Token storage encrypted + refresh handling
+        - label: Provider property discovery implemented
+        - label: Property → Project/Site mapping implemented
+        - label: Daily incremental sync scheduler implemented
+        - label: Backfill mode implemented (chunked date ranges)
+        - label: Canonical fact tables implemented (`search_fact_daily`, `analytics_fact_daily`, `link_facts` when available)
+        - label: Data quality flags recorded (sampling/thresholds/missing dims)
+        - label: GSC adapter implemented and syncing
+        - label: GA4 adapter implemented and syncing
+        - label: Bing Webmaster adapter implemented and syncing
+        - label: Sync status endpoints show last sync time + errors
+
+  - type: markdown
+    attributes:
+      value: "## Phase 2 — Hybrid Crawl + Audit + Diffs (MVP Core)"
+
+  - type: checkboxes
+    id: phase2
+    attributes:
+      label: Crawl & Audit
+      options:
+        - label: Crawl trigger endpoint implemented (`POST /projects/{id}/crawls`)
+        - label: Crawl run state machine (queued/running/completed/failed)
+        - label: robots.txt respected by default + sitemap discovery enabled by default
+        - label: URL normalization rules implemented (tracking params stripping + allow/deny policy)
+        - label: HTML page fetch records stored (`crawl_pages`)
+        - label: Link extraction stored (`link_edges`)
+        - label: Hybrid mode implemented (HTML-first + Playwright fallback)
+        - label: Hybrid heuristics implemented (thin DOM/text, SPA shell, required selectors missing, client-side redirects)
+        - label: Playwright budgets enforced (max rendered pages, per-page timeout, separate JS concurrency)
+        - label: Rendered vs non-rendered evidence visible on page detail
+        - label: Rules engine implemented with MVP checks + stable issue taxonomy
+        - label: Impact score implemented (joins to canonical facts last 28d)
+        - label: Audit view returns impact-sorted issues
+        - label: Crawl-to-crawl diffs implemented (added/resolved/changed issues)
+        - label: Regression summary (“top 10 regressions”) implemented
+
+  - type: markdown
+    attributes:
+      value: "## Phase 2b — Visibility + Alerts (MVP Core)"
+
+  - type: checkboxes
+    id: phase2b
+    attributes:
+      label: Visibility & Alerts
+      options:
+        - label: Query trends endpoint implemented (`/performance/queries`)
+        - label: Page trends endpoint implemented (`/performance/pages`)
+        - label: Analytics pages endpoint implemented (`/analytics/pages`)
+        - label: CTR opportunities endpoint implemented (`/opportunities/ctr`)
+        - label: Alert engine computes visibility drops (query/page)
+        - label: Alert rules configurable (`/alerts/rules`)
+        - label: Alerts listed via endpoint (`/alerts`)
+        - label: Webhook event `alert.fired` delivered (at-least-once)
+
+  - type: markdown
+    attributes:
+      value: "## Phase 3 — Common Crawl Ingestion (Core MVP Backlinks)"
+
+  - type: checkboxes
+    id: phase3
+    attributes:
+      label: Common Crawl ingestion + explorer
+      options:
+        - label: Snapshot registry implemented (`GET /commoncrawl/snapshots`)
+        - label: Ingest trigger endpoint implemented (`POST /commoncrawl/ingest`) (operator/admin)
+        - label: Ingest pipeline implemented (WAT-first or chosen approach) and writes raw edges (ClickHouse recommended)
+        - label: Aggregates/materializations built (ref domains, anchors, counts)
+        - label: Domain backlinks explorer endpoints implemented (`/links/domain/{domain}/...`)
+        - label: New/lost between two snapshots implemented (`/links/domain/{domain}/new-lost`)
+        - label: Competitive overlap implemented (`/links/domain/{domain}/overlap`)
+        - label: Competitive intersect implemented (`/links/domain/{domain}/intersect`)
+        - label: Ingest status/progress visible (admin endpoint or logs + status table)
+
+  - type: markdown
+    attributes:
+      value: "## Phase 3b — Project Backlinks (Multi-source merge)"
+
+  - type: checkboxes
+    id: phase3b
+    attributes:
+      label: Project backlinks merge
+      options:
+        - label: CSV backlink import endpoint implemented and queues ingestion
+        - label: Provider links ingested into `link_facts` where available
+        - label: Project backlink views merge Common Crawl + imports + provider links (+ optional community edges)
+        - label: Project overlap/intersect endpoints implemented (project domain vs competitors)
+        - label: Optional opt-in community-fed link edges stored (hashed-by-default)
+
+  - type: markdown
+    attributes:
+      value: "## Phase 4 — Reports + Exports + Webhooks"
+
+  - type: checkboxes
+    id: phase4
+    attributes:
+      label: Reporting & Webhooks
+      options:
+        - label: PDF reporting pipeline implemented (HTML → PDF)
+        - label: Scheduled exports implemented (cron/timezone)
+        - label: Exports list endpoint implemented with status tracking
+        - label: Webhook configuration endpoints implemented
+        - label: Webhook signature (HMAC) implemented
+        - label: Webhook event `crawl.completed` delivered (at-least-once)
+        - label: Webhook event `export.completed` delivered (at-least-once)
+        - label: Webhook event `commoncrawl.ingest_completed` delivered (at-least-once)
+
+  - type: markdown
+    attributes:
+      value: "## Optional hardening"
+
+  - type: checkboxes
+    id: optional
+    attributes:
+      label: Hardening
+      options:
+        - label: Rate limiting for crawl triggers and export endpoints
+        - label: Per-project concurrency caps for crawler
+        - label: Integration sync retry/backoff policies tested
+        - label: ClickHouse enabled for edges at scale (partitioning + TTL)
+        - label: End-to-end smoke tests in CI
+        - label: Seed data + demo fixtures
+
+  - type: textarea
+    id: risks
+    attributes:
+      label: Risks / Blockers
+      placeholder: |
+        - Provider quotas / OAuth scope issues
+        - URL normalization edge cases
+        - Crawl politeness + performance constraints
+        - Common Crawl ingest scale / storage
+        - PDF rendering reliability
+    validations:
+      required: false

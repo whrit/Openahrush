@@ -1,0 +1,1596 @@
+openapi: 3.0.3
+info:
+  title: Openahrush API
+  version: 0.2.0
+  description: >
+    Starter OpenAPI spec for OSS Openahrush MVP:
+    Projects + Settings, Integrations (GSC/GA4/BWT), Hybrid Site Audit, Visibility endpoints,
+    Backlinks (multi-source) + Common Crawl ingestion + competitive overlap/intersect, Exports, Alerts, Webhooks.
+
+servers:
+  - url: http://localhost:8000
+    description: Local dev
+
+tags:
+  - name: Health
+  - name: Auth
+  - name: Projects
+  - name: Settings
+  - name: Integrations
+  - name: Crawls
+  - name: Audit
+  - name: Performance
+  - name: Backlinks
+  - name: CommonCrawl
+  - name: Alerts
+  - name: Exports
+  - name: Webhooks
+
+security:
+  - bearerAuth: []
+
+paths:
+  /healthz:
+    get:
+      tags: [Health]
+      summary: Liveness probe
+      security: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HealthResponse" }
+
+  /readyz:
+    get:
+      tags: [Health]
+      summary: Readiness probe
+      security: []
+      responses:
+        "200":
+          description: Ready
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HealthResponse" }
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login and obtain an access token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LoginRequest" }
+      responses:
+        "200":
+          description: Token response
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LoginResponse" }
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Logout
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OkResponse" }
+
+  /me:
+    get:
+      tags: [Auth]
+      summary: Get current user
+      responses:
+        "200":
+          description: User
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+
+  /projects:
+    get:
+      tags: [Projects]
+      summary: List projects
+      responses:
+        "200":
+          description: Projects
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProjectList" }
+    post:
+      tags: [Projects]
+      summary: Create a project
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProjectCreate" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Project" }
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /projects/{project_id}:
+    get:
+      tags: [Projects]
+      summary: Get a project
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      responses:
+        "200":
+          description: Project
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Project" }
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags: [Projects]
+      summary: Update a project
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProjectUpdate" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Project" }
+    delete:
+      tags: [Projects]
+      summary: Delete a project
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      responses:
+        "204":
+          description: Deleted
+
+  /projects/{project_id}/settings:
+    get:
+      tags: [Settings]
+      summary: Get project settings
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      responses:
+        "200":
+          description: Settings
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProjectSettings" }
+    put:
+      tags: [Settings]
+      summary: Update project settings
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProjectSettings" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OkResponse" }
+
+  /projects/{project_id}/sites:
+    post:
+      tags: [Projects]
+      summary: Add a site to a project
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SiteCreate" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Site" }
+
+  /projects/{project_id}/competitors:
+    post:
+      tags: [Projects]
+      summary: Add a competitor domain
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CompetitorCreate" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Competitor" }
+    get:
+      tags: [Projects]
+      summary: List competitors
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      responses:
+        "200":
+          description: Competitors
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CompetitorList" }
+
+  /integrations/{provider}/connect:
+    post:
+      tags: [Integrations]
+      summary: Start OAuth connect flow for a provider
+      parameters:
+        - $ref: "#/components/parameters/Provider"
+      responses:
+        "200":
+          description: Connect URL (or redirect hint)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/IntegrationConnectResponse" }
+
+  /integrations/{provider}/callback:
+    post:
+      tags: [Integrations]
+      summary: OAuth callback handler
+      parameters:
+        - $ref: "#/components/parameters/Provider"
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/OAuthCallbackRequest" }
+      responses:
+        "200":
+          description: Connected
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/IntegrationAccount" }
+
+  /integrations/accounts:
+    get:
+      tags: [Integrations]
+      summary: List integration accounts
+      responses:
+        "200":
+          description: Accounts
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/IntegrationAccountList" }
+
+  /integrations/accounts/{integration_account_id}/disconnect:
+    post:
+      tags: [Integrations]
+      summary: Disconnect an integration account
+      parameters:
+        - $ref: "#/components/parameters/IntegrationAccountId"
+      responses:
+        "200":
+          description: Disconnected
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OkResponse" }
+
+  /integrations/{provider}/properties:
+    get:
+      tags: [Integrations]
+      summary: List available properties for a provider account
+      parameters:
+        - $ref: "#/components/parameters/Provider"
+        - in: query
+          name: integration_account_id
+          schema: { type: string, format: uuid }
+          required: true
+      responses:
+        "200":
+          description: Properties
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/IntegrationPropertyList" }
+
+  /projects/{project_id}/integrations/map:
+    post:
+      tags: [Integrations]
+      summary: Map a provider property to a project/site
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/IntegrationMapRequest" }
+      responses:
+        "200":
+          description: Mapping created/updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OkResponse" }
+
+  /projects/{project_id}/integrations/sync:
+    post:
+      tags: [Integrations]
+      summary: Trigger an integration sync (manual)
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/IntegrationSyncRequest" }
+      responses:
+        "202":
+          description: Sync queued
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OkResponse" }
+
+  /projects/{project_id}/crawls:
+    post:
+      tags: [Crawls]
+      summary: Trigger a crawl
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CrawlRequest" }
+      responses:
+        "202":
+          description: Crawl queued
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CrawlRun" }
+    get:
+      tags: [Crawls]
+      summary: List crawl runs
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      responses:
+        "200":
+          description: Crawl runs
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CrawlRunList" }
+
+  /crawls/{crawl_run_id}:
+    get:
+      tags: [Crawls]
+      summary: Get crawl run details
+      parameters:
+        - $ref: "#/components/parameters/CrawlRunId"
+      responses:
+        "200":
+          description: Crawl run
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CrawlRun" }
+
+  /crawls/{crawl_run_id}/issues:
+    get:
+      tags: [Audit]
+      summary: List issues for a crawl run
+      parameters:
+        - $ref: "#/components/parameters/CrawlRunId"
+        - in: query
+          name: sort
+          schema:
+            type: string
+            enum: [impact, severity, category]
+      responses:
+        "200":
+          description: Issues
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/IssueList" }
+
+  /projects/{project_id}/issues:
+    get:
+      tags: [Audit]
+      summary: Get latest issues (impact-sorted by default)
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 500, default: 100 }
+      responses:
+        "200":
+          description: Issues
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/IssueList" }
+
+  /projects/{project_id}/issues/diffs:
+    get:
+      tags: [Audit]
+      summary: Compare issues between two crawl runs
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - in: query
+          name: from_crawl_run_id
+          schema: { type: string, format: uuid }
+          required: true
+        - in: query
+          name: to_crawl_run_id
+          schema: { type: string, format: uuid }
+          required: true
+      responses:
+        "200":
+          description: Diff
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/IssueDiffResponse" }
+
+  /projects/{project_id}/performance/queries:
+    get:
+      tags: [Performance]
+      summary: Query-level performance trends
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/DateRangeStart"
+        - $ref: "#/components/parameters/DateRangeEnd"
+      responses:
+        "200":
+          description: Queries
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PerformanceQueryList" }
+
+  /projects/{project_id}/performance/pages:
+    get:
+      tags: [Performance]
+      summary: Page-level performance trends
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/DateRangeStart"
+        - $ref: "#/components/parameters/DateRangeEnd"
+      responses:
+        "200":
+          description: Pages
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PerformancePageList" }
+
+  /projects/{project_id}/analytics/pages:
+    get:
+      tags: [Performance]
+      summary: Page-level analytics trends
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/DateRangeStart"
+        - $ref: "#/components/parameters/DateRangeEnd"
+      responses:
+        "200":
+          description: Analytics pages
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AnalyticsPageList" }
+
+  /projects/{project_id}/opportunities/ctr:
+    get:
+      tags: [Performance]
+      summary: CTR opportunities (high impressions, low CTR)
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/DateRangeStart"
+        - $ref: "#/components/parameters/DateRangeEnd"
+      responses:
+        "200":
+          description: CTR opportunities
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CtrOpportunityList" }
+
+  /projects/{project_id}/backlinks/import:
+    post:
+      tags: [Backlinks]
+      summary: Import backlinks from CSV
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file: { type: string, format: binary }
+                source: { type: string, description: "Source label (e.g., semrush_export)" }
+      responses:
+        "202":
+          description: Import queued
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OkResponse" }
+
+  /projects/{project_id}/backlinks/new_lost:
+    get:
+      tags: [Backlinks]
+      summary: New/lost backlinks over time (project merged sources)
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/DateRangeStart"
+        - $ref: "#/components/parameters/DateRangeEnd"
+      responses:
+        "200":
+          description: New/lost series
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/NewLostBacklinksResponse" }
+
+  /projects/{project_id}/backlinks/targets:
+    get:
+      tags: [Backlinks]
+      summary: Top linked target pages (project merged sources)
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      responses:
+        "200":
+          description: Targets
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BacklinkTargetList" }
+
+  /projects/{project_id}/backlinks/anchors:
+    get:
+      tags: [Backlinks]
+      summary: Anchor distribution (project merged sources)
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      responses:
+        "200":
+          description: Anchors
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BacklinkAnchorList" }
+
+  /projects/{project_id}/backlinks/overlap:
+    get:
+      tags: [Backlinks]
+      summary: Project overlap (ref domains) vs competitors
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - in: query
+          name: competitors
+          schema:
+            type: array
+            items: { type: string }
+          style: form
+          explode: true
+          required: true
+      responses:
+        "200":
+          description: Overlap
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DomainOverlapResponse" }
+
+  /projects/{project_id}/backlinks/intersect:
+    get:
+      tags: [Backlinks]
+      summary: Project intersect (domains linking to competitors but not project)
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - in: query
+          name: competitors
+          schema:
+            type: array
+            items: { type: string }
+          style: form
+          explode: true
+          required: true
+      responses:
+        "200":
+          description: Intersect
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DomainIntersectResponse" }
+
+  /commoncrawl/snapshots:
+    get:
+      tags: [CommonCrawl]
+      summary: List Common Crawl snapshots (known/ingested)
+      responses:
+        "200":
+          description: Snapshots
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommonCrawlSnapshotList" }
+
+  /commoncrawl/ingest:
+    post:
+      tags: [CommonCrawl]
+      summary: Trigger Common Crawl ingestion (operator/admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CommonCrawlIngestRequest" }
+      responses:
+        "202":
+          description: Ingest queued
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OkResponse" }
+
+  /links/domain/{domain}/refdomains:
+    get:
+      tags: [CommonCrawl]
+      summary: Referring domains for a domain (Common Crawl snapshot)
+      parameters:
+        - $ref: "#/components/parameters/Domain"
+        - $ref: "#/components/parameters/SnapshotId"
+        - in: query
+          name: limit
+          schema: { type: integer, default: 100, minimum: 1, maximum: 10000 }
+      responses:
+        "200":
+          description: Referring domains
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RefDomainList" }
+
+  /links/domain/{domain}/backlinks:
+    get:
+      tags: [CommonCrawl]
+      summary: Backlinks list for a domain (Common Crawl snapshot)
+      parameters:
+        - $ref: "#/components/parameters/Domain"
+        - $ref: "#/components/parameters/SnapshotId"
+        - in: query
+          name: limit
+          schema: { type: integer, default: 100, minimum: 1, maximum: 1000 }
+        - in: query
+          name: offset
+          schema: { type: integer, default: 0, minimum: 0 }
+      responses:
+        "200":
+          description: Backlinks
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BacklinkList" }
+
+  /links/domain/{domain}/anchors:
+    get:
+      tags: [CommonCrawl]
+      summary: Anchor distribution for a domain (Common Crawl snapshot)
+      parameters:
+        - $ref: "#/components/parameters/Domain"
+        - $ref: "#/components/parameters/SnapshotId"
+        - in: query
+          name: limit
+          schema: { type: integer, default: 100, minimum: 1, maximum: 10000 }
+      responses:
+        "200":
+          description: Anchors
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BacklinkAnchorList" }
+
+  /links/domain/{domain}/new-lost:
+    get:
+      tags: [CommonCrawl]
+      summary: New/lost backlinks between two snapshots (Common Crawl)
+      parameters:
+        - $ref: "#/components/parameters/Domain"
+        - in: query
+          name: snapshot_a
+          schema: { type: string }
+          required: true
+        - in: query
+          name: snapshot_b
+          schema: { type: string }
+          required: true
+      responses:
+        "200":
+          description: New/lost
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/NewLostBacklinksResponse" }
+
+  /links/domain/{domain}/overlap:
+    get:
+      tags: [CommonCrawl]
+      summary: Referring-domain overlap between a domain and competitors (Common Crawl)
+      parameters:
+        - $ref: "#/components/parameters/Domain"
+        - $ref: "#/components/parameters/SnapshotId"
+        - in: query
+          name: competitors
+          schema:
+            type: array
+            items: { type: string }
+          style: form
+          explode: true
+          required: true
+      responses:
+        "200":
+          description: Overlap
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DomainOverlapResponse" }
+
+  /links/domain/{domain}/intersect:
+    get:
+      tags: [CommonCrawl]
+      summary: Link intersect (domains linking to competitors but not you) (Common Crawl)
+      parameters:
+        - $ref: "#/components/parameters/Domain"
+        - $ref: "#/components/parameters/SnapshotId"
+        - in: query
+          name: competitors
+          schema:
+            type: array
+            items: { type: string }
+          style: form
+          explode: true
+          required: true
+      responses:
+        "200":
+          description: Intersect
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DomainIntersectResponse" }
+
+  /projects/{project_id}/alerts:
+    get:
+      tags: [Alerts]
+      summary: List alerts
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      responses:
+        "200":
+          description: Alerts
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AlertList" }
+
+  /projects/{project_id}/alerts/rules:
+    post:
+      tags: [Alerts]
+      summary: Create/update alert rules for a project
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AlertRulesUpsert" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OkResponse" }
+
+  /projects/{project_id}/exports:
+    post:
+      tags: [Exports]
+      summary: Create an export (CSV/JSON/PDF)
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ExportCreate" }
+      responses:
+        "202":
+          description: Export queued
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Export" }
+    get:
+      tags: [Exports]
+      summary: List exports
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      responses:
+        "200":
+          description: Exports
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ExportList" }
+
+  /projects/{project_id}/exports/schedule:
+    post:
+      tags: [Exports]
+      summary: Schedule exports
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ExportScheduleRequest" }
+      responses:
+        "200":
+          description: Scheduled
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OkResponse" }
+
+  /projects/{project_id}/webhooks:
+    post:
+      tags: [Webhooks]
+      summary: Create a webhook
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/WebhookCreate" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Webhook" }
+    get:
+      tags: [Webhooks]
+      summary: List webhooks
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      responses:
+        "200":
+          description: Webhooks
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WebhookList" }
+
+  /projects/{project_id}/webhooks/{webhook_id}:
+    delete:
+      tags: [Webhooks]
+      summary: Delete a webhook
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/WebhookId"
+      responses:
+        "204":
+          description: Deleted
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    ProjectId:
+      in: path
+      name: project_id
+      required: true
+      schema: { type: string, format: uuid }
+
+    CrawlRunId:
+      in: path
+      name: crawl_run_id
+      required: true
+      schema: { type: string, format: uuid }
+
+    IntegrationAccountId:
+      in: path
+      name: integration_account_id
+      required: true
+      schema: { type: string, format: uuid }
+
+    WebhookId:
+      in: path
+      name: webhook_id
+      required: true
+      schema: { type: string, format: uuid }
+
+    Provider:
+      in: path
+      name: provider
+      required: true
+      schema:
+        type: string
+        enum: [google_search_console, ga4, bing_webmaster, matomo, plausible, other]
+
+    Domain:
+      in: path
+      name: domain
+      required: true
+      schema:
+        type: string
+        example: example.com
+
+    SnapshotId:
+      in: query
+      name: snapshot_id
+      required: false
+      schema:
+        type: string
+        description: Optional snapshot selector; defaults to latest ingested snapshot.
+
+    DateRangeStart:
+      in: query
+      name: start_date
+      required: false
+      schema: { type: string, format: date }
+
+    DateRangeEnd:
+      in: query
+      name: end_date
+      required: false
+      schema: { type: string, format: date }
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        ok: { type: boolean }
+        version: { type: string }
+      required: [ok]
+
+    OkResponse:
+      type: object
+      properties:
+        ok: { type: boolean }
+        message: { type: string }
+      required: [ok]
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code: { type: string }
+            message: { type: string }
+            details: { type: object, additionalProperties: true }
+          required: [code, message]
+      required: [error]
+
+    LoginRequest:
+      type: object
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, format: password }
+      required: [email, password]
+
+    LoginResponse:
+      type: object
+      properties:
+        access_token: { type: string }
+        token_type: { type: string, example: bearer }
+        expires_in: { type: integer, example: 3600 }
+      required: [access_token, token_type]
+
+    User:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string, format: email }
+        name: { type: string }
+      required: [id, email]
+
+    Project:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        created_at: { type: string, format: date-time }
+      required: [id, name]
+
+    ProjectCreate:
+      type: object
+      properties:
+        name: { type: string }
+      required: [name]
+
+    ProjectUpdate:
+      type: object
+      properties:
+        name: { type: string }
+
+    ProjectList:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/Project" }
+      required: [items]
+
+    ProjectSettings:
+      type: object
+      properties:
+        seed_url: { type: string, example: "https://example.com/" }
+        include_subdomains: { type: boolean, default: true }
+        allowed_hosts:
+          type: array
+          items: { type: string }
+        include_regexes:
+          type: array
+          items: { type: string }
+        exclude_regexes:
+          type: array
+          items: { type: string }
+        query_param_policy:
+          type: string
+          enum: [allow_all, strip_all, allowlist, denylist]
+          default: strip_all
+        query_param_allowlist:
+          type: array
+          items: { type: string }
+        query_param_denylist:
+          type: array
+          items: { type: string }
+        strip_tracking_params: { type: boolean, default: true }
+
+        max_pages: { type: integer, default: 5000 }
+        max_depth: { type: integer, default: 6 }
+        concurrency_html: { type: integer, default: 16 }
+        politeness_delay_ms: { type: integer, default: 0 }
+        respect_robots: { type: boolean, default: true }
+        use_sitemaps: { type: boolean, default: true }
+        user_agent: { type: string, example: "oss-semrush-core/0.2 (+https://yourdomain)" }
+
+        js_render_mode:
+          type: string
+          enum: [off, hybrid, js_only]
+          default: hybrid
+        max_rendered_pages: { type: integer, default: 200 }
+        max_render_time_ms: { type: integer, default: 15000 }
+        concurrency_js: { type: integer, default: 2 }
+        required_selectors:
+          type: array
+          items: { type: string }
+          description: Optional CSS selectors used by hybrid rendering heuristics.
+
+        audit_frequency:
+          type: string
+          enum: [off, daily, weekly]
+          default: weekly
+        integration_sync_frequency:
+          type: string
+          enum: [daily, weekly]
+          default: daily
+        visibility_refresh_frequency:
+          type: string
+          enum: [daily, weekly]
+          default: daily
+        links_refresh_frequency:
+          type: string
+          enum: [off, monthly]
+          default: monthly
+
+        retain_audit_runs: { type: integer, default: 10 }
+        retain_serp_snapshots_days: { type: integer, default: 90 }
+        retain_raw_html_days: { type: integer, default: 0 }
+      required: [seed_url]
+
+    Site:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        project_id: { type: string, format: uuid }
+        domain: { type: string, example: example.com }
+        base_url: { type: string, example: "https://example.com" }
+      required: [id, project_id, domain, base_url]
+
+    SiteCreate:
+      type: object
+      properties:
+        domain: { type: string }
+        base_url: { type: string }
+      required: [domain, base_url]
+
+    Competitor:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        project_id: { type: string, format: uuid }
+        domain: { type: string }
+      required: [id, project_id, domain]
+
+    CompetitorCreate:
+      type: object
+      properties:
+        domain: { type: string }
+      required: [domain]
+
+    CompetitorList:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/Competitor" }
+      required: [items]
+
+    IntegrationConnectResponse:
+      type: object
+      properties:
+        connect_url: { type: string }
+        state: { type: string }
+      required: [connect_url]
+
+    OAuthCallbackRequest:
+      type: object
+      properties:
+        code: { type: string }
+        state: { type: string }
+        redirect_uri: { type: string }
+      required: [code, state]
+
+    IntegrationAccount:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        provider: { type: string }
+        status: { type: string, enum: [connected, degraded, disconnected] }
+        created_at: { type: string, format: date-time }
+      required: [id, provider, status]
+
+    IntegrationAccountList:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/IntegrationAccount" }
+      required: [items]
+
+    IntegrationProperty:
+      type: object
+      properties:
+        provider: { type: string }
+        property_id: { type: string }
+        display_name: { type: string }
+      required: [provider, property_id]
+
+    IntegrationPropertyList:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/IntegrationProperty" }
+      required: [items]
+
+    IntegrationMapRequest:
+      type: object
+      properties:
+        integration_account_id: { type: string, format: uuid }
+        provider: { type: string }
+        property_id: { type: string }
+        site_id: { type: string, format: uuid }
+      required: [integration_account_id, provider, property_id, site_id]
+
+    IntegrationSyncRequest:
+      type: object
+      properties:
+        provider: { type: string }
+        property_id: { type: string }
+        mode: { type: string, enum: [backfill, incremental] }
+        start_date: { type: string, format: date }
+        end_date: { type: string, format: date }
+
+    CrawlRequest:
+      type: object
+      properties:
+        site_id: { type: string, format: uuid }
+        max_pages: { type: integer, default: 5000 }
+        max_depth: { type: integer, default: 6 }
+        concurrency: { type: integer, default: 16 }
+        respect_robots: { type: boolean, default: true }
+        use_sitemaps: { type: boolean, default: true }
+        store_html: { type: boolean, default: false }
+        js_render: { type: string, enum: [off, hybrid, js_only], default: hybrid }
+
+    CrawlRun:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        project_id: { type: string, format: uuid }
+        site_id: { type: string, format: uuid }
+        status: { type: string, enum: [queued, running, completed, failed] }
+        started_at: { type: string, format: date-time, nullable: true }
+        completed_at: { type: string, format: date-time, nullable: true }
+        stats:
+          type: object
+          additionalProperties: true
+      required: [id, project_id, site_id, status]
+
+    CrawlRunList:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/CrawlRun" }
+      required: [items]
+
+    Issue:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        crawl_run_id: { type: string, format: uuid }
+        issue_type_id: { type: string }
+        category: { type: string }
+        severity: { type: integer, minimum: 1, maximum: 5 }
+        confidence: { type: number, minimum: 0, maximum: 1 }
+        affected_url: { type: string }
+        impact_score: { type: number }
+        evidence: { type: object, additionalProperties: true }
+      required: [id, crawl_run_id, issue_type_id, severity, confidence, affected_url]
+
+    IssueList:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/Issue" }
+      required: [items]
+
+    IssueDiffResponse:
+      type: object
+      properties:
+        from_crawl_run_id: { type: string, format: uuid }
+        to_crawl_run_id: { type: string, format: uuid }
+        added:
+          type: array
+          items: { $ref: "#/components/schemas/Issue" }
+        resolved:
+          type: array
+          items: { $ref: "#/components/schemas/Issue" }
+        changed:
+          type: array
+          items: { $ref: "#/components/schemas/Issue" }
+
+    PerformanceQueryRow:
+      type: object
+      properties:
+        query: { type: string }
+        impressions: { type: integer }
+        clicks: { type: integer }
+        ctr: { type: number }
+        avg_position: { type: number, nullable: true }
+        top_page_url: { type: string, nullable: true }
+      required: [query, impressions, clicks]
+
+    PerformanceQueryList:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/PerformanceQueryRow" }
+      required: [items]
+
+    PerformancePageRow:
+      type: object
+      properties:
+        page_url: { type: string }
+        impressions: { type: integer }
+        clicks: { type: integer }
+        ctr: { type: number }
+        avg_position: { type: number, nullable: true }
+      required: [page_url, impressions, clicks]
+
+    PerformancePageList:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/PerformancePageRow" }
+      required: [items]
+
+    AnalyticsPageRow:
+      type: object
+      properties:
+        page_url: { type: string }
+        sessions: { type: integer }
+        users: { type: integer, nullable: true }
+        conversions: { type: integer, nullable: true }
+        revenue: { type: number, nullable: true }
+      required: [page_url, sessions]
+
+    AnalyticsPageList:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/AnalyticsPageRow" }
+      required: [items]
+
+    CtrOpportunity:
+      type: object
+      properties:
+        query: { type: string }
+        page_url: { type: string, nullable: true }
+        impressions: { type: integer }
+        clicks: { type: integer }
+        ctr: { type: number }
+        suggested_action: { type: string }
+      required: [query, impressions, clicks, ctr]
+
+    CtrOpportunityList:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/CtrOpportunity" }
+      required: [items]
+
+    NewLostBacklinksResponse:
+      type: object
+      properties:
+        series:
+          type: array
+          items:
+            type: object
+            properties:
+              date: { type: string, format: date }
+              new: { type: integer }
+              lost: { type: integer }
+            required: [date, new, lost]
+      required: [series]
+
+    BacklinkTarget:
+      type: object
+      properties:
+        target_url: { type: string }
+        referring_domains: { type: integer }
+        backlinks: { type: integer }
+      required: [target_url, referring_domains, backlinks]
+
+    BacklinkTargetList:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/BacklinkTarget" }
+      required: [items]
+
+    BacklinkAnchor:
+      type: object
+      properties:
+        anchor: { type: string }
+        count: { type: integer }
+      required: [anchor, count]
+
+    BacklinkAnchorList:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/BacklinkAnchor" }
+      required: [items]
+
+    BacklinkRow:
+      type: object
+      properties:
+        source_url: { type: string }
+        source_domain: { type: string }
+        target_url: { type: string }
+        target_domain: { type: string }
+        anchor: { type: string, nullable: true }
+        flags: { type: object, additionalProperties: true }
+      required: [source_url, source_domain, target_url, target_domain]
+
+    BacklinkList:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/BacklinkRow" }
+      required: [items]
+
+    RefDomainRow:
+      type: object
+      properties:
+        ref_domain: { type: string }
+        backlinks: { type: integer }
+        first_seen: { type: string, nullable: true }
+        last_seen: { type: string, nullable: true }
+      required: [ref_domain, backlinks]
+
+    RefDomainList:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/RefDomainRow" }
+      required: [items]
+
+    DomainOverlapResponse:
+      type: object
+      properties:
+        domain: { type: string }
+        competitors:
+          type: array
+          items: { type: string }
+        shared_ref_domains:
+          type: array
+          items:
+            type: object
+            properties:
+              ref_domain: { type: string }
+              in_domain: { type: boolean }
+              in_competitors:
+                type: object
+                additionalProperties: { type: boolean }
+            required: [ref_domain, in_domain, in_competitors]
+      required: [domain, competitors, shared_ref_domains]
+
+    DomainIntersectResponse:
+      type: object
+      properties:
+        domain: { type: string }
+        competitors:
+          type: array
+          items: { type: string }
+        intersect_ref_domains:
+          type: array
+          items:
+            type: object
+            properties:
+              ref_domain: { type: string }
+              links_to_competitors:
+                type: object
+                additionalProperties: { type: boolean }
+            required: [ref_domain, links_to_competitors]
+      required: [domain, competitors, intersect_ref_domains]
+
+    Alert:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        kind: { type: string }
+        entity_type: { type: string, enum: [project, page, query] }
+        entity_key: { type: string }
+        severity: { type: string, enum: [info, warn, critical] }
+        created_at: { type: string, format: date-time }
+        payload: { type: object, additionalProperties: true }
+      required: [id, kind, entity_type, entity_key, severity, created_at]
+
+    AlertList:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/Alert" }
+      required: [items]
+
+    AlertRulesUpsert:
+      type: object
+      properties:
+        visibility_drop_threshold_pct: { type: number, default: 30 }
+        ctr_opportunity_min_impressions: { type: integer, default: 1000 }
+        regression_issue_delta_threshold: { type: integer, default: 10 }
+
+    Export:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        format: { type: string, enum: [csv, json, pdf] }
+        status: { type: string, enum: [queued, running, completed, failed] }
+        download_url: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+      required: [id, format, status, created_at]
+
+    ExportCreate:
+      type: object
+      properties:
+        format: { type: string, enum: [csv, json, pdf] }
+        resource: { type: string }
+        params: { type: object, additionalProperties: true }
+      required: [format, resource]
+
+    ExportList:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/Export" }
+      required: [items]
+
+    ExportScheduleRequest:
+      type: object
+      properties:
+        format: { type: string, enum: [csv, json, pdf] }
+        resource: { type: string }
+        cron: { type: string, example: "0 9 * * 1" }
+        timezone: { type: string, example: "America/Los_Angeles" }
+        params: { type: object, additionalProperties: true }
+      required: [format, resource, cron]
+
+    Webhook:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        url: { type: string }
+        events:
+          type: array
+          items: { type: string }
+        is_enabled: { type: boolean }
+        created_at: { type: string, format: date-time }
+      required: [id, url, events, is_enabled, created_at]
+
+    WebhookCreate:
+      type: object
+      properties:
+        url: { type: string }
+        secret: { type: string }
+        events:
+          type: array
+          items:
+            type: string
+            enum: [crawl.completed, alert.fired, integration.sync_failed, export.completed, commoncrawl.ingest_completed]
+      required: [url, secret, events]
+
+    WebhookList:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/Webhook" }
+      required: [items]
+
+    CommonCrawlSnapshot:
+      type: object
+      properties:
+        snapshot_id: { type: string, example: "CC-MAIN-2025-05" }
+        status: { type: string, enum: [known, ingesting, ingested, failed] }
+        ingested_at: { type: string, format: date-time, nullable: true }
+        notes: { type: string, nullable: true }
+      required: [snapshot_id, status]
+
+    CommonCrawlSnapshotList:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/CommonCrawlSnapshot" }
+      required: [items]
+
+    CommonCrawlIngestRequest:
+      type: object
+      properties:
+        snapshot_id: { type: string, example: "CC-MAIN-2025-05" }
+        subset:
+          type: object
+          description: Optional subset spec (partitions, domain allowlists, limits).
+          additionalProperties: true
+        build_aggregates: { type: boolean, default: true }
+      required: [snapshot_id]

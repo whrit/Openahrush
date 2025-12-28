@@ -1,0 +1,61 @@
+[project]
+name = "openahrush"
+version = "0.1.0"
+description = "Openahrush MVP (Python control plane + Rust data plane)"
+requires-python = ">=3.12,<3.13"
+readme = "README.md"
+license = { text = "AGPL-3.0-or-later" }
+authors = [{ name = "whrit" }]
+
+# Root project has no runtime deps; packages live in apps/ and libs/
+dependencies = []
+
+[tool.uv]
+# uv workspace: editable installs for local dev
+workspace = true
+
+[tool.uv.workspace]
+members = [
+  "libs/core",
+  "libs/seo",
+  "libs/backlinks",
+  "apps/api",
+  "apps/workers",
+  "apps/integrations",
+  "apps/reports",
+  "apps/commoncrawl_ingest",
+]
+
+[tool.uv.sources]
+# If you later want to pin workspace packages as sources, keep this section.
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+extend-exclude = ["migrations/versions"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM", "RUF"]
+ignore = ["E501"] # handled by formatter
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+no_implicit_optional = true
+check_untyped_defs = true
+ignore_missing_imports = true
+pretty = true
+
+[tool.pytest.ini_options]
+testpaths = ["apps", "libs"]
+addopts = "-q"
+filterwarnings = [
+  "error::DeprecationWarning:.*semrush_.*",
+  "ignore::DeprecationWarning",
+]
