@@ -16,12 +16,11 @@ from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from semrush_core.database import get_async_session
 from semrush_core.models import Project, ProjectSettings
 from semrush_core.security.jwt import TokenData
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from semrush_api.deps import get_current_user
 from semrush_api.schemas.settings import (
@@ -196,7 +195,7 @@ async def update_settings(
                       422 if validation fails.
     """
     # Validate project exists and user has access
-    project = await _get_project_or_404(project_id, db, current_user)
+    await _get_project_or_404(project_id, db, current_user)
 
     # Get existing settings record or create new one
     settings_record = await _get_settings_record(project_id, db)

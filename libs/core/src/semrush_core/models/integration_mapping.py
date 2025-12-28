@@ -82,19 +82,19 @@ class IntegrationMapping(Base, UUIDMixin):
     )
 
     # Relationships
-    project: Mapped["Project"] = relationship()
-    site: Mapped["Site | None"] = relationship()
-    integration_property: Mapped["IntegrationProperty"] = relationship(
+    project: Mapped[Project] = relationship()
+    site: Mapped[Site | None] = relationship()
+    integration_property: Mapped[IntegrationProperty] = relationship(
         back_populates="mappings",
     )
-    sync_runs: Mapped[list["SyncRun"]] = relationship(
+    sync_runs: Mapped[list[SyncRun]] = relationship(
         back_populates="mapping",
         cascade="all, delete-orphan",
         order_by="desc(SyncRun.created_at)",
     )
 
     @property
-    def latest_sync(self) -> "SyncRun | None":
+    def latest_sync(self) -> SyncRun | None:
         """
         Get the most recent sync run for this mapping.
 

@@ -14,11 +14,18 @@ Provides endpoints for:
 """
 
 import secrets
-import uuid
 from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, status
+from semrush_core import get_settings
+from semrush_core.models import IntegrationMapping, Project, SyncRun
+from semrush_core.models.integration_account import IntegrationAccount
+from semrush_core.models.sync_run import SyncStatus as SyncRunStatus
+from semrush_integrations.oauth.google import GoogleOAuthProvider
+from semrush_integrations.oauth.microsoft import MicrosoftOAuthProvider
+from semrush_integrations.services.health_service import IntegrationHealthService
+from semrush_integrations.services.property_service import PropertyMappingService, PropertyService
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -47,14 +54,6 @@ from semrush_api.schemas.sync import (
     TriggerSyncRequest,
     TriggerSyncResponse,
 )
-from semrush_core import get_settings
-from semrush_core.models import IntegrationMapping, IntegrationProperty, Project, SyncRun
-from semrush_core.models.integration_account import IntegrationAccount
-from semrush_core.models.sync_run import SyncStatus as SyncRunStatus
-from semrush_integrations.oauth.google import GoogleOAuthProvider
-from semrush_integrations.oauth.microsoft import MicrosoftOAuthProvider
-from semrush_integrations.services.health_service import IntegrationHealthService
-from semrush_integrations.services.property_service import PropertyMappingService, PropertyService
 
 router = APIRouter()
 
@@ -345,8 +344,8 @@ async def oauth_callback(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Failed to exchange authorization code: {str(e)}",
-        )
+            detail=f"Failed to exchange authorization code: {e!s}",
+        ) from e
 
     # Get user info from provider
     try:
@@ -354,8 +353,8 @@ async def oauth_callback(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Failed to retrieve user information: {str(e)}",
-        )
+            detail=f"Failed to retrieve user information: {e!s}",
+        ) from e
 
     # Create integration account
     integration_account = IntegrationAccount(
@@ -1143,7 +1142,7 @@ async def sync_properties(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
-        )
+        ) from e
     finally:
         sync_session.close()
 
@@ -1233,11 +1232,11 @@ async def create_mapping(
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail=error_msg,
-            )
+            ) from e
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=error_msg,
-        )
+        ) from e
     finally:
         sync_session.close()
 

@@ -5,17 +5,17 @@ Following TDD: These tests are written FIRST, then the implementation.
 Uses mocking for database operations to avoid PostgreSQL-specific types.
 """
 
-import pytest
 import uuid
-from datetime import date, datetime, timedelta, timezone
-from unittest.mock import MagicMock, patch
+from datetime import UTC, date, datetime, timedelta
+from unittest.mock import MagicMock
 
+import pytest
 from semrush_integrations.services.health_service import (
-    IntegrationHealthService,
-    SyncStatus,
+    PROVIDER_DATA_LAG_DAYS,
     DataFreshness,
     IntegrationHealth,
-    PROVIDER_DATA_LAG_DAYS,
+    IntegrationHealthService,
+    SyncStatus,
 )
 
 
@@ -36,7 +36,7 @@ class MockSyncRun:
         self.error_message = kwargs.get("error_message")
         self.started_at = kwargs.get("started_at")
         self.completed_at = kwargs.get("completed_at")
-        self.created_at = kwargs.get("created_at", datetime.now(timezone.utc))
+        self.created_at = kwargs.get("created_at", datetime.now(UTC))
 
 
 class MockIntegrationMapping:
@@ -48,7 +48,7 @@ class MockIntegrationMapping:
         self.site_id = kwargs.get("site_id")
         self.integration_property_id = kwargs.get("integration_property_id", uuid.uuid4())
         self.is_primary = kwargs.get("is_primary", True)
-        self.created_at = kwargs.get("created_at", datetime.now(timezone.utc))
+        self.created_at = kwargs.get("created_at", datetime.now(UTC))
         self.sync_runs = kwargs.get("sync_runs", [])
         self.integration_property = kwargs.get("integration_property")
 
@@ -123,7 +123,7 @@ class TestGetSyncStatus:
 
     def test_returns_sync_status_for_valid_mapping(self, mock_db_session, sample_mapping_id):
         """Should return SyncStatus for a valid mapping with completed sync."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         last_sync = now - timedelta(hours=1)
 
         mock_sync_run = MockSyncRun(
@@ -172,7 +172,7 @@ class TestGetSyncStatus:
 
     def test_calculates_consecutive_error_count(self, mock_db_session, sample_mapping_id):
         """Should count consecutive failures."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         # Create 3 failed syncs followed by 1 success
         runs = [
@@ -193,7 +193,7 @@ class TestGetSyncStatus:
 
     def test_calculates_next_sync_time(self, mock_db_session, sample_mapping_id):
         """Should calculate next sync time based on last sync."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         last_sync = now - timedelta(hours=12)
 
         mock_sync_run = MockSyncRun(
@@ -219,7 +219,7 @@ class TestGetSyncStatus:
         """Should report running status when sync is in progress."""
         mock_sync_run = MockSyncRun(
             status="running",
-            started_at=datetime.now(timezone.utc) - timedelta(minutes=5),
+            started_at=datetime.now(UTC) - timedelta(minutes=5),
             completed_at=None,
         )
         mock_mapping = MockIntegrationMapping(
@@ -354,7 +354,7 @@ class TestGetIntegrationHealth:
 
     def test_returns_health_for_all_user_integrations(self, mock_db_session, sample_user_id):
         """Should return health status for all user integrations."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         mock_token = MockIntegrationToken(expires_at=now + timedelta(hours=1))
         mock_property = MockIntegrationProperty(provider="google_search_console")
@@ -386,7 +386,7 @@ class TestGetIntegrationHealth:
 
     def test_reports_expired_token_without_refresh(self, mock_db_session, sample_user_id):
         """Should report token_valid=False when token is expired and no refresh token."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         mock_token = MockIntegrationToken(
             expires_at=now - timedelta(hours=1),
@@ -427,7 +427,7 @@ class TestGetIntegrationHealth:
             MockIntegrationProperty(property_id="prop2"),
             MockIntegrationProperty(property_id="prop3"),
         ]
-        mock_token = MockIntegrationToken(expires_at=datetime.now(timezone.utc) + timedelta(hours=1))
+        mock_token = MockIntegrationToken(expires_at=datetime.now(UTC) + timedelta(hours=1))
         mock_account = MockIntegrationAccount(
             user_id=sample_user_id,
             provider="google_search_console",
@@ -443,7 +443,7 @@ class TestGetIntegrationHealth:
 
     def test_includes_last_sync_time(self, mock_db_session, sample_user_id):
         """Should include last sync time from most recent sync run."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         last_sync = now - timedelta(hours=2)
 
         mock_property = MockIntegrationProperty(provider="google_search_console")
@@ -472,7 +472,7 @@ class TestCheckTokenValidity:
 
     def test_returns_true_for_valid_token(self, mock_db_session, sample_user_id):
         """Should return True when token is valid and not expired."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         mock_token = MockIntegrationToken(expires_at=now + timedelta(hours=1))
         mock_account = MockIntegrationAccount(
@@ -489,7 +489,7 @@ class TestCheckTokenValidity:
 
     def test_returns_false_for_expired_token_without_refresh(self, mock_db_session, sample_user_id):
         """Should return False when token is expired and no refresh token available."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         mock_token = MockIntegrationToken(
             expires_at=now - timedelta(hours=1),
@@ -532,7 +532,7 @@ class TestCheckTokenValidity:
 
     def test_handles_refresh_token_check(self, mock_db_session, sample_user_id):
         """Should check for refresh token availability."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         # Token near expiry but has refresh token
         mock_token = MockIntegrationToken(
@@ -558,7 +558,7 @@ class TestSyncHealthCheck:
 
     def test_sync_healthy_when_recent(self, mock_db_session, sample_mapping_id):
         """Should report healthy when last sync was within 48 hours."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         mock_sync_run = MockSyncRun(
             status="completed",
@@ -577,7 +577,7 @@ class TestSyncHealthCheck:
 
     def test_sync_unhealthy_when_stale(self, mock_db_session, sample_mapping_id):
         """Should report unhealthy when last sync was more than 48 hours ago."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         mock_sync_run = MockSyncRun(
             status="completed",
@@ -596,7 +596,7 @@ class TestSyncHealthCheck:
 
     def test_sync_unhealthy_with_consecutive_failures(self, mock_db_session, sample_mapping_id):
         """Should report unhealthy with 2+ consecutive failures."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         runs = [
             MockSyncRun(status="failed", completed_at=now - timedelta(hours=1)),
@@ -633,7 +633,7 @@ class TestActionableStatusMessages:
 
     def test_status_message_for_healthy_sync(self, mock_db_session, sample_mapping_id):
         """Should provide reassuring message for healthy sync."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         mock_sync_run = MockSyncRun(
             status="completed",
@@ -652,7 +652,7 @@ class TestActionableStatusMessages:
 
     def test_status_message_for_stale_data(self, mock_db_session, sample_mapping_id):
         """Should provide actionable message for stale data."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         mock_sync_run = MockSyncRun(
             status="completed",
@@ -671,7 +671,7 @@ class TestActionableStatusMessages:
 
     def test_status_message_for_failed_sync(self, mock_db_session, sample_mapping_id):
         """Should provide helpful message for failed sync."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         mock_sync_run = MockSyncRun(
             status="failed",
@@ -695,7 +695,7 @@ class TestGetProjectSyncStatus:
 
     def test_returns_all_mappings_status(self, mock_db_session, sample_project_id):
         """Should return sync status for all mappings in project."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         mapping_id_1 = uuid.uuid4()
         mapping_id_2 = uuid.uuid4()

@@ -8,6 +8,10 @@ Provides endpoints for:
 """
 
 from fastapi import APIRouter, HTTPException, status
+from semrush_core import get_settings
+from semrush_core.models import User
+from semrush_core.security.jwt import create_access_token
+from semrush_core.security.password import verify_password
 from sqlalchemy import select
 
 from semrush_api.deps import CurrentUser, DbSession
@@ -17,10 +21,6 @@ from semrush_api.schemas.auth import (
     LogoutResponse,
     UserResponse,
 )
-from semrush_core import get_settings
-from semrush_core.models import User
-from semrush_core.security.jwt import create_access_token
-from semrush_core.security.password import verify_password
 
 router = APIRouter()
 

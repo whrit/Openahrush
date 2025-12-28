@@ -2,7 +2,7 @@
 
 **Duration:** 2-3 weeks
 **Dependencies:** None
-**Status:** Not Started
+**Status:** Complete (2025-12-28)
 
 This sprint establishes the core platform skeleton: FastAPI application, database schema, development infrastructure, and basic project management.
 
@@ -27,12 +27,12 @@ This sprint establishes the core platform skeleton: FastAPI application, databas
 **Description:** Initialize the shared core library with base models, utilities, and database configuration.
 
 **Acceptance Criteria:**
-- [ ] `libs/core/pyproject.toml` created with dependencies
-- [ ] `libs/core/src/semrush_core/__init__.py` exists
-- [ ] `libs/core/src/semrush_core/config.py` with Settings class (pydantic-settings)
-- [ ] `libs/core/src/semrush_core/database.py` with async SQLAlchemy engine
-- [ ] `libs/core/src/semrush_core/models/base.py` with Base declarative model
-- [ ] `uv sync` succeeds
+- [x] `libs/core/pyproject.toml` created with dependencies
+- [x] `libs/core/src/semrush_core/__init__.py` exists
+- [x] `libs/core/src/semrush_core/config.py` with Settings class (pydantic-settings)
+- [x] `libs/core/src/semrush_core/database.py` with async SQLAlchemy engine
+- [x] `libs/core/src/semrush_core/models/base.py` with Base declarative model
+- [x] `uv sync` succeeds
 
 **Files to Create:**
 ```
@@ -61,10 +61,10 @@ libs/core/
 **Description:** Initialize the SEO utilities library for URL normalization and extraction.
 
 **Acceptance Criteria:**
-- [ ] `libs/seo/pyproject.toml` created
-- [ ] `libs/seo/src/semrush_seo/__init__.py` exists
-- [ ] `libs/seo/src/semrush_seo/url.py` with URL normalization utilities
-- [ ] `libs/seo/src/semrush_seo/extraction.py` placeholder for HTML extraction
+- [x] `libs/seo/pyproject.toml` created
+- [x] `libs/seo/src/semrush_seo/__init__.py` exists
+- [x] `libs/seo/src/semrush_seo/url.py` with URL normalization utilities
+- [x] `libs/seo/src/semrush_seo/extraction.py` placeholder for HTML extraction
 
 **Files to Create:**
 ```
@@ -88,9 +88,9 @@ libs/seo/
 **Description:** Initialize the backlinks processing library (placeholder for Sprint 3).
 
 **Acceptance Criteria:**
-- [ ] `libs/backlinks/pyproject.toml` created
-- [ ] `libs/backlinks/src/semrush_backlinks/__init__.py` exists
-- [ ] Placeholder modules for future backlink processing
+- [x] `libs/backlinks/pyproject.toml` created
+- [x] `libs/backlinks/src/semrush_backlinks/__init__.py` exists
+- [x] Placeholder modules for future backlink processing
 
 **Files to Create:**
 ```
@@ -109,11 +109,11 @@ libs/backlinks/
 **Description:** Initialize the FastAPI application with basic structure.
 
 **Acceptance Criteria:**
-- [ ] `apps/api/pyproject.toml` created with FastAPI dependencies
-- [ ] `apps/api/src/semrush_api/__init__.py` exists
-- [ ] `apps/api/src/semrush_api/main.py` with FastAPI app instance
-- [ ] `apps/api/src/semrush_api/routers/` directory structure
-- [ ] Application starts with `uvicorn semrush_api.main:app`
+- [x] `apps/api/pyproject.toml` created with FastAPI dependencies
+- [x] `apps/api/src/semrush_api/__init__.py` exists
+- [x] `apps/api/src/semrush_api/main.py` with FastAPI app instance
+- [x] `apps/api/src/semrush_api/routers/` directory structure
+- [x] Application starts with `uvicorn semrush_api.main:app`
 
 **Files to Create:**
 ```
@@ -143,9 +143,9 @@ apps/api/
 **Description:** Initialize the worker orchestration package.
 
 **Acceptance Criteria:**
-- [ ] `apps/workers/pyproject.toml` created
-- [ ] `apps/workers/src/semrush_workers/__init__.py` exists
-- [ ] `apps/workers/src/semrush_workers/runner.py` with worker loop placeholder
+- [x] `apps/workers/pyproject.toml` created
+- [x] `apps/workers/src/semrush_workers/__init__.py` exists
+- [x] `apps/workers/src/semrush_workers/runner.py` with worker loop placeholder
 
 **Files to Create:**
 ```
@@ -170,9 +170,9 @@ apps/workers/
 **Description:** Initialize skeleton packages for integrations, reports, and commoncrawl_ingest.
 
 **Acceptance Criteria:**
-- [ ] `apps/integrations/` package created with pyproject.toml
-- [ ] `apps/reports/` package created with pyproject.toml
-- [ ] `apps/commoncrawl_ingest/` package created with pyproject.toml
+- [x] `apps/integrations/` package created with pyproject.toml
+- [x] `apps/reports/` package created with pyproject.toml
+- [x] `apps/commoncrawl_ingest/` package created with pyproject.toml
 
 **Files to Create:**
 ```
@@ -204,11 +204,11 @@ apps/commoncrawl_ingest/
 **Description:** Configure Alembic for database migrations with async support.
 
 **Acceptance Criteria:**
-- [ ] `migrations/alembic.ini` created
-- [ ] `migrations/env.py` configured for async SQLAlchemy
-- [ ] `migrations/script.py.mako` template exists
-- [ ] `migrations/versions/` directory exists
-- [ ] Migration commands work via `uv run`
+- [x] `migrations/alembic.ini` created
+- [x] `migrations/env.py` configured for async SQLAlchemy
+- [x] `migrations/script.py.mako` template exists
+- [x] `migrations/versions/` directory exists
+- [x] Migration commands work via `uv run`
 
 **Files to Create:**
 ```
@@ -227,13 +227,13 @@ migrations/
 **Description:** Create the initial database schema with core tables.
 
 **Acceptance Criteria:**
-- [ ] Migration creates `users` table
-- [ ] Migration creates `projects` table
-- [ ] Migration creates `sites` table
-- [ ] Migration creates `competitors` table
-- [ ] Migration creates `project_settings` table
-- [ ] Migration enables `citext` and `uuid-ossp` extensions
-- [ ] `alembic upgrade head` succeeds
+- [x] Migration creates `users` table
+- [x] Migration creates `projects` table
+- [x] Migration creates `sites` table
+- [x] Migration creates `competitors` table
+- [x] Migration creates `project_settings` table
+- [x] Migration enables `citext` and `uuid-ossp` extensions
+- [x] `alembic upgrade head` succeeds
 
 **Schema (users):**
 ```sql
@@ -297,12 +297,12 @@ CREATE TABLE project_settings (
 **Description:** Define SQLAlchemy ORM models for the core schema.
 
 **Acceptance Criteria:**
-- [ ] `User` model in `libs/core/src/semrush_core/models/user.py`
-- [ ] `Project` model in `libs/core/src/semrush_core/models/project.py`
-- [ ] `Site` model in `libs/core/src/semrush_core/models/site.py`
-- [ ] `Competitor` model in `libs/core/src/semrush_core/models/competitor.py`
-- [ ] `ProjectSettings` model in `libs/core/src/semrush_core/models/settings.py`
-- [ ] Models imported in `models/__init__.py`
+- [x] `User` model in `libs/core/src/semrush_core/models/user.py`
+- [x] `Project` model in `libs/core/src/semrush_core/models/project.py`
+- [x] `Site` model in `libs/core/src/semrush_core/models/site.py`
+- [x] `Competitor` model in `libs/core/src/semrush_core/models/competitor.py`
+- [x] `ProjectSettings` model in `libs/core/src/semrush_core/models/settings.py`
+- [x] Models imported in `models/__init__.py`
 
 **Files to Create:**
 ```
@@ -325,13 +325,13 @@ libs/core/src/semrush_core/models/
 **Description:** Set up Docker Compose for local development with all required services.
 
 **Acceptance Criteria:**
-- [ ] `infra/compose/docker-compose.yml` created
-- [ ] API service configured (builds from workspace)
-- [ ] Postgres service with health check
-- [ ] Redis service with health check
-- [ ] MinIO service with console
-- [ ] Network configuration correct
-- [ ] Volume mounts for persistence
+- [x] `infra/compose/docker-compose.yml` created
+- [x] API service configured (builds from workspace)
+- [x] Postgres service with health check
+- [x] Redis service with health check
+- [x] MinIO service with console
+- [x] Network configuration correct
+- [x] Volume mounts for persistence
 
 **Services Configuration:**
 ```yaml
@@ -379,12 +379,12 @@ infra/
 **Description:** Create a multi-stage Dockerfile for the API service.
 
 **Acceptance Criteria:**
-- [ ] `Dockerfile` at repo root
-- [ ] Uses Python 3.12 base image
-- [ ] Installs uv for dependency management
-- [ ] Copies workspace and builds packages
-- [ ] Runs uvicorn on port 8000
-- [ ] Non-root user for security
+- [x] `Dockerfile` at repo root
+- [x] Uses Python 3.12 base image
+- [x] Installs uv for dependency management
+- [x] Copies workspace and builds packages
+- [x] Runs uvicorn on port 8000
+- [x] Non-root user for security
 
 ---
 
@@ -393,10 +393,10 @@ infra/
 **Description:** Create shell scripts for common development tasks.
 
 **Acceptance Criteria:**
-- [ ] `scripts/dev.sh` with up/down/logs/restart commands
-- [ ] `scripts/lint.sh` runs ruff + mypy
-- [ ] `scripts/test.sh` runs pytest
-- [ ] Scripts are executable (chmod +x)
+- [x] `scripts/dev.sh` with up/down/logs/restart commands
+- [x] `scripts/lint.sh` runs ruff + mypy
+- [x] `scripts/test.sh` runs pytest
+- [x] Scripts are executable (chmod +x)
 
 **Files to Create:**
 ```
@@ -415,10 +415,10 @@ scripts/
 **Description:** Create /healthz and /readyz endpoints per OpenAPI spec.
 
 **Acceptance Criteria:**
-- [ ] `GET /healthz` returns `{"ok": true, "version": "0.2.0"}`
-- [ ] `GET /readyz` checks database connectivity
-- [ ] Returns 503 if database unreachable
-- [ ] No authentication required
+- [x] `GET /healthz` returns `{"ok": true, "version": "0.2.0"}`
+- [x] `GET /readyz` checks database connectivity
+- [x] Returns 503 if database unreachable
+- [x] No authentication required
 
 **Router:** `apps/api/src/semrush_api/routers/health.py`
 
@@ -429,11 +429,11 @@ scripts/
 **Description:** Create login/logout/me endpoints with JWT authentication.
 
 **Acceptance Criteria:**
-- [ ] `POST /auth/login` validates credentials, returns JWT
-- [ ] `POST /auth/logout` acknowledges logout
-- [ ] `GET /me` returns current user (requires auth)
-- [ ] JWT tokens have configurable expiry
-- [ ] Password hashing with bcrypt
+- [x] `POST /auth/login` validates credentials, returns JWT
+- [x] `POST /auth/logout` acknowledges logout
+- [x] `GET /me` returns current user (requires auth)
+- [x] JWT tokens have configurable expiry
+- [x] Password hashing with bcrypt
 
 **Router:** `apps/api/src/semrush_api/routers/auth.py`
 
@@ -446,10 +446,10 @@ scripts/
 **Description:** Add user registration endpoint for self-hosted deployments.
 
 **Acceptance Criteria:**
-- [ ] `POST /auth/register` creates new user
-- [ ] Email uniqueness validated
-- [ ] Password strength requirements (configurable)
-- [ ] Returns created user (without password)
+- [x] `POST /auth/register` creates new user
+- [x] Email uniqueness validated
+- [x] Password strength requirements (configurable)
+- [x] Returns created user (without password)
 
 ---
 
@@ -460,11 +460,11 @@ scripts/
 **Description:** Create endpoints for listing and creating projects.
 
 **Acceptance Criteria:**
-- [ ] `GET /projects` returns paginated project list for current user
-- [ ] `POST /projects` creates a new project
-- [ ] Validates required fields (name)
-- [ ] Sets owner_id from current user
-- [ ] Returns 201 on creation
+- [x] `GET /projects` returns paginated project list for current user
+- [x] `POST /projects` creates a new project
+- [x] Validates required fields (name)
+- [x] Sets owner_id from current user
+- [x] Returns 201 on creation
 
 **Router:** `apps/api/src/semrush_api/routers/projects.py`
 
@@ -475,11 +475,11 @@ scripts/
 **Description:** Create endpoints for individual project operations.
 
 **Acceptance Criteria:**
-- [ ] `GET /projects/{project_id}` returns project details
-- [ ] `PATCH /projects/{project_id}` updates project fields
-- [ ] `DELETE /projects/{project_id}` soft-deletes or hard-deletes project
-- [ ] 404 if project not found
-- [ ] 403 if user doesn't own project
+- [x] `GET /projects/{project_id}` returns project details
+- [x] `PATCH /projects/{project_id}` updates project fields
+- [x] `DELETE /projects/{project_id}` soft-deletes or hard-deletes project
+- [x] 404 if project not found
+- [x] 403 if user doesn't own project
 
 ---
 
@@ -488,10 +488,10 @@ scripts/
 **Description:** Create endpoints for managing sites within projects.
 
 **Acceptance Criteria:**
-- [ ] `POST /projects/{project_id}/sites` adds a site
-- [ ] Validates domain and base_url format
-- [ ] Returns 201 on creation
-- [ ] Site belongs to project
+- [x] `POST /projects/{project_id}/sites` adds a site
+- [x] Validates domain and base_url format
+- [x] Returns 201 on creation
+- [x] Site belongs to project
 
 **Router:** `apps/api/src/semrush_api/routers/sites.py` (or in projects.py)
 
@@ -502,10 +502,10 @@ scripts/
 **Description:** Create endpoints for managing competitor domains.
 
 **Acceptance Criteria:**
-- [ ] `POST /projects/{project_id}/competitors` adds a competitor
-- [ ] `GET /projects/{project_id}/competitors` lists competitors
-- [ ] Validates domain format
-- [ ] Returns 201 on creation
+- [x] `POST /projects/{project_id}/competitors` adds a competitor
+- [x] `GET /projects/{project_id}/competitors` lists competitors
+- [x] Validates domain format
+- [x] Returns 201 on creation
 
 ---
 
@@ -516,14 +516,14 @@ scripts/
 **Description:** Create Pydantic model matching the OpenAPI ProjectSettings schema.
 
 **Acceptance Criteria:**
-- [ ] All settings fields defined with correct types and defaults
-- [ ] Scope settings: seed_url, include_subdomains, allowed_hosts, regexes
-- [ ] Query param settings: policy, allowlist, denylist, strip_tracking
-- [ ] Crawl budgets: max_pages, max_depth, concurrency, politeness, robots, sitemaps
-- [ ] JS rendering: mode, max_rendered, timeout, concurrency, required_selectors
-- [ ] Schedules: audit/sync/visibility/links frequency
-- [ ] Retention: audit_runs, serp_days, html_days
-- [ ] Validation for regex patterns
+- [x] All settings fields defined with correct types and defaults
+- [x] Scope settings: seed_url, include_subdomains, allowed_hosts, regexes
+- [x] Query param settings: policy, allowlist, denylist, strip_tracking
+- [x] Crawl budgets: max_pages, max_depth, concurrency, politeness, robots, sitemaps
+- [x] JS rendering: mode, max_rendered, timeout, concurrency, required_selectors
+- [x] Schedules: audit/sync/visibility/links frequency
+- [x] Retention: audit_runs, serp_days, html_days
+- [x] Validation for regex patterns
 
 **File:** `libs/core/src/semrush_core/schemas/settings.py`
 
@@ -534,11 +534,11 @@ scripts/
 **Description:** Create GET/PUT endpoints for project settings.
 
 **Acceptance Criteria:**
-- [ ] `GET /projects/{project_id}/settings` returns current settings (or defaults)
-- [ ] `PUT /projects/{project_id}/settings` updates settings
-- [ ] Settings stored as JSONB in project_settings table
-- [ ] Validates all settings against schema
-- [ ] Returns 404 if project not found
+- [x] `GET /projects/{project_id}/settings` returns current settings (or defaults)
+- [x] `PUT /projects/{project_id}/settings` updates settings
+- [x] Settings stored as JSONB in project_settings table
+- [x] Validates all settings against schema
+- [x] Returns 404 if project not found
 
 **Router:** `apps/api/src/semrush_api/routers/settings.py`
 
@@ -549,45 +549,45 @@ scripts/
 **Description:** Implement default settings and merge logic.
 
 **Acceptance Criteria:**
-- [ ] Default settings defined in code
-- [ ] New projects get default settings automatically
-- [ ] Partial updates merge with existing settings
-- [ ] Settings can be reset to defaults
+- [x] Default settings defined in code
+- [x] New projects get default settings automatically
+- [x] Partial updates merge with existing settings
+- [x] Settings can be reset to defaults
 
 ---
 
 ## Verification Checklist
 
 ### Endpoints Working
-- [ ] `GET /healthz` → 200
-- [ ] `GET /readyz` → 200 (with DB)
-- [ ] `POST /auth/login` → JWT token
-- [ ] `GET /me` → current user
-- [ ] `POST /projects` → 201
-- [ ] `GET /projects` → project list
-- [ ] `GET /projects/{id}` → project detail
-- [ ] `PATCH /projects/{id}` → updated project
-- [ ] `DELETE /projects/{id}` → 204
-- [ ] `POST /projects/{id}/sites` → 201
-- [ ] `POST /projects/{id}/competitors` → 201
-- [ ] `GET /projects/{id}/competitors` → list
-- [ ] `GET /projects/{id}/settings` → settings
-- [ ] `PUT /projects/{id}/settings` → 200
+- [x] `GET /healthz` → 200
+- [x] `GET /readyz` → 200 (with DB)
+- [x] `POST /auth/login` → JWT token
+- [x] `GET /me` → current user
+- [x] `POST /projects` → 201
+- [x] `GET /projects` → project list
+- [x] `GET /projects/{id}` → project detail
+- [x] `PATCH /projects/{id}` → updated project
+- [x] `DELETE /projects/{id}` → 204
+- [x] `POST /projects/{id}/sites` → 201
+- [x] `POST /projects/{id}/competitors` → 201
+- [x] `GET /projects/{id}/competitors` → list
+- [x] `GET /projects/{id}/settings` → settings
+- [x] `PUT /projects/{id}/settings` → 200
 
 ### Development Infrastructure
-- [ ] `uv sync` succeeds
-- [ ] `uv run --package semrush-api uvicorn semrush_api.main:app` starts
-- [ ] `scripts/dev.sh up` brings up Docker stack
-- [ ] `scripts/dev.sh down` tears down cleanly
-- [ ] `scripts/lint.sh` passes
-- [ ] `scripts/test.sh` passes
-- [ ] Alembic migrations apply successfully
+- [x] `uv sync` succeeds
+- [x] `uv run --package semrush-api uvicorn semrush_api.main:app` starts
+- [x] `scripts/dev.sh up` brings up Docker stack
+- [x] `scripts/dev.sh down` tears down cleanly
+- [x] `scripts/lint.sh` passes
+- [x] `scripts/test.sh` passes
+- [x] Alembic migrations apply successfully
 
 ### Code Quality
-- [ ] All files pass Ruff linting
-- [ ] All files pass MyPy type checking
-- [ ] Test coverage for core functionality
-- [ ] OpenAPI spec matches implementation
+- [x] All files pass Ruff linting
+- [x] All files pass MyPy type checking
+- [x] Test coverage for core functionality
+- [x] OpenAPI spec matches implementation
 
 ---
 

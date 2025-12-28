@@ -12,12 +12,12 @@ import os
 import uuid
 from collections.abc import AsyncGenerator
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncSession
 
 # Set test environment variables before importing app
 os.environ.setdefault("DATABASE_URL", "postgresql+asyncpg://test:test@localhost:5432/test_db")
@@ -25,14 +25,12 @@ os.environ.setdefault("REDIS_URL", "redis://localhost:6379/0")
 os.environ.setdefault("JWT_SECRET", "test-secret-key-that-is-at-least-32-characters-long")
 os.environ.setdefault("ENVIRONMENT", "development")
 
+from datetime import UTC
+
 from semrush_core.config import Settings, get_settings
 from semrush_core.database import get_async_session
 from semrush_core.security.jwt import create_access_token
 from semrush_core.security.password import hash_password
-
-
-# Configure pytest-asyncio
-pytest_plugins = ["pytest_asyncio"]
 
 
 def get_test_settings() -> Settings:
@@ -100,8 +98,6 @@ async def client(mock_db_session: AsyncMock, mock_settings: Settings) -> AsyncGe
         Configured async HTTP client.
     """
     from semrush_api.main import create_app
-    from semrush_core.config import get_settings
-    from semrush_core.database import get_async_session
 
     app = create_app()
 
@@ -300,14 +296,14 @@ def test_project(test_project_id: uuid.UUID, test_user_id: uuid.UUID) -> MagicMo
     Returns:
         MagicMock configured as a Project.
     """
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     mock_project = MagicMock()
     mock_project.id = test_project_id
     mock_project.owner_id = test_user_id
     mock_project.name = "Test Project"
-    mock_project.created_at = datetime(2024, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
-    mock_project.updated_at = datetime(2024, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
+    mock_project.created_at = datetime(2024, 1, 1, 0, 0, 0, tzinfo=UTC)
+    mock_project.updated_at = datetime(2024, 1, 1, 0, 0, 0, tzinfo=UTC)
     mock_project.sites = []
     mock_project.competitors = []
     return mock_project
@@ -327,14 +323,14 @@ def other_user_project(
     Returns:
         MagicMock configured as a Project owned by another user.
     """
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     mock_project = MagicMock()
     mock_project.id = other_project_id
     mock_project.owner_id = other_user_id
     mock_project.name = "Other User Project"
-    mock_project.created_at = datetime(2024, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
-    mock_project.updated_at = datetime(2024, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
+    mock_project.created_at = datetime(2024, 1, 1, 0, 0, 0, tzinfo=UTC)
+    mock_project.updated_at = datetime(2024, 1, 1, 0, 0, 0, tzinfo=UTC)
     mock_project.sites = []
     mock_project.competitors = []
     return mock_project
@@ -351,14 +347,14 @@ def test_site(test_project_id: uuid.UUID) -> MagicMock:
     Returns:
         MagicMock configured as a Site.
     """
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     mock_site = MagicMock()
     mock_site.id = uuid.UUID("dddddddd-dddd-dddd-dddd-dddddddddddd")
     mock_site.project_id = test_project_id
     mock_site.domain = "example.com"
     mock_site.base_url = "https://example.com"
-    mock_site.created_at = datetime(2024, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
+    mock_site.created_at = datetime(2024, 1, 1, 0, 0, 0, tzinfo=UTC)
     return mock_site
 
 
@@ -373,7 +369,7 @@ def test_competitors(test_project_id: uuid.UUID) -> list[MagicMock]:
     Returns:
         List of MagicMocks configured as Competitors.
     """
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     competitors = []
     for i, domain in enumerate(["competitor1.com", "competitor2.com"]):
@@ -381,6 +377,6 @@ def test_competitors(test_project_id: uuid.UUID) -> list[MagicMock]:
         mock_competitor.id = uuid.UUID(f"eeeeeeee-eeee-eeee-eeee-eeeeeeeeee{i:02d}")
         mock_competitor.project_id = test_project_id
         mock_competitor.domain = domain
-        mock_competitor.created_at = datetime(2024, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
+        mock_competitor.created_at = datetime(2024, 1, 1, 0, 0, 0, tzinfo=UTC)
         competitors.append(mock_competitor)
     return competitors

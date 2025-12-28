@@ -7,15 +7,15 @@ Provides adapters for discovering properties from:
 - Bing Webmaster Tools (BWT)
 """
 
-from semrush_integrations.adapters.base import PropertyAdapter, DiscoveredProperty
-from semrush_integrations.adapters.gsc_adapter import GSCAdapter
-from semrush_integrations.adapters.ga4_adapter import GA4Adapter
+from semrush_integrations.adapters.base import DiscoveredProperty, PropertyAdapter
 from semrush_integrations.adapters.bwt_adapter import BWTAdapter
+from semrush_integrations.adapters.ga4_adapter import GA4Adapter
+from semrush_integrations.adapters.gsc_adapter import GSCAdapter
 
 __all__ = [
-    "PropertyAdapter",
-    "DiscoveredProperty",
-    "GSCAdapter",
-    "GA4Adapter",
     "BWTAdapter",
+    "DiscoveredProperty",
+    "GA4Adapter",
+    "GSCAdapter",
+    "PropertyAdapter",
 ]

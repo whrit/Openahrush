@@ -12,12 +12,12 @@ from __future__ import annotations
 
 import json
 import uuid
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 from typing import TYPE_CHECKING, Any
 
 from redis.asyncio import Redis
-
 from semrush_core.models.sync_run import SyncMode
+
 from semrush_workers.config import get_worker_config
 
 if TYPE_CHECKING:
@@ -70,7 +70,7 @@ class Scheduler:
             Job ID of the scheduled job.
         """
         # Calculate next sync time
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         next_sync = now.replace(
             hour=self._config.daily_sync_hour_utc,
             minute=0,
@@ -110,7 +110,7 @@ class Scheduler:
         return await self.schedule_at(
             mapping_id=mapping_id,
             sync_mode=SyncMode.BACKFILL,
-            execute_at=datetime.now(timezone.utc),
+            execute_at=datetime.now(UTC),
             date_range_start=start_date,
             date_range_end=end_date,
         )
@@ -131,7 +131,7 @@ class Scheduler:
         return await self.schedule_at(
             mapping_id=mapping_id,
             sync_mode=SyncMode.INCREMENTAL,
-            execute_at=datetime.now(timezone.utc),
+            execute_at=datetime.now(UTC),
         )
 
     async def schedule_at(
@@ -166,7 +166,7 @@ class Scheduler:
             "max_retries": self._config.max_retries,
             "date_range_start": date_range_start.isoformat() if date_range_start else None,
             "date_range_end": date_range_end.isoformat() if date_range_end else None,
-            "created_at": datetime.now(timezone.utc).isoformat(),
+            "created_at": datetime.now(UTC).isoformat(),
             "scheduled_at": execute_at.isoformat(),
         }
 
@@ -226,7 +226,7 @@ class Scheduler:
         Returns:
             List of job data dictionaries for jobs ready to run.
         """
-        now = datetime.now(timezone.utc).timestamp()
+        now = datetime.now(UTC).timestamp()
 
         # Get all jobs with score <= now
         job_ids = await self._redis.zrangebyscore(
@@ -250,7 +250,7 @@ class Scheduler:
         Returns:
             List of job data dictionaries that were moved.
         """
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         now_ts = now.timestamp()
 
         # Get due jobs
@@ -298,7 +298,7 @@ class Scheduler:
             job_id: Job ID to mark completed.
             records_written: Number of records written during sync.
         """
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         # Remove from processing queue
         await self._redis.zrem(self.PROCESSING_JOBS_KEY, job_id)
@@ -329,7 +329,7 @@ class Scheduler:
             job_id: Job ID to mark failed.
             error: Error message.
         """
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         # Remove from processing queue
         await self._redis.zrem(self.PROCESSING_JOBS_KEY, job_id)
@@ -369,7 +369,7 @@ class Scheduler:
         delay = base_delay * (2 ** (attempts - 1))
 
         # Schedule retry
-        retry_at = datetime.now(timezone.utc) + timedelta(seconds=delay)
+        retry_at = datetime.now(UTC) + timedelta(seconds=delay)
 
         # Update job data
         job_data["status"] = "pending"
@@ -405,7 +405,7 @@ class Scheduler:
             job_data = await self.get_job_data(job_id)
             if job_data:
                 job_data["status"] = "cancelled"
-                job_data["cancelled_at"] = datetime.now(timezone.utc).isoformat()
+                job_data["cancelled_at"] = datetime.now(UTC).isoformat()
 
                 job_key = f"{self.JOB_DATA_PREFIX}{job_id}"
                 await self._redis.set(

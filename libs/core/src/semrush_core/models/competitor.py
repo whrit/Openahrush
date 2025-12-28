@@ -45,6 +45,6 @@ class Competitor(Base, UUIDMixin, TimestampMixin):
     )
 
     # Relationships
-    project: Mapped["Project"] = relationship(
+    project: Mapped[Project] = relationship(
         back_populates="competitors",
     )

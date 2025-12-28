@@ -2,7 +2,7 @@
 
 **Duration:** 2-3 weeks
 **Dependencies:** Sprint 0 (Foundation)
-**Status:** Not Started
+**Status:** Complete (2025-12-28)
 
 This sprint implements the "truth-first" integrations: OAuth flows, data synchronization, and normalization for Google Search Console, Google Analytics 4, and Bing Webmaster Tools.
 
@@ -57,10 +57,10 @@ CREATE UNIQUE INDEX idx_integration_tokens_account ON integration_tokens(integra
 ```
 
 **Acceptance Criteria:**
-- [ ] Migration creates both tables
-- [ ] Encrypted token columns use BYTEA
-- [ ] Proper indexes for common queries
-- [ ] Foreign key cascades work correctly
+- [x] Migration creates both tables
+- [x] Encrypted token columns use BYTEA
+- [x] Proper indexes for common queries
+- [x] Foreign key cascades work correctly
 
 ---
 
@@ -69,12 +69,12 @@ CREATE UNIQUE INDEX idx_integration_tokens_account ON integration_tokens(integra
 **Description:** Create utilities for encrypting/decrypting OAuth tokens at rest.
 
 **Acceptance Criteria:**
-- [ ] `libs/core/src/semrush_core/security/encryption.py` created
-- [ ] Uses Fernet symmetric encryption (or AWS KMS for production)
-- [ ] Encryption key loaded from environment variable
-- [ ] `encrypt_token(plaintext: str) -> bytes` function
-- [ ] `decrypt_token(ciphertext: bytes) -> str` function
-- [ ] Key rotation support (optional for MVP)
+- [x] `libs/core/src/semrush_core/security/encryption.py` created
+- [x] Uses Fernet symmetric encryption (or AWS KMS for production)
+- [x] Encryption key loaded from environment variable
+- [x] `encrypt_token(plaintext: str) -> bytes` function
+- [x] `decrypt_token(ciphertext: bytes) -> str` function
+- [x] Key rotation support (optional for MVP)
 
 **Implementation Notes:**
 ```python
@@ -126,9 +126,9 @@ CREATE TABLE integration_mappings (
 ```
 
 **Acceptance Criteria:**
-- [ ] Migration creates both tables
-- [ ] Unique constraints prevent duplicate mappings
-- [ ] Cascading deletes work correctly
+- [x] Migration creates both tables
+- [x] Unique constraints prevent duplicate mappings
+- [x] Cascading deletes work correctly
 
 ---
 
@@ -158,9 +158,9 @@ CREATE INDEX idx_sync_runs_status ON sync_runs(status);
 ```
 
 **Acceptance Criteria:**
-- [ ] Migration creates table with all columns
-- [ ] Status tracking supports full lifecycle
-- [ ] Date range captured for audit
+- [x] Migration creates table with all columns
+- [x] Status tracking supports full lifecycle
+- [x] Date range captured for audit
 
 ---
 
@@ -171,11 +171,11 @@ CREATE INDEX idx_sync_runs_status ON sync_runs(status);
 **Description:** Create OAuth 2.0 authorization flow for Google (GSC + GA4).
 
 **Acceptance Criteria:**
-- [ ] `POST /integrations/google_search_console/connect` returns auth URL
-- [ ] Auth URL includes correct scopes for Search Console
-- [ ] State parameter generated and stored for CSRF protection
-- [ ] Redirect URI configurable via environment
-- [ ] Same endpoint pattern works for `ga4` provider
+- [x] `POST /integrations/google_search_console/connect` returns auth URL
+- [x] Auth URL includes correct scopes for Search Console
+- [x] State parameter generated and stored for CSRF protection
+- [x] Redirect URI configurable via environment
+- [x] Same endpoint pattern works for `ga4` provider
 
 **Scopes Required:**
 - GSC: `https://www.googleapis.com/auth/webmasters.readonly`
@@ -190,12 +190,12 @@ CREATE INDEX idx_sync_runs_status ON sync_runs(status);
 **Description:** Handle OAuth callback and exchange code for tokens.
 
 **Acceptance Criteria:**
-- [ ] `POST /integrations/google_search_console/callback` exchanges code for tokens
-- [ ] Validates state parameter matches
-- [ ] Creates integration_account record
-- [ ] Encrypts and stores access_token and refresh_token
-- [ ] Returns IntegrationAccount response
-- [ ] Handles error cases (denied, expired, invalid)
+- [x] `POST /integrations/google_search_console/callback` exchanges code for tokens
+- [x] Validates state parameter matches
+- [x] Creates integration_account record
+- [x] Encrypts and stores access_token and refresh_token
+- [x] Returns IntegrationAccount response
+- [x] Handles error cases (denied, expired, invalid)
 
 **Implementation Flow:**
 1. Validate state matches stored state
@@ -212,10 +212,10 @@ CREATE INDEX idx_sync_runs_status ON sync_runs(status);
 **Description:** Create OAuth flow for Bing Webmaster Tools.
 
 **Acceptance Criteria:**
-- [ ] `POST /integrations/bing_webmaster/connect` returns auth URL
-- [ ] `POST /integrations/bing_webmaster/callback` handles callback
-- [ ] Uses Microsoft identity platform endpoints
-- [ ] Correct scopes for Bing Webmaster API
+- [x] `POST /integrations/bing_webmaster/connect` returns auth URL
+- [x] `POST /integrations/bing_webmaster/callback` handles callback
+- [x] Uses Microsoft identity platform endpoints
+- [x] Correct scopes for Bing Webmaster API
 
 **Scopes Required:**
 - `https://ssl.bing.com/webmaster/api/.default`
@@ -228,12 +228,12 @@ CREATE INDEX idx_sync_runs_status ON sync_runs(status);
 **Description:** Automatically refresh expired tokens before API calls.
 
 **Acceptance Criteria:**
-- [ ] `libs/core/src/semrush_core/security/oauth.py` with refresh logic
-- [ ] Checks token expiry before each API call
-- [ ] Uses refresh_token to get new access_token
-- [ ] Updates stored tokens after refresh
-- [ ] Marks account as `degraded` if refresh fails
-- [ ] Retries with exponential backoff
+- [x] `libs/core/src/semrush_core/security/oauth.py` with refresh logic
+- [x] Checks token expiry before each API call
+- [x] Uses refresh_token to get new access_token
+- [x] Updates stored tokens after refresh
+- [x] Marks account as `degraded` if refresh fails
+- [x] Retries with exponential backoff
 
 **Implementation:**
 ```python
@@ -257,11 +257,11 @@ async def get_valid_token(account_id: UUID) -> str:
 **Description:** Create endpoints for listing and disconnecting accounts.
 
 **Acceptance Criteria:**
-- [ ] `GET /integrations/accounts` lists user's integration accounts
-- [ ] Returns account status, provider, created_at
-- [ ] `POST /integrations/accounts/{id}/disconnect` revokes tokens
-- [ ] Revokes token with provider (if supported)
-- [ ] Deletes account and cascades to tokens/properties
+- [x] `GET /integrations/accounts` lists user's integration accounts
+- [x] Returns account status, provider, created_at
+- [x] `POST /integrations/accounts/{id}/disconnect` revokes tokens
+- [x] Revokes token with provider (if supported)
+- [x] Deletes account and cascades to tokens/properties
 
 ---
 
@@ -272,11 +272,11 @@ async def get_valid_token(account_id: UUID) -> str:
 **Description:** Fetch available Search Console properties for an account.
 
 **Acceptance Criteria:**
-- [ ] `GET /integrations/google_search_console/properties` lists properties
-- [ ] Requires `integration_account_id` query parameter
-- [ ] Returns property_id, display_name, property_type
-- [ ] Stores discovered properties in integration_properties
-- [ ] Handles domain vs URL-prefix properties
+- [x] `GET /integrations/google_search_console/properties` lists properties
+- [x] Requires `integration_account_id` query parameter
+- [x] Returns property_id, display_name, property_type
+- [x] Stores discovered properties in integration_properties
+- [x] Handles domain vs URL-prefix properties
 
 **API Call:** `GET https://www.googleapis.com/webmasters/v3/sites`
 
@@ -287,10 +287,10 @@ async def get_valid_token(account_id: UUID) -> str:
 **Description:** Fetch available GA4 properties for an account.
 
 **Acceptance Criteria:**
-- [ ] `GET /integrations/ga4/properties` lists properties
-- [ ] Returns property_id (e.g., `properties/123456`), display_name
-- [ ] Stores discovered properties in integration_properties
-- [ ] Handles account → property hierarchy
+- [x] `GET /integrations/ga4/properties` lists properties
+- [x] Returns property_id (e.g., `properties/123456`), display_name
+- [x] Stores discovered properties in integration_properties
+- [x] Handles account → property hierarchy
 
 **API Call:** `GET https://analyticsadmin.googleapis.com/v1beta/accountSummaries`
 
@@ -301,9 +301,9 @@ async def get_valid_token(account_id: UUID) -> str:
 **Description:** Fetch available Bing Webmaster sites for an account.
 
 **Acceptance Criteria:**
-- [ ] `GET /integrations/bing_webmaster/properties` lists sites
-- [ ] Returns property_id (site URL), display_name
-- [ ] Stores discovered properties in integration_properties
+- [x] `GET /integrations/bing_webmaster/properties` lists sites
+- [x] Returns property_id (site URL), display_name
+- [x] Stores discovered properties in integration_properties
 
 **API Call:** `GET https://ssl.bing.com/webmaster/api.svc/json/GetUserSites`
 
@@ -314,12 +314,12 @@ async def get_valid_token(account_id: UUID) -> str:
 **Description:** Map a provider property to a project/site.
 
 **Acceptance Criteria:**
-- [ ] `POST /projects/{id}/integrations/map` creates mapping
-- [ ] Validates property exists for user's account
-- [ ] Validates site belongs to project
-- [ ] Creates integration_mapping record
-- [ ] Supports multiple properties per project (GSC + GA4)
-- [ ] Returns success response
+- [x] `POST /projects/{id}/integrations/map` creates mapping
+- [x] Validates property exists for user's account
+- [x] Validates site belongs to project
+- [x] Creates integration_mapping record
+- [x] Supports multiple properties per project (GSC + GA4)
+- [x] Returns success response
 
 **Request Body:**
 ```json
@@ -371,10 +371,10 @@ CREATE UNIQUE INDEX idx_search_fact_unique ON search_fact_daily(
 ```
 
 **Acceptance Criteria:**
-- [ ] Migration creates table with all columns
-- [ ] Unique index prevents duplicate rows
-- [ ] Query/page indexes for fast lookups
-- [ ] data_quality_flags stores sampling info
+- [x] Migration creates table with all columns
+- [x] Unique index prevents duplicate rows
+- [x] Query/page indexes for fast lookups
+- [x] data_quality_flags stores sampling info
 
 ---
 
@@ -413,9 +413,9 @@ CREATE UNIQUE INDEX idx_analytics_fact_unique ON analytics_fact_daily(
 ```
 
 **Acceptance Criteria:**
-- [ ] Migration creates table with all columns
-- [ ] Unique index prevents duplicate rows
-- [ ] Supports nullable dimensions
+- [x] Migration creates table with all columns
+- [x] Unique index prevents duplicate rows
+- [x] Supports nullable dimensions
 
 ---
 
@@ -448,9 +448,9 @@ CREATE INDEX idx_link_facts_source ON link_facts(source);
 ```
 
 **Acceptance Criteria:**
-- [ ] Migration creates table with all columns
-- [ ] Indexes support common query patterns
-- [ ] Source field tracks data provenance
+- [x] Migration creates table with all columns
+- [x] Indexes support common query patterns
+- [x] Source field tracks data provenance
 
 ---
 
@@ -461,12 +461,12 @@ CREATE INDEX idx_link_facts_source ON link_facts(source);
 **Description:** Create abstract base class for search data adapters.
 
 **Acceptance Criteria:**
-- [ ] `apps/integrations/src/semrush_integrations/adapters/base.py` created
-- [ ] Abstract methods defined:
+- [x] `apps/integrations/src/semrush_integrations/adapters/base.py` created
+- [x] Abstract methods defined:
   - `list_properties(account_id) -> List[Property]`
   - `fetch_search_performance(property_id, date_range, dimensions) -> DataFrame`
   - `fetch_links(property_id) -> List[Link]` (optional)
-- [ ] Uses Python Protocol or ABC
+- [x] Uses Python Protocol or ABC
 
 **Interface:**
 ```python
@@ -491,13 +491,13 @@ class SearchAdapter(Protocol):
 **Description:** Implement Search Console data adapter.
 
 **Acceptance Criteria:**
-- [ ] `apps/integrations/src/semrush_integrations/adapters/gsc.py` created
-- [ ] Implements SearchAdapter protocol
-- [ ] Fetches search performance via Search Console API
-- [ ] Handles API pagination (up to 25k rows per request)
-- [ ] Normalizes response to SearchFactRow
-- [ ] Respects rate limits (1200 queries/min)
-- [ ] Fetches links via Links API (if available)
+- [x] `apps/integrations/src/semrush_integrations/adapters/gsc.py` created
+- [x] Implements SearchAdapter protocol
+- [x] Fetches search performance via Search Console API
+- [x] Handles API pagination (up to 25k rows per request)
+- [x] Normalizes response to SearchFactRow
+- [x] Respects rate limits (1200 queries/min)
+- [x] Fetches links via Links API (if available)
 
 **API Endpoint:** `POST https://www.googleapis.com/webmasters/v3/sites/{siteUrl}/searchAnalytics/query`
 
@@ -508,12 +508,12 @@ class SearchAdapter(Protocol):
 **Description:** Implement Google Analytics 4 data adapter.
 
 **Acceptance Criteria:**
-- [ ] `apps/integrations/src/semrush_integrations/adapters/ga4.py` created
-- [ ] Implements AnalyticsAdapter protocol
-- [ ] Fetches page-level metrics via Data API
-- [ ] Handles API quotas
-- [ ] Normalizes response to AnalyticsFactRow
-- [ ] Supports dimension filters
+- [x] `apps/integrations/src/semrush_integrations/adapters/ga4.py` created
+- [x] Implements AnalyticsAdapter protocol
+- [x] Fetches page-level metrics via Data API
+- [x] Handles API quotas
+- [x] Normalizes response to AnalyticsFactRow
+- [x] Supports dimension filters
 
 **API Endpoint:** `POST https://analyticsdata.googleapis.com/v1beta/properties/{property}/runReport`
 
@@ -524,11 +524,11 @@ class SearchAdapter(Protocol):
 **Description:** Implement Bing Webmaster Tools data adapter.
 
 **Acceptance Criteria:**
-- [ ] `apps/integrations/src/semrush_integrations/adapters/bwt.py` created
-- [ ] Implements SearchAdapter protocol
-- [ ] Fetches search performance via BWT API
-- [ ] Normalizes to SearchFactRow with engine='bing'
-- [ ] Handles API rate limits
+- [x] `apps/integrations/src/semrush_integrations/adapters/bwt.py` created
+- [x] Implements SearchAdapter protocol
+- [x] Fetches search performance via BWT API
+- [x] Normalizes to SearchFactRow with engine='bing'
+- [x] Handles API rate limits
 
 **API Endpoint:** `GET https://ssl.bing.com/webmaster/api.svc/json/GetQueryStats`
 
@@ -541,11 +541,11 @@ class SearchAdapter(Protocol):
 **Description:** Set up Redis queue and worker for sync jobs.
 
 **Acceptance Criteria:**
-- [ ] Redis queue named `integration.sync` created
-- [ ] Job schema defined: mapping_id, mode, date_range
-- [ ] Worker consumes and processes jobs
-- [ ] Job status tracked in sync_runs table
-- [ ] Retry logic with exponential backoff
+- [x] Redis queue named `integration.sync` created
+- [x] Job schema defined: mapping_id, mode, date_range
+- [x] Worker consumes and processes jobs
+- [x] Job status tracked in sync_runs table
+- [x] Retry logic with exponential backoff
 
 **Job Payload:**
 ```json
@@ -568,11 +568,11 @@ class SearchAdapter(Protocol):
 **Description:** Fetch and store data for recent date range.
 
 **Acceptance Criteria:**
-- [ ] Incremental sync fetches last 3-7 days by default
-- [ ] Avoids re-fetching unchanged data
-- [ ] Upserts into fact tables (prevents duplicates)
-- [ ] Updates sync_run status on completion
-- [ ] Emits `integration.sync_completed` event
+- [x] Incremental sync fetches last 3-7 days by default
+- [x] Avoids re-fetching unchanged data
+- [x] Upserts into fact tables (prevents duplicates)
+- [x] Updates sync_run status on completion
+- [x] Emits `integration.sync_completed` event
 
 **Flow:**
 1. Load mapping and get property/adapter
@@ -589,11 +589,11 @@ class SearchAdapter(Protocol):
 **Description:** Fetch historical data for initial setup.
 
 **Acceptance Criteria:**
-- [ ] Backfill supports configurable date range
-- [ ] Chunks large ranges into smaller requests
-- [ ] Respects API rate limits
-- [ ] Progress tracked in sync_run
-- [ ] Can be resumed if interrupted
+- [x] Backfill supports configurable date range
+- [x] Chunks large ranges into smaller requests
+- [x] Respects API rate limits
+- [x] Progress tracked in sync_run
+- [x] Can be resumed if interrupted
 
 **Implementation Notes:**
 - GSC provides up to 16 months of history
@@ -607,11 +607,11 @@ class SearchAdapter(Protocol):
 **Description:** Schedule daily incremental syncs for all active mappings.
 
 **Acceptance Criteria:**
-- [ ] Scheduler runs daily (configurable time)
-- [ ] Queries all active integration_mappings
-- [ ] Enqueues sync job for each mapping
-- [ ] Respects project integration_sync_frequency setting
-- [ ] Logs scheduled jobs
+- [x] Scheduler runs daily (configurable time)
+- [x] Queries all active integration_mappings
+- [x] Enqueues sync job for each mapping
+- [x] Respects project integration_sync_frequency setting
+- [x] Logs scheduled jobs
 
 ---
 
@@ -620,11 +620,11 @@ class SearchAdapter(Protocol):
 **Description:** Allow manual sync via API endpoint.
 
 **Acceptance Criteria:**
-- [ ] `POST /projects/{id}/integrations/sync` triggers sync
-- [ ] Supports optional provider/property filter
-- [ ] Supports optional mode (backfill/incremental)
-- [ ] Returns 202 Accepted with job info
-- [ ] Rate limited to prevent abuse
+- [x] `POST /projects/{id}/integrations/sync` triggers sync
+- [x] Supports optional provider/property filter
+- [x] Supports optional mode (backfill/incremental)
+- [x] Returns 202 Accepted with job info
+- [x] Rate limited to prevent abuse
 
 ---
 
@@ -635,11 +635,11 @@ class SearchAdapter(Protocol):
 **Description:** Track data quality issues during sync.
 
 **Acceptance Criteria:**
-- [ ] Flags stored in data_quality_flags JSONB column
-- [ ] Tracks: sampled (bool), sampling_rate, missing_dimensions
-- [ ] GSC adapter sets sampled flag when applicable
-- [ ] GA4 adapter tracks sampling info
-- [ ] Flags queryable in API responses
+- [x] Flags stored in data_quality_flags JSONB column
+- [x] Tracks: sampled (bool), sampling_rate, missing_dimensions
+- [x] GSC adapter sets sampled flag when applicable
+- [x] GA4 adapter tracks sampling info
+- [x] Flags queryable in API responses
 
 **Flag Examples:**
 ```json
@@ -658,10 +658,10 @@ class SearchAdapter(Protocol):
 **Description:** API endpoints for viewing sync status.
 
 **Acceptance Criteria:**
-- [ ] Sync history queryable per project
-- [ ] Returns last successful sync time
-- [ ] Returns error details for failed syncs
-- [ ] Supports filtering by provider/status
+- [x] Sync history queryable per project
+- [x] Returns last successful sync time
+- [x] Returns error details for failed syncs
+- [x] Supports filtering by provider/status
 
 ---
 
@@ -670,44 +670,44 @@ class SearchAdapter(Protocol):
 **Description:** Track and report integration account health.
 
 **Acceptance Criteria:**
-- [ ] Account status updated based on sync results
-- [ ] Consecutive failures → `degraded` status
-- [ ] Token refresh failure → `degraded` status
-- [ ] Manual reconnect resets to `connected`
-- [ ] Health visible in account listing
+- [x] Account status updated based on sync results
+- [x] Consecutive failures → `degraded` status
+- [x] Token refresh failure → `degraded` status
+- [x] Manual reconnect resets to `connected`
+- [x] Health visible in account listing
 
 ---
 
 ## Verification Checklist
 
 ### OAuth Flows
-- [ ] Google OAuth connect returns valid auth URL
-- [ ] Google OAuth callback exchanges code successfully
-- [ ] Tokens encrypted and stored in database
-- [ ] Token refresh works before expiry
-- [ ] Bing OAuth connect/callback works
-- [ ] Disconnect revokes and cleans up
+- [x] Google OAuth connect returns valid auth URL
+- [x] Google OAuth callback exchanges code successfully
+- [x] Tokens encrypted and stored in database
+- [x] Token refresh works before expiry
+- [x] Bing OAuth connect/callback works
+- [x] Disconnect revokes and cleans up
 
 ### Property Discovery
-- [ ] GSC properties discovered and listed
-- [ ] GA4 properties discovered and listed
-- [ ] BWT sites discovered and listed
-- [ ] Properties can be mapped to projects
-- [ ] Duplicate mappings prevented
+- [x] GSC properties discovered and listed
+- [x] GA4 properties discovered and listed
+- [x] BWT sites discovered and listed
+- [x] Properties can be mapped to projects
+- [x] Duplicate mappings prevented
 
 ### Data Sync
-- [ ] GSC incremental sync populates search_fact_daily
-- [ ] GA4 incremental sync populates analytics_fact_daily
-- [ ] BWT sync populates search_fact_daily with engine='bing'
-- [ ] Backfill retrieves historical data
-- [ ] Daily scheduler runs syncs automatically
-- [ ] Manual sync trigger works
+- [x] GSC incremental sync populates search_fact_daily
+- [x] GA4 incremental sync populates analytics_fact_daily
+- [x] BWT sync populates search_fact_daily with engine='bing'
+- [x] Backfill retrieves historical data
+- [x] Daily scheduler runs syncs automatically
+- [x] Manual sync trigger works
 
 ### Data Quality
-- [ ] Sync runs tracked with status
-- [ ] Failed syncs have error messages
-- [ ] Data quality flags captured
-- [ ] Account health reflects sync status
+- [x] Sync runs tracked with status
+- [x] Failed syncs have error messages
+- [x] Data quality flags captured
+- [x] Account health reflects sync status
 
 ---
 

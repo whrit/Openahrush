@@ -36,7 +36,15 @@ extend-exclude = ["migrations/versions"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "SIM", "RUF"]
-ignore = ["E501"] # handled by formatter
+ignore = [
+    "E501",   # handled by formatter
+    "B008",   # Depends() in FastAPI is designed to be used in defaults
+    "RUF022", # unsorted __all__ is fine for grouped organization
+    "RUF012", # mutable class attributes work fine in SQLAlchemy
+    "SIM108", # ternary is not always more readable
+    "SIM117", # nested with is fine for readability
+    "SIM102", # nested if is sometimes more readable than combined
+]
 
 [tool.ruff.format]
 quote-style = "double"
@@ -54,7 +62,10 @@ pretty = true
 
 [tool.pytest.ini_options]
 testpaths = ["apps", "libs"]
-addopts = "-q"
+pythonpath = ["."]
+addopts = "-q --import-mode=importlib"
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 filterwarnings = [
   "error::DeprecationWarning:.*semrush_.*",
   "ignore::DeprecationWarning",

@@ -16,7 +16,7 @@ import logging
 import signal
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Any
 
@@ -57,7 +57,7 @@ class Job:
     status: JobStatus = JobStatus.PENDING
     attempts: int = 0
     max_retries: int = 3
-    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     started_at: datetime | None = None
     completed_at: datetime | None = None
     error: str | None = None
@@ -158,7 +158,7 @@ class WorkerRunner:
                     )
                     # If we get here, shutdown was requested
                     break
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     # Normal timeout, continue polling
                     pass
 
@@ -199,13 +199,13 @@ class WorkerRunner:
             return
 
         job.status = JobStatus.RUNNING
-        job.started_at = datetime.now(timezone.utc)
+        job.started_at = datetime.now(UTC)
         job.attempts += 1
 
         try:
             await handler(job)
             job.status = JobStatus.COMPLETED
-            job.completed_at = datetime.now(timezone.utc)
+            job.completed_at = datetime.now(UTC)
             logger.info("Job %s completed successfully", job.id)
 
         except Exception as e:

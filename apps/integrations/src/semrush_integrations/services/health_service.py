@@ -9,7 +9,7 @@ Provides visibility into:
 """
 
 from dataclasses import dataclass
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 from typing import TYPE_CHECKING
 from uuid import UUID
 
@@ -18,11 +18,8 @@ from sqlalchemy.orm import Session
 
 if TYPE_CHECKING:
     from semrush_core.models import (
-        AnalyticsFactDaily,
         IntegrationAccount,
         IntegrationMapping,
-        IntegrationProperty,
-        SearchFactDaily,
         SyncRun,
     )
 
@@ -215,7 +212,6 @@ class IntegrationHealthService:
         days_behind = 0
         if latest_data_date:
             today = date.today()
-            expected_date = today - timedelta(days=expected_lag)
             actual_lag = (today - latest_data_date).days
             days_behind = max(0, actual_lag - expected_lag)
 
@@ -397,10 +393,10 @@ class IntegrationHealthService:
         if not last_sync_at:
             return False
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         last_sync_tz = last_sync_at
         if last_sync_at.tzinfo is None:
-            last_sync_tz = last_sync_at.replace(tzinfo=timezone.utc)
+            last_sync_tz = last_sync_at.replace(tzinfo=UTC)
 
         hours_since_sync = (now - last_sync_tz).total_seconds() / 3600
         return hours_since_sync <= STALE_SYNC_THRESHOLD_HOURS
@@ -427,10 +423,10 @@ class IntegrationHealthService:
         if not last_sync_at:
             return "Integration has never been synced"
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         last_sync_tz = last_sync_at
         if last_sync_at.tzinfo is None:
-            last_sync_tz = last_sync_at.replace(tzinfo=timezone.utc)
+            last_sync_tz = last_sync_at.replace(tzinfo=UTC)
 
         hours_since = (now - last_sync_tz).total_seconds() / 3600
 
@@ -528,10 +524,10 @@ class IntegrationHealthService:
             # If no expiry, check if refresh token exists
             return token.refresh_token_encrypted is not None
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         expires_at = token.expires_at
         if expires_at.tzinfo is None:
-            expires_at = expires_at.replace(tzinfo=timezone.utc)
+            expires_at = expires_at.replace(tzinfo=UTC)
 
         # Token is valid if not expired, or if near expiry but has refresh token
         if now < expires_at:
@@ -574,10 +570,10 @@ class IntegrationHealthService:
         if last_sync is None:
             return f"Connected with {properties_count} properties. No syncs completed yet"
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         last_sync_tz = last_sync
         if last_sync.tzinfo is None:
-            last_sync_tz = last_sync.replace(tzinfo=timezone.utc)
+            last_sync_tz = last_sync.replace(tzinfo=UTC)
 
         hours_since = (now - last_sync_tz).total_seconds() / 3600
 

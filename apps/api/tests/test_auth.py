@@ -7,13 +7,10 @@ Tests cover:
 - GET /me - current user information retrieval
 """
 
-import uuid
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from httpx import AsyncClient
-
-from semrush_core.security.password import hash_password
 
 
 class TestLoginEndpoint:
@@ -518,6 +515,7 @@ class TestMeEndpoint:
         # Create an expired token (this is a mock, the actual expiry
         # would be handled by JWT decode)
         from datetime import timedelta
+
         from semrush_core.security.jwt import create_access_token
 
         expired_token = create_access_token(

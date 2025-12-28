@@ -12,13 +12,11 @@ Tests cover:
 from __future__ import annotations
 
 import uuid
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-import pytest_asyncio
-
 from semrush_core.models.sync_run import SyncMode, SyncStatus
 
 
@@ -136,7 +134,7 @@ class TestBaseJob:
             "payload": {"key": "value"},
             "attempts": 1,
             "max_retries": 3,
-            "created_at": datetime.now(timezone.utc).isoformat(),
+            "created_at": datetime.now(UTC).isoformat(),
         }
 
         job = Job.from_dict(data)

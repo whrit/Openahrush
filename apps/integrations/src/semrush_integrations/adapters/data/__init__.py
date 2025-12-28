@@ -6,14 +6,14 @@ to property discovery adapters which just list available properties.
 """
 
 from semrush_integrations.adapters.data.base import DataAdapter, DateRange
-from semrush_integrations.adapters.data.gsc_data import GSCDataAdapter
-from semrush_integrations.adapters.data.ga4_data import GA4DataAdapter
 from semrush_integrations.adapters.data.bwt_data import BWTDataAdapter
+from semrush_integrations.adapters.data.ga4_data import GA4DataAdapter
+from semrush_integrations.adapters.data.gsc_data import GSCDataAdapter
 
 __all__ = [
+    "BWTDataAdapter",
     "DataAdapter",
     "DateRange",
-    "GSCDataAdapter",
     "GA4DataAdapter",
-    "BWTDataAdapter",
+    "GSCDataAdapter",
 ]

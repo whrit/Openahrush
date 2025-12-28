@@ -15,15 +15,14 @@ from __future__ import annotations
 import asyncio
 import json
 import uuid
-from datetime import date, datetime, timedelta, timezone
-from typing import Any, AsyncGenerator
+from collections.abc import AsyncGenerator
+from datetime import UTC, date, datetime, timedelta
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import fakeredis.aioredis
 import pytest
 import pytest_asyncio
 from redis.asyncio import Redis
-
 from semrush_core.models.sync_run import SyncMode
 
 
@@ -71,7 +70,7 @@ class TestScheduler:
         )
 
         if score is not None:
-            scheduled_time = datetime.fromtimestamp(score, tz=timezone.utc)
+            scheduled_time = datetime.fromtimestamp(score, tz=UTC)
             assert scheduled_time.hour == 2
             assert scheduled_time.minute == 0
 
@@ -147,7 +146,7 @@ class TestScheduler:
         job_future = await scheduler.schedule_at(
             mapping_id=sample_mapping_id,
             sync_mode=SyncMode.INCREMENTAL,
-            execute_at=datetime.now(timezone.utc) + timedelta(hours=24),
+            execute_at=datetime.now(UTC) + timedelta(hours=24),
         )
 
         due = await scheduler.get_due_jobs()
@@ -412,7 +411,7 @@ class TestWorker:
         scheduler = Scheduler(redis=async_fake_redis)
 
         # Schedule a job
-        job_id = await scheduler.schedule_manual_sync(sample_mapping_id)
+        _job_id = await scheduler.schedule_manual_sync(sample_mapping_id)
 
         # Start worker in background and stop after short time
         async def run_briefly() -> None:

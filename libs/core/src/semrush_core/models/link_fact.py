@@ -13,7 +13,7 @@ from enum import Enum
 from typing import TYPE_CHECKING
 from urllib.parse import urlparse
 
-from sqlalchemy import Date, DateTime, ForeignKey, String, Text, func
+from sqlalchemy import Date, DateTime, ForeignKey, Text, func
 from sqlalchemy.dialects.postgresql import ARRAY, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -124,7 +124,7 @@ class LinkFact(Base, UUIDMixin):
     )
 
     # Relationships
-    project: Mapped["Project"] = relationship()
+    project: Mapped[Project] = relationship()
 
     @property
     def is_dofollow(self) -> bool:

@@ -19,8 +19,8 @@ from datetime import date
 from typing import TYPE_CHECKING, Any
 
 from redis.asyncio import Redis
-
 from semrush_core.models.sync_run import SyncMode
+
 from semrush_workers.config import WorkerConfig, get_worker_config
 from semrush_workers.jobs.property_sync_job import PropertySyncJob
 from semrush_workers.jobs.sync_job import SyncJob
@@ -117,7 +117,7 @@ class Worker:
                         )
                         # Shutdown requested
                         break
-                    except asyncio.TimeoutError:
+                    except TimeoutError:
                         # Normal timeout, continue polling
                         pass
 
@@ -166,7 +166,7 @@ class Worker:
                         self._run_job(job, db_session),
                         timeout=self.job_timeout,
                     )
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     result = {
                         "success": False,
                         "error": f"Job timed out after {self.job_timeout} seconds",
@@ -194,8 +194,8 @@ class Worker:
 
     async def _run_job(
         self,
-        job: "Job",
-        db_session: "AsyncSession",
+        job: Job,
+        db_session: AsyncSession,
     ) -> dict[str, Any]:
         """
         Run a job with its dependencies.
@@ -216,7 +216,7 @@ class Worker:
         else:
             raise ValueError(f"Unknown job type: {type(job)}")
 
-    def _create_job_from_data(self, job_data: dict[str, Any]) -> "Job":
+    def _create_job_from_data(self, job_data: dict[str, Any]) -> Job:
         """
         Create a job instance from scheduler data.
 
@@ -260,8 +260,8 @@ class Worker:
 
     async def process_job(
         self,
-        job: "Job",
-        db_session: "AsyncSession",
+        job: Job,
+        db_session: AsyncSession,
         data_sync_service: Any | None = None,
         discovery_service: Any | None = None,
     ) -> dict[str, Any]:
@@ -299,7 +299,7 @@ class Worker:
             else:
                 result = {"success": False, "error": f"Unknown job type: {type(job)}"}
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             result = {
                 "success": False,
                 "error": f"Job timed out after {self.job_timeout} seconds",

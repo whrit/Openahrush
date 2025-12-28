@@ -72,7 +72,7 @@ class IntegrationToken(Base, UUIDMixin, TimestampMixin):
     )
 
     # Relationships
-    account: Mapped["IntegrationAccount"] = relationship(
+    account: Mapped[IntegrationAccount] = relationship(
         back_populates="token",
     )
 

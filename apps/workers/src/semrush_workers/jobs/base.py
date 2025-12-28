@@ -11,11 +11,12 @@ from __future__ import annotations
 
 import random
 import uuid
-from abc import ABC, abstractmethod
+from abc import abstractmethod
+from collections.abc import Callable, Coroutine
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import StrEnum
-from typing import TYPE_CHECKING, Any, Callable, Coroutine
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
@@ -52,7 +53,7 @@ class Job:
     payload: dict[str, Any]
     attempts: int = 0
     max_retries: int = 3
-    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     last_error: str | None = None
     scheduled_at: datetime | None = None
     started_at: datetime | None = None
@@ -102,7 +103,7 @@ class Job:
     def record_attempt(self) -> None:
         """Record a job execution attempt."""
         self.attempts += 1
-        self.started_at = datetime.now(timezone.utc)
+        self.started_at = datetime.now(UTC)
 
     def record_error(self, error: str) -> None:
         """Record an error from the last attempt."""
@@ -110,7 +111,7 @@ class Job:
 
     def mark_completed(self) -> None:
         """Mark the job as completed."""
-        self.completed_at = datetime.now(timezone.utc)
+        self.completed_at = datetime.now(UTC)
 
     def to_dict(self) -> dict[str, Any]:
         """
@@ -171,7 +172,7 @@ class Job:
     @abstractmethod
     async def execute(
         self,
-        db_session: "AsyncSession",
+        db_session: AsyncSession,
         **kwargs: Any,
     ) -> dict[str, Any]:
         """

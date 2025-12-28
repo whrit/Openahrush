@@ -7,20 +7,17 @@ Provides services for:
 - Syncing property lists from external APIs
 """
 
-import asyncio
-from datetime import datetime, timezone
-from typing import Any
+from datetime import UTC, datetime
 from uuid import UUID
 
+from semrush_core.models import IntegrationAccount, IntegrationMapping, IntegrationProperty, Project
 from sqlalchemy.orm import Session
 
-from semrush_core.models import IntegrationAccount, IntegrationMapping, IntegrationProperty, Project
 from semrush_integrations.adapters.base import DiscoveredProperty
 from semrush_integrations.adapters.bwt_adapter import BWTAdapter
 from semrush_integrations.adapters.ga4_adapter import GA4Adapter
 from semrush_integrations.adapters.gsc_adapter import GSCAdapter
 from semrush_integrations.services.token_service import TokenService
-
 
 # Provider to adapter mapping
 PROVIDER_ADAPTERS = {
@@ -238,7 +235,7 @@ class PropertyService:
                     display_name=prop_data["display_name"],
                     property_type=prop_data["property_type"],
                     metadata_=prop_data["metadata"],
-                    discovered_at=datetime.now(timezone.utc),
+                    discovered_at=datetime.now(UTC),
                 )
                 self.db.add(new_property)
                 stored.append(new_property)
@@ -324,7 +321,7 @@ class PropertyMappingService:
             .first()
         )
         if existing:
-            raise ValueError(f"Property is already mapped to this project")
+            raise ValueError("Property is already mapped to this project")
 
         # If setting as primary, unset other primary mappings for this project
         if is_primary:
@@ -419,7 +416,7 @@ class PropertyMappingService:
             self.db.query(IntegrationMapping)
             .filter(
                 IntegrationMapping.project_id == project_id,
-                IntegrationMapping.is_primary == True,
+                IntegrationMapping.is_primary.is_(True),
             )
             .update({"is_primary": False})
         )

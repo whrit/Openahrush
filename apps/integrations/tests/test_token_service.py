@@ -5,11 +5,11 @@ Following TDD: These tests are written FIRST, then the implementation.
 Uses mocking for database operations to avoid PostgreSQL-specific types.
 """
 
-import pytest
 import uuid
-from datetime import datetime, timedelta, timezone
-from unittest.mock import MagicMock, AsyncMock, patch, PropertyMock
+from datetime import UTC, datetime, timedelta
+from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
 from semrush_integrations.oauth.base import OAuthTokens
 from semrush_integrations.services.token_service import TokenService
 
@@ -43,7 +43,7 @@ def sample_tokens():
         access_token="ya29.test_access_token_value",
         refresh_token="1//test_refresh_token_value",
         token_type="Bearer",
-        expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
+        expires_at=datetime.now(UTC) + timedelta(hours=1),
         scopes=["openid", "email"],
     )
 
@@ -172,7 +172,7 @@ class TestTokenServiceGetValidToken:
         mock_token = MockIntegrationToken(
             integration_account_id=sample_account_id,
             access_token_encrypted=b"encrypted_access",
-            expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
+            expires_at=datetime.now(UTC) + timedelta(hours=1),
         )
         mock_db_session.query.return_value.filter.return_value.first.return_value = mock_token
         mock_decrypt.return_value = "decrypted_access_token"
@@ -201,7 +201,7 @@ class TestTokenServiceGetValidToken:
             integration_account_id=sample_account_id,
             access_token_encrypted=b"encrypted_access",
             refresh_token_encrypted=b"encrypted_refresh",
-            expires_at=datetime.now(timezone.utc) - timedelta(hours=1),
+            expires_at=datetime.now(UTC) - timedelta(hours=1),
         )
         mock_db_session.query.return_value.filter.return_value.first.return_value = mock_token
         mock_decrypt.return_value = "decrypted_refresh_token"
@@ -212,7 +212,7 @@ class TestTokenServiceGetValidToken:
             access_token="ya29.new_access_token",
             refresh_token="1//new_refresh_token",
             token_type="Bearer",
-            expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
+            expires_at=datetime.now(UTC) + timedelta(hours=1),
             scopes=["openid"],
         )
         mock_provider.refresh_tokens = AsyncMock(return_value=new_tokens)
@@ -235,7 +235,7 @@ class TestTokenServiceGetValidToken:
             integration_account_id=sample_account_id,
             access_token_encrypted=b"encrypted_access",
             refresh_token_encrypted=b"encrypted_refresh",
-            expires_at=datetime.now(timezone.utc) + timedelta(minutes=3),
+            expires_at=datetime.now(UTC) + timedelta(minutes=3),
         )
         mock_db_session.query.return_value.filter.return_value.first.return_value = mock_token
         mock_decrypt.return_value = "decrypted_refresh_token"
@@ -246,7 +246,7 @@ class TestTokenServiceGetValidToken:
             access_token="ya29.refreshed_token",
             refresh_token="1//new_refresh",
             token_type="Bearer",
-            expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
+            expires_at=datetime.now(UTC) + timedelta(hours=1),
             scopes=["openid"],
         )
         mock_provider.refresh_tokens = AsyncMock(return_value=new_tokens)
@@ -265,7 +265,7 @@ class TestTokenServiceGetValidToken:
             integration_account_id=sample_account_id,
             access_token_encrypted=b"encrypted_access",
             refresh_token_encrypted=None,
-            expires_at=datetime.now(timezone.utc) - timedelta(hours=1),
+            expires_at=datetime.now(UTC) - timedelta(hours=1),
         )
         mock_db_session.query.return_value.filter.return_value.first.return_value = mock_token
 

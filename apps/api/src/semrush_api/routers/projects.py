@@ -15,6 +15,7 @@ Provides endpoints for:
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, status
+from semrush_core.models import Competitor, Project, Site
 from sqlalchemy import func, select
 
 from semrush_api.deps import CurrentUser, DbSession, Pagination
@@ -29,7 +30,6 @@ from semrush_api.schemas.project import (
     SiteCreate,
     SiteResponse,
 )
-from semrush_core.models import Competitor, Project, Site
 
 router = APIRouter(prefix="/projects", tags=["Projects"])
 

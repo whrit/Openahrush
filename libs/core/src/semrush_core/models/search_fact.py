@@ -160,8 +160,8 @@ class SearchFactDaily(Base, UUIDMixin):
     )
 
     # Relationships
-    project: Mapped["Project"] = relationship()
-    site: Mapped["Site | None"] = relationship()
+    project: Mapped[Project] = relationship()
+    site: Mapped[Site | None] = relationship()
 
     @property
     def calculated_ctr(self) -> Decimal | None:

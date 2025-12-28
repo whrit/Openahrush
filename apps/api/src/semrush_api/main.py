@@ -12,18 +12,17 @@ Configures the FastAPI application with:
 import logging
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import Any
 
 import uvicorn
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
-
-from semrush_api.routers import auth, health, integrations, projects, settings
 from semrush_core import get_settings
 from semrush_core.database import dispose_engine, get_engine
 from semrush_core.security.jwt import TokenError
+
+from semrush_api.routers import auth, health, integrations, projects, settings
 
 # Configure logging
 logging.basicConfig(
@@ -56,7 +55,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     # Initialize database engine (validates connection)
     try:
-        engine = get_engine()
+        _ = get_engine()
         logger.info("Database connection pool initialized")
     except Exception as e:
         logger.error("Failed to initialize database: %s", e)

@@ -5,14 +5,14 @@ Following TDD: These tests are written FIRST, then the implementation.
 Uses respx to mock HTTP requests.
 """
 
-import pytest
-import respx
-import httpx
 from datetime import datetime, timedelta
 from urllib.parse import parse_qs, urlparse
 
-from semrush_integrations.oauth.google import GoogleOAuthProvider
+import httpx
+import pytest
+import respx
 from semrush_integrations.oauth.base import OAuthTokens, OAuthUserInfo
+from semrush_integrations.oauth.google import GoogleOAuthProvider
 
 
 class TestGoogleOAuthProviderAttributes:
@@ -217,7 +217,7 @@ class TestGoogleOAuthProviderExchangeCode:
     @respx.mock
     async def test_exchange_code_sends_correct_parameters(self):
         """exchange_code should send required parameters."""
-        route = respx.post("https://oauth2.googleapis.com/token").mock(
+        _route = respx.post("https://oauth2.googleapis.com/token").mock(
             return_value=httpx.Response(
                 200,
                 json={

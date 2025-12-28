@@ -12,9 +12,9 @@ from semrush_integrations.oauth.google import GoogleOAuthProvider
 from semrush_integrations.oauth.microsoft import MicrosoftOAuthProvider
 
 __all__ = [
+    "GoogleOAuthProvider",
+    "MicrosoftOAuthProvider",
     "OAuthProvider",
     "OAuthTokens",
     "OAuthUserInfo",
-    "GoogleOAuthProvider",
-    "MicrosoftOAuthProvider",
 ]

@@ -1,6 +1,6 @@
 # Task Tracker — Openahrush MVP
 
-Last Updated: 2025-01-28
+Last Updated: 2025-12-28
 
 This document tracks overall progress across all sprints. Each task references its detailed sprint document.
 
@@ -10,127 +10,127 @@ This document tracks overall progress across all sprints. Each task references i
 
 | Sprint | Status | Tasks | Completed | Progress |
 |--------|--------|-------|-----------|----------|
-| Sprint 0: Foundation | Not Started | 25 | 0 | 0% |
-| Sprint 1: Integrations | Not Started | 24 | 0 | 0% |
+| Sprint 0: Foundation | Complete | 25 | 25 | 100% |
+| Sprint 1: Integrations | Complete | 24 | 24 | 100% |
 | Sprint 2: Crawl & Audit | Not Started | 31 | 0 | 0% |
 | Sprint 3: Backlinks | Not Started | 22 | 0 | 0% |
 | Sprint 4: Reports | Not Started | 22 | 0 | 0% |
 | Sprint 5: Hardening | Not Started | 18 | 0 | 0% |
-| **Total** | | **142** | **0** | **0%** |
+| **Total** | | **142** | **49** | **35%** |
 
 ---
 
 ## Sprint 0: Foundation & Platform
 
-**Status:** Not Started | **Doc:** [SPRINT-0-FOUNDATION.md](./SPRINT-0-FOUNDATION.md)
+**Status:** Complete | **Doc:** [SPRINT-0-FOUNDATION.md](./SPRINT-0-FOUNDATION.md)
 
 ### Epic 0.1: Workspace Bootstrap
 | Task | Description | Status | Assignee | Notes |
 |------|-------------|--------|----------|-------|
-| 0.1.1 | Create libs/core package | [ ] | | |
-| 0.1.2 | Create libs/seo package | [ ] | | |
-| 0.1.3 | Create libs/backlinks package | [ ] | | |
-| 0.1.4 | Create apps/api package | [ ] | | |
-| 0.1.5 | Create apps/workers package | [ ] | | |
-| 0.1.6 | Create remaining app packages | [ ] | | |
+| 0.1.1 | Create libs/core package | [x] | Agent | config.py, database.py, models/ |
+| 0.1.2 | Create libs/seo package | [x] | Agent | url.py with normalization |
+| 0.1.3 | Create libs/backlinks package | [x] | Agent | models.py placeholder |
+| 0.1.4 | Create apps/api package | [x] | Agent | FastAPI main.py, routers/ |
+| 0.1.5 | Create apps/workers package | [x] | Agent | runner.py, scheduler.py |
+| 0.1.6 | Create remaining app packages | [x] | Agent | integrations, reports, commoncrawl_ingest |
 
 ### Epic 0.2: Database & Migrations
 | Task | Description | Status | Assignee | Notes |
 |------|-------------|--------|----------|-------|
-| 0.2.1 | Set up Alembic migrations | [ ] | | |
-| 0.2.2 | Create initial schema migration | [ ] | | |
-| 0.2.3 | Create SQLAlchemy models | [ ] | | |
+| 0.2.1 | Set up Alembic migrations | [x] | Agent | migrations/env.py, alembic.ini |
+| 0.2.2 | Create initial schema migration | [x] | Agent | 001_initial_schema.py |
+| 0.2.3 | Create SQLAlchemy models | [x] | Agent | User, Project, Site, Competitor, Settings |
 
 ### Epic 0.3: Infrastructure
 | Task | Description | Status | Assignee | Notes |
 |------|-------------|--------|----------|-------|
-| 0.3.1 | Create Docker Compose configuration | [ ] | | |
-| 0.3.2 | Create Dockerfile for API | [ ] | | |
-| 0.3.3 | Create dev scripts | [ ] | | |
+| 0.3.1 | Create Docker Compose configuration | [x] | Agent | infra/compose/docker-compose.yml |
+| 0.3.2 | Create Dockerfile for API | [x] | Agent | Multi-stage Dockerfile |
+| 0.3.3 | Create dev scripts | [x] | Agent | scripts/dev.sh, lint.sh, test.sh |
 
 ### Epic 0.4: Auth & Health Endpoints
 | Task | Description | Status | Assignee | Notes |
 |------|-------------|--------|----------|-------|
-| 0.4.1 | Implement health endpoints | [ ] | | |
-| 0.4.2 | Implement auth endpoints | [ ] | | |
-| 0.4.3 | Implement user registration | [ ] | | |
+| 0.4.1 | Implement health endpoints | [x] | Agent | /healthz, /readyz (9 tests) |
+| 0.4.2 | Implement auth endpoints | [x] | Agent | /auth/login, /logout, /me (20 tests) |
+| 0.4.3 | Implement user registration | [x] | Agent | POST /auth/register |
 
 ### Epic 0.5: Projects CRUD
 | Task | Description | Status | Assignee | Notes |
 |------|-------------|--------|----------|-------|
-| 0.5.1 | Implement Projects list/create | [ ] | | |
-| 0.5.2 | Implement Projects get/update/delete | [ ] | | |
-| 0.5.3 | Implement Sites management | [ ] | | |
-| 0.5.4 | Implement Competitors management | [ ] | | |
+| 0.5.1 | Implement Projects list/create | [x] | Agent | GET/POST /projects (35 tests) |
+| 0.5.2 | Implement Projects get/update/delete | [x] | Agent | CRUD complete |
+| 0.5.3 | Implement Sites management | [x] | Agent | /projects/{id}/sites |
+| 0.5.4 | Implement Competitors management | [x] | Agent | /projects/{id}/competitors |
 
 ### Epic 0.6: Project Settings
 | Task | Description | Status | Assignee | Notes |
 |------|-------------|--------|----------|-------|
-| 0.6.1 | Define ProjectSettings Pydantic model | [ ] | | |
-| 0.6.2 | Implement Settings endpoints | [ ] | | |
-| 0.6.3 | Create settings defaults logic | [ ] | | |
+| 0.6.1 | Define ProjectSettings Pydantic model | [x] | Agent | 30+ validated fields |
+| 0.6.2 | Implement Settings endpoints | [x] | Agent | GET/PUT (28 tests) |
+| 0.6.3 | Create settings defaults logic | [x] | Agent | Default merge logic |
 
 ---
 
 ## Sprint 1: Integrations (GSC/GA4/BWT)
 
-**Status:** Not Started | **Doc:** [SPRINT-1-INTEGRATIONS.md](./SPRINT-1-INTEGRATIONS.md)
+**Status:** Complete | **Doc:** [SPRINT-1-INTEGRATIONS.md](./SPRINT-1-INTEGRATIONS.md)
 
 ### Epic 1.1: Integration Infrastructure
 | Task | Description | Status | Assignee | Notes |
 |------|-------------|--------|----------|-------|
-| 1.1.1 | Create integration_accounts table | [ ] | | |
-| 1.1.2 | Implement token encryption | [ ] | | |
-| 1.1.3 | Create integration_properties table | [ ] | | |
-| 1.1.4 | Create sync_runs table | [ ] | | |
+| 1.1.1 | Create integration_accounts table | [x] | Agent | 002_integration_tables.py |
+| 1.1.2 | Implement token encryption | [x] | Agent | Fernet encryption in security/ |
+| 1.1.3 | Create integration_properties table | [x] | Agent | With integration_mappings |
+| 1.1.4 | Create sync_runs table | [x] | Agent | SyncMode, SyncStatus enums |
 
 ### Epic 1.2: OAuth Flows
 | Task | Description | Status | Assignee | Notes |
 |------|-------------|--------|----------|-------|
-| 1.2.1 | Implement Google OAuth connect | [ ] | | |
-| 1.2.2 | Implement Google OAuth callback | [ ] | | |
-| 1.2.3 | Implement Bing OAuth | [ ] | | |
-| 1.2.4 | Implement token refresh | [ ] | | |
-| 1.2.5 | Implement account management | [ ] | | |
+| 1.2.1 | Implement Google OAuth connect | [x] | Agent | oauth/google.py (27 tests) |
+| 1.2.2 | Implement Google OAuth callback | [x] | Agent | Token exchange, storage |
+| 1.2.3 | Implement Bing OAuth | [x] | Agent | oauth/microsoft.py (23 tests) |
+| 1.2.4 | Implement token refresh | [x] | Agent | TokenService (20 tests) |
+| 1.2.5 | Implement account management | [x] | Agent | List, disconnect endpoints |
 
 ### Epic 1.3: Property Discovery & Mapping
 | Task | Description | Status | Assignee | Notes |
 |------|-------------|--------|----------|-------|
-| 1.3.1 | Implement GSC property discovery | [ ] | | |
-| 1.3.2 | Implement GA4 property discovery | [ ] | | |
-| 1.3.3 | Implement BWT property discovery | [ ] | | |
-| 1.3.4 | Implement property → project mapping | [ ] | | |
+| 1.3.1 | Implement GSC property discovery | [x] | Agent | gsc_adapter.py |
+| 1.3.2 | Implement GA4 property discovery | [x] | Agent | ga4_adapter.py |
+| 1.3.3 | Implement BWT property discovery | [x] | Agent | bwt_adapter.py |
+| 1.3.4 | Implement property → project mapping | [x] | Agent | PropertyService (44 tests) |
 
 ### Epic 1.4: Canonical Fact Tables
 | Task | Description | Status | Assignee | Notes |
 |------|-------------|--------|----------|-------|
-| 1.4.1 | Create search_fact_daily table | [ ] | | |
-| 1.4.2 | Create analytics_fact_daily table | [ ] | | |
-| 1.4.3 | Create link_facts table | [ ] | | |
+| 1.4.1 | Create search_fact_daily table | [x] | Agent | 003_fact_tables.py |
+| 1.4.2 | Create analytics_fact_daily table | [x] | Agent | With unique indexes |
+| 1.4.3 | Create link_facts table | [x] | Agent | LinkSource enum |
 
 ### Epic 1.5: Provider Adapters
 | Task | Description | Status | Assignee | Notes |
 |------|-------------|--------|----------|-------|
-| 1.5.1 | Define SearchAdapter protocol | [ ] | | |
-| 1.5.2 | Implement GSC adapter | [ ] | | |
-| 1.5.3 | Implement GA4 adapter | [ ] | | |
-| 1.5.4 | Implement BWT adapter | [ ] | | |
+| 1.5.1 | Define SearchAdapter protocol | [x] | Agent | adapters/base.py |
+| 1.5.2 | Implement GSC adapter | [x] | Agent | data/gsc_data.py (45 tests) |
+| 1.5.3 | Implement GA4 adapter | [x] | Agent | data/ga4_data.py |
+| 1.5.4 | Implement BWT adapter | [x] | Agent | data/bwt_data.py |
 
 ### Epic 1.6: Sync Scheduler
 | Task | Description | Status | Assignee | Notes |
 |------|-------------|--------|----------|-------|
-| 1.6.1 | Create sync job infrastructure | [ ] | | |
-| 1.6.2 | Implement incremental sync | [ ] | | |
-| 1.6.3 | Implement backfill sync | [ ] | | |
-| 1.6.4 | Create daily sync scheduler | [ ] | | |
-| 1.6.5 | Implement manual sync trigger | [ ] | | |
+| 1.6.1 | Create sync job infrastructure | [x] | Agent | jobs/base.py, sync_job.py |
+| 1.6.2 | Implement incremental sync | [x] | Agent | DataSyncService |
+| 1.6.3 | Implement backfill sync | [x] | Agent | Chunked historical fetch |
+| 1.6.4 | Create daily sync scheduler | [x] | Agent | scheduler.py (27 tests) |
+| 1.6.5 | Implement manual sync trigger | [x] | Agent | POST /mappings/{id}/sync |
 
 ### Epic 1.7: Data Quality & Status
 | Task | Description | Status | Assignee | Notes |
 |------|-------------|--------|----------|-------|
-| 1.7.1 | Implement data quality flags | [ ] | | |
-| 1.7.2 | Implement sync status endpoints | [ ] | | |
-| 1.7.3 | Implement health monitoring | [ ] | | |
+| 1.7.1 | Implement data quality flags | [x] | Agent | JSONB flags in fact tables |
+| 1.7.2 | Implement sync status endpoints | [x] | Agent | /sync-status, /data-freshness |
+| 1.7.3 | Implement health monitoring | [x] | Agent | IntegrationHealthService (36 tests) |
 
 ---
 
@@ -344,7 +344,7 @@ This document tracks overall progress across all sprints. Each task references i
 ### Epic 5.4: Testing
 | Task | Description | Status | Assignee | Notes |
 |------|-------------|--------|----------|-------|
-| 5.4.1 | Unit test coverage | [ ] | | |
+| 5.4.1 | Unit test coverage | [~] | Agent | 419 tests passing |
 | 5.4.2 | Integration tests | [ ] | | |
 | 5.4.3 | End-to-end tests | [ ] | | |
 | 5.4.4 | Load testing | [ ] | | |
@@ -362,7 +362,7 @@ This document tracks overall progress across all sprints. Each task references i
 |------|-------------|--------|----------|-------|
 | 5.6.1 | Production Docker Compose | [ ] | | |
 | 5.6.2 | Environment configuration | [ ] | | |
-| 5.6.3 | Health and monitoring endpoints | [ ] | | |
+| 5.6.3 | Health and monitoring endpoints | [x] | Agent | Already in Sprint 0 |
 | 5.6.4 | Database migrations for production | [ ] | | |
 
 ---
@@ -371,6 +371,7 @@ This document tracks overall progress across all sprints. Each task references i
 
 | Date | Change |
 |------|--------|
+| 2025-12-28 | Sprint 0 and Sprint 1 marked complete (419 tests passing) |
 | 2025-01-28 | Initial task tracker created |
 
 ---

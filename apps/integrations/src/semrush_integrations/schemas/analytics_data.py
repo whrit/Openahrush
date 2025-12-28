@@ -9,7 +9,6 @@ from __future__ import annotations
 
 from datetime import date
 from decimal import Decimal
-from typing import Optional
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -37,16 +36,16 @@ class AnalyticsDataRow(BaseModel):
     """
 
     date: date
-    page_url: Optional[str] = None
+    page_url: str | None = None
     sessions: int = Field(ge=0)
-    users: Optional[int] = Field(default=None, ge=0)
-    engagement_rate: Optional[Decimal] = Field(default=None, ge=Decimal("0"), le=Decimal("1"))
-    conversions: Optional[int] = Field(default=None, ge=0)
-    revenue: Optional[Decimal] = Field(default=None, ge=Decimal("0"))
-    country: Optional[str] = None
-    device: Optional[str] = None
-    source_medium: Optional[str] = None
-    campaign: Optional[str] = None
+    users: int | None = Field(default=None, ge=0)
+    engagement_rate: Decimal | None = Field(default=None, ge=Decimal("0"), le=Decimal("1"))
+    conversions: int | None = Field(default=None, ge=0)
+    revenue: Decimal | None = Field(default=None, ge=Decimal("0"))
+    country: str | None = None
+    device: str | None = None
+    source_medium: str | None = None
+    campaign: str | None = None
 
     model_config = {
         "json_schema_extra": {
@@ -69,7 +68,7 @@ class AnalyticsDataRow(BaseModel):
 
     @field_validator("device", mode="before")
     @classmethod
-    def normalize_device(cls, v: Optional[str]) -> Optional[str]:
+    def normalize_device(cls, v: str | None) -> str | None:
         """Normalize device type to lowercase."""
         if v is not None:
             return v.lower()
@@ -77,7 +76,7 @@ class AnalyticsDataRow(BaseModel):
 
     @field_validator("country", mode="before")
     @classmethod
-    def normalize_country(cls, v: Optional[str]) -> Optional[str]:
+    def normalize_country(cls, v: str | None) -> str | None:
         """Normalize country code to lowercase."""
         if v is not None:
             return v.lower()
@@ -99,7 +98,7 @@ class AnalyticsDataResponse(BaseModel):
 
     rows: list[AnalyticsDataRow] = Field(default_factory=list)
     total_rows: int = 0
-    sampling_info: Optional[dict[str, str]] = None
+    sampling_info: dict[str, str] | None = None
     data_quality_flags: dict[str, str] = Field(default_factory=dict)
 
     model_config = {

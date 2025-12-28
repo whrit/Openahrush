@@ -6,13 +6,13 @@ for integration accounts.
 """
 
 import asyncio
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
-
-from sqlalchemy.orm import Session
 
 from semrush_core.models.integration_token import IntegrationToken
 from semrush_core.security.encryption import decrypt_token, encrypt_token
+from sqlalchemy.orm import Session
+
 from semrush_integrations.oauth.base import OAuthProvider, OAuthTokens
 
 
@@ -125,10 +125,10 @@ class TokenService:
         needs_refresh = False
         if token.expires_at is not None:
             # Ensure timezone-aware comparison
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
             expires_at = token.expires_at
             if expires_at.tzinfo is None:
-                expires_at = expires_at.replace(tzinfo=timezone.utc)
+                expires_at = expires_at.replace(tzinfo=UTC)
 
             buffer = timedelta(minutes=buffer_minutes)
             if now >= expires_at - buffer:

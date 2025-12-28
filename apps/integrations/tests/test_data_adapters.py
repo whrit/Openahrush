@@ -13,7 +13,7 @@ Tests cover:
 from __future__ import annotations
 
 import uuid
-from datetime import date, datetime, timedelta, timezone
+from datetime import date
 from decimal import Decimal
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -21,15 +21,13 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import httpx
 import pytest
 import respx
-
 from semrush_integrations.adapters.data.base import DataAdapter, DateRange
-from semrush_integrations.adapters.data.gsc_data import GSCDataAdapter
-from semrush_integrations.adapters.data.ga4_data import GA4DataAdapter
 from semrush_integrations.adapters.data.bwt_data import BWTDataAdapter
-from semrush_integrations.schemas.search_data import SearchDataRow, SearchDataResponse
-from semrush_integrations.schemas.analytics_data import AnalyticsDataRow, AnalyticsDataResponse
+from semrush_integrations.adapters.data.ga4_data import GA4DataAdapter
+from semrush_integrations.adapters.data.gsc_data import GSCDataAdapter
+from semrush_integrations.schemas.analytics_data import AnalyticsDataResponse, AnalyticsDataRow
+from semrush_integrations.schemas.search_data import SearchDataResponse, SearchDataRow
 from semrush_integrations.services.data_sync_service import DataSyncService
-
 
 # =============================================================================
 # Test Fixtures

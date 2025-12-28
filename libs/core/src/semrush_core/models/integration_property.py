@@ -11,7 +11,7 @@ import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import DateTime, ForeignKey, String, Text, UniqueConstraint, func
+from sqlalchemy import DateTime, ForeignKey, String, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -88,10 +88,10 @@ class IntegrationProperty(Base, UUIDMixin):
     )
 
     # Relationships
-    account: Mapped["IntegrationAccount"] = relationship(
+    account: Mapped[IntegrationAccount] = relationship(
         back_populates="properties",
     )
-    mappings: Mapped[list["IntegrationMapping"]] = relationship(
+    mappings: Mapped[list[IntegrationMapping]] = relationship(
         back_populates="integration_property",
         cascade="all, delete-orphan",
     )

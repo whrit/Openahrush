@@ -135,8 +135,8 @@ class AnalyticsFactDaily(Base, UUIDMixin):
     )
 
     # Relationships
-    project: Mapped["Project"] = relationship()
-    site: Mapped["Site | None"] = relationship()
+    project: Mapped[Project] = relationship()
+    site: Mapped[Site | None] = relationship()
 
     @property
     def source(self) -> str | None:

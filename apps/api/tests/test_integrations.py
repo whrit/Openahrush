@@ -10,12 +10,11 @@ Tests cover:
 """
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from httpx import AsyncClient
-
 
 # =============================================================================
 # Fixtures for Integration Testing
@@ -41,7 +40,7 @@ def mock_oauth_tokens() -> dict:
         "access_token": "mock_access_token_12345",
         "refresh_token": "mock_refresh_token_67890",
         "token_type": "Bearer",
-        "expires_at": datetime(2025, 1, 1, 12, 0, 0, tzinfo=timezone.utc),
+        "expires_at": datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC),
         "scopes": ["email", "openid", "https://www.googleapis.com/auth/webmasters.readonly"],
     }
 
@@ -67,13 +66,13 @@ def mock_integration_account(
     mock_account.user_id = test_user_id
     mock_account.provider = "google_search_console"
     mock_account.provider_account_id = "external_user_123"
-    mock_account.token_expires_at = datetime(2025, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+    mock_account.token_expires_at = datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC)
     mock_account.scopes = ["email", "openid"]
     mock_account.last_sync_at = None
     mock_account.sync_status = "pending"
     mock_account.sync_error = None
-    mock_account.created_at = datetime(2024, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
-    mock_account.updated_at = datetime(2024, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
+    mock_account.created_at = datetime(2024, 1, 1, 0, 0, 0, tzinfo=UTC)
+    mock_account.updated_at = datetime(2024, 1, 1, 0, 0, 0, tzinfo=UTC)
     return mock_account
 
 
@@ -267,7 +266,7 @@ class TestCallbackEndpoint:
         mock_db_session.refresh = AsyncMock()
 
         # Store a valid state first
-        from semrush_api.routers.integrations import store_oauth_state, _oauth_states
+        from semrush_api.routers.integrations import _oauth_states, store_oauth_state
         store_oauth_state("valid_state_token", "test-user-id", "google_search_console")
 
         with patch(
@@ -330,7 +329,7 @@ class TestCallbackEndpoint:
         mock_db_session.refresh = mock_refresh
 
         # Store a valid state first
-        from semrush_api.routers.integrations import store_oauth_state, _oauth_states
+        from semrush_api.routers.integrations import _oauth_states, store_oauth_state
         store_oauth_state("valid_state_token2", "test-user-id", "google_search_console")
 
         with patch(
@@ -725,7 +724,7 @@ class TestStatusEndpoint:
     ) -> None:
         """Test that status includes last sync information."""
         mock_integration_account.last_sync_at = datetime(
-            2024, 6, 15, 10, 0, 0, tzinfo=timezone.utc
+            2024, 6, 15, 10, 0, 0, tzinfo=UTC
         )
         mock_integration_account.sync_status = "success"
 

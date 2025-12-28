@@ -9,12 +9,12 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass, field
-from datetime import date, datetime, timezone
-from typing import TYPE_CHECKING, Any, Callable, Coroutine, Protocol
-
-from sqlalchemy import select
+from datetime import date
+from typing import TYPE_CHECKING, Any, Protocol
 
 from semrush_core.models.sync_run import SyncMode, SyncRun, SyncStatus
+from sqlalchemy import select
+
 from semrush_workers.jobs.base import Job, JobType
 
 if TYPE_CHECKING:
@@ -106,7 +106,7 @@ class SyncJob(Job):
 
     async def execute(
         self,
-        db_session: "AsyncSession",
+        db_session: AsyncSession,
         data_sync_service: DataSyncServiceProtocol | None = None,
         **kwargs: Any,
     ) -> dict[str, Any]:
@@ -182,7 +182,7 @@ class SyncJob(Job):
 
     async def _get_or_create_sync_run(
         self,
-        db_session: "AsyncSession",
+        db_session: AsyncSession,
     ) -> SyncRun:
         """
         Get existing SyncRun or create a new one.
@@ -219,7 +219,7 @@ class SyncJob(Job):
 
     async def _get_sync_run(
         self,
-        db_session: "AsyncSession",
+        db_session: AsyncSession,
     ) -> SyncRun | None:
         """
         Get existing SyncRun by ID.

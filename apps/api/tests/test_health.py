@@ -6,10 +6,10 @@ Tests cover:
 - Readiness check (/readyz) - dependency health including database
 """
 
+from unittest.mock import AsyncMock
+
 import pytest
 from httpx import AsyncClient
-from unittest.mock import AsyncMock, patch
-from sqlalchemy import text
 
 
 class TestHealthzEndpoint:

@@ -18,8 +18,8 @@ from semrush_backlinks.models import (
 )
 
 __all__ = [
-    "__version__",
     "Backlink",
     "BacklinkSource",
     "LinkType",
+    "__version__",
 ]

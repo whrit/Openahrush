@@ -6,7 +6,7 @@ Tokens include standard claims plus custom user data.
 """
 
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from jose import JWTError, jwt
@@ -43,7 +43,7 @@ class TokenData(BaseModel):
     @property
     def is_expired(self) -> bool:
         """Check if token has expired."""
-        return datetime.now(timezone.utc) > self.exp
+        return datetime.now(UTC) > self.exp
 
 
 class TokenError(Exception):
@@ -191,8 +191,8 @@ def decode_token(
 
     return TokenData(
         sub=payload["sub"],
-        exp=datetime.fromtimestamp(payload["exp"], tz=timezone.utc),
-        iat=datetime.fromtimestamp(payload["iat"], tz=timezone.utc),
+        exp=datetime.fromtimestamp(payload["exp"], tz=UTC),
+        iat=datetime.fromtimestamp(payload["iat"], tz=UTC),
         jti=payload.get("jti", ""),
         token_type=token_type or "access",
         scopes=payload.get("scopes", []),
@@ -220,7 +220,7 @@ def _create_token(
         Encoded JWT string.
     """
     settings = get_settings()
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     claims = {
         "sub": subject,

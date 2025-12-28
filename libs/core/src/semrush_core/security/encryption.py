@@ -6,7 +6,6 @@ before storing in the database. Provides symmetric encryption with
 authenticated encryption (AE) guarantees.
 """
 
-import base64
 import secrets
 from typing import overload
 
@@ -191,7 +190,7 @@ def encrypt_dict_values(
     keys = keys_to_encrypt or list(data.keys())
 
     for key in keys:
-        if key in result and result[key]:
+        if result.get(key):
             result[key] = encrypt_token(result[key])
 
     return result
@@ -216,7 +215,7 @@ def decrypt_dict_values(
     keys = keys_to_decrypt or list(data.keys())
 
     for key in keys:
-        if key in result and result[key]:
+        if result.get(key):
             result[key] = decrypt_token(result[key])
 
     return result

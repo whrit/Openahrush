@@ -53,20 +53,20 @@ class Project(Base, UUIDMixin, TimestampMixin):
     )
 
     # Relationships
-    owner: Mapped["User"] = relationship(
+    owner: Mapped[User] = relationship(
         back_populates="projects",
     )
-    sites: Mapped[list["Site"]] = relationship(
+    sites: Mapped[list[Site]] = relationship(
         back_populates="project",
         cascade="all, delete-orphan",
         lazy="selectin",
     )
-    competitors: Mapped[list["Competitor"]] = relationship(
+    competitors: Mapped[list[Competitor]] = relationship(
         back_populates="project",
         cascade="all, delete-orphan",
         lazy="selectin",
     )
-    settings: Mapped["ProjectSettings | None"] = relationship(
+    settings: Mapped[ProjectSettings | None] = relationship(
         back_populates="project",
         uselist=False,
         cascade="all, delete-orphan",

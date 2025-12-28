@@ -13,11 +13,10 @@ from uuid import UUID
 
 from fastapi import Depends, Header, HTTPException, Query, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from semrush_core import Settings, get_settings
 from semrush_core.database import get_async_session
 from semrush_core.security.jwt import TokenData, TokenError, decode_token
+from sqlalchemy.ext.asyncio import AsyncSession
 
 # Security scheme for JWT bearer tokens
 bearer_scheme = HTTPBearer(

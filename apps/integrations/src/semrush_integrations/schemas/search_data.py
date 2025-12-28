@@ -9,7 +9,6 @@ from __future__ import annotations
 
 from datetime import date
 from decimal import Decimal
-from typing import Optional
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -36,15 +35,15 @@ class SearchDataRow(BaseModel):
     """
 
     date: date
-    query: Optional[str] = None
-    page_url: Optional[str] = None
+    query: str | None = None
+    page_url: str | None = None
     clicks: int = Field(ge=0)
     impressions: int = Field(ge=0)
-    ctr: Optional[Decimal] = Field(default=None, ge=Decimal("0"), le=Decimal("1"))
-    position: Optional[Decimal] = Field(default=None, ge=Decimal("0"))
-    device: Optional[str] = None
-    country: Optional[str] = None
-    search_type: Optional[str] = None
+    ctr: Decimal | None = Field(default=None, ge=Decimal("0"), le=Decimal("1"))
+    position: Decimal | None = Field(default=None, ge=Decimal("0"))
+    device: str | None = None
+    country: str | None = None
+    search_type: str | None = None
 
     model_config = {
         "json_schema_extra": {
@@ -67,7 +66,7 @@ class SearchDataRow(BaseModel):
 
     @field_validator("device", mode="before")
     @classmethod
-    def normalize_device(cls, v: Optional[str]) -> Optional[str]:
+    def normalize_device(cls, v: str | None) -> str | None:
         """Normalize device type to lowercase."""
         if v is not None:
             return v.lower()
@@ -75,7 +74,7 @@ class SearchDataRow(BaseModel):
 
     @field_validator("country", mode="before")
     @classmethod
-    def normalize_country(cls, v: Optional[str]) -> Optional[str]:
+    def normalize_country(cls, v: str | None) -> str | None:
         """Normalize country code to lowercase."""
         if v is not None:
             return v.lower()
@@ -83,7 +82,7 @@ class SearchDataRow(BaseModel):
 
     @field_validator("search_type", mode="before")
     @classmethod
-    def normalize_search_type(cls, v: Optional[str]) -> Optional[str]:
+    def normalize_search_type(cls, v: str | None) -> str | None:
         """Normalize search type to lowercase."""
         if v is not None:
             return v.lower()
@@ -105,7 +104,7 @@ class SearchDataResponse(BaseModel):
 
     rows: list[SearchDataRow] = Field(default_factory=list)
     total_rows: int = 0
-    response_aggregation_type: Optional[str] = None
+    response_aggregation_type: str | None = None
     data_quality_flags: dict[str, str] = Field(default_factory=dict)
 
     model_config = {

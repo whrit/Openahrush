@@ -12,7 +12,7 @@ from datetime import datetime
 from enum import Enum
 from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import DateTime, ForeignKey, String, Text, UniqueConstraint, func
+from sqlalchemy import DateTime, ForeignKey, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -113,15 +113,15 @@ class IntegrationAccount(Base, UUIDMixin, TimestampMixin):
     )
 
     # Relationships
-    user: Mapped["User"] = relationship(
+    user: Mapped[User] = relationship(
         back_populates="integration_accounts",
     )
-    token: Mapped["IntegrationToken | None"] = relationship(
+    token: Mapped[IntegrationToken | None] = relationship(
         back_populates="account",
         uselist=False,
         cascade="all, delete-orphan",
     )
-    properties: Mapped[list["IntegrationProperty"]] = relationship(
+    properties: Mapped[list[IntegrationProperty]] = relationship(
         back_populates="account",
         cascade="all, delete-orphan",
     )

@@ -5,14 +5,14 @@ Following TDD: These tests are written FIRST, then the implementation.
 Uses respx to mock HTTP requests.
 """
 
+from datetime import datetime, timedelta
+from urllib.parse import urlparse
+
+import httpx
 import pytest
 import respx
-import httpx
-from datetime import datetime, timedelta
-from urllib.parse import parse_qs, urlparse
-
-from semrush_integrations.oauth.microsoft import MicrosoftOAuthProvider
 from semrush_integrations.oauth.base import OAuthTokens, OAuthUserInfo
+from semrush_integrations.oauth.microsoft import MicrosoftOAuthProvider
 
 
 class TestMicrosoftOAuthProviderAttributes:

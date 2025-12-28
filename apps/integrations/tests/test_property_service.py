@@ -6,15 +6,11 @@ Uses mocking for database and external API operations.
 """
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import httpx
 import pytest
-
-from semrush_core.models import IntegrationProvider
-
 
 # =============================================================================
 # Mock classes for testing
@@ -48,7 +44,7 @@ class MockIntegrationProperty:
         self.display_name = kwargs.get("display_name", "example.com")
         self.property_type = kwargs.get("property_type", "siteUrl")
         self.metadata_ = kwargs.get("metadata_", {})
-        self.discovered_at = kwargs.get("discovered_at", datetime.now(timezone.utc))
+        self.discovered_at = kwargs.get("discovered_at", datetime.now(UTC))
 
 
 class MockIntegrationMapping:
@@ -60,7 +56,7 @@ class MockIntegrationMapping:
         self.site_id = kwargs.get("site_id")
         self.integration_property_id = kwargs.get("integration_property_id", uuid.uuid4())
         self.is_primary = kwargs.get("is_primary", False)
-        self.created_at = kwargs.get("created_at", datetime.now(timezone.utc))
+        self.created_at = kwargs.get("created_at", datetime.now(UTC))
         self.integration_property = kwargs.get("integration_property")
 
 
@@ -613,7 +609,10 @@ class TestPropertyServiceDiscoverProperties:
         mock_db_session: MagicMock,
     ) -> None:
         """Should use GSC adapter for google_search_console provider."""
-        from semrush_integrations.services.property_service import PropertyService, PROVIDER_ADAPTERS
+        from semrush_integrations.services.property_service import (
+            PROVIDER_ADAPTERS,
+            PropertyService,
+        )
 
         # Set up mock to return account
         mock_db_session.query.return_value.filter.return_value.first.return_value = (
@@ -640,7 +639,10 @@ class TestPropertyServiceDiscoverProperties:
         mock_db_session: MagicMock,
     ) -> None:
         """Should store discovered properties in database."""
-        from semrush_integrations.services.property_service import PropertyService, PROVIDER_ADAPTERS
+        from semrush_integrations.services.property_service import (
+            PROVIDER_ADAPTERS,
+            PropertyService,
+        )
 
         mock_db_session.query.return_value.filter.return_value.first.return_value = (
             mock_integration_account
@@ -699,7 +701,10 @@ class TestPropertyServiceSyncProperties:
         mock_db_session: MagicMock,
     ) -> None:
         """Should update existing properties during sync."""
-        from semrush_integrations.services.property_service import PropertyService, PROVIDER_ADAPTERS
+        from semrush_integrations.services.property_service import (
+            PROVIDER_ADAPTERS,
+            PropertyService,
+        )
 
         # Account has existing property
         mock_integration_account.properties = [mock_integration_property]
@@ -737,7 +742,10 @@ class TestPropertyServiceSyncProperties:
         mock_db_session: MagicMock,
     ) -> None:
         """Should add new properties discovered during sync."""
-        from semrush_integrations.services.property_service import PropertyService, PROVIDER_ADAPTERS
+        from semrush_integrations.services.property_service import (
+            PROVIDER_ADAPTERS,
+            PropertyService,
+        )
 
         mock_integration_account.properties = []
         mock_db_session.query.return_value.filter.return_value.first.return_value = (
@@ -1048,7 +1056,7 @@ class TestPropertyMappingServiceDelete:
     ) -> None:
         """Should only delete mappings belonging to the specified project."""
         other_project_id = uuid.UUID("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee")
-        mock_mapping = MockIntegrationMapping(
+        _mock_mapping = MockIntegrationMapping(
             id=sample_mapping_id,
             project_id=other_project_id,  # Different project
         )

@@ -8,7 +8,7 @@ external providers and the canonical fact tables.
 from __future__ import annotations
 
 import uuid
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from enum import Enum
 from typing import TYPE_CHECKING
 
@@ -119,7 +119,7 @@ class SyncRun(Base, UUIDMixin):
     )
 
     # Relationships
-    mapping: Mapped["IntegrationMapping"] = relationship(
+    mapping: Mapped[IntegrationMapping] = relationship(
         back_populates="sync_runs",
     )
 
@@ -152,10 +152,9 @@ class SyncRun(Base, UUIDMixin):
 
     def mark_started(self) -> None:
         """Mark this sync as started."""
-        from datetime import timezone
 
         self.status = SyncStatus.RUNNING.value
-        self.started_at = datetime.now(timezone.utc)
+        self.started_at = datetime.now(UTC)
 
     def mark_completed(self, records_written: int = 0) -> None:
         """
@@ -164,10 +163,9 @@ class SyncRun(Base, UUIDMixin):
         Args:
             records_written: Number of records written during sync.
         """
-        from datetime import timezone
 
         self.status = SyncStatus.COMPLETED.value
-        self.completed_at = datetime.now(timezone.utc)
+        self.completed_at = datetime.now(UTC)
         self.records_written = records_written
 
     def mark_failed(self, error_message: str) -> None:
@@ -177,8 +175,7 @@ class SyncRun(Base, UUIDMixin):
         Args:
             error_message: Description of what went wrong.
         """
-        from datetime import timezone
 
         self.status = SyncStatus.FAILED.value
-        self.completed_at = datetime.now(timezone.utc)
+        self.completed_at = datetime.now(UTC)
         self.error_message = error_message

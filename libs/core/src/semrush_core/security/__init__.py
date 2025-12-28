@@ -13,10 +13,10 @@ from semrush_core.security.encryption import (
     generate_encryption_key,
 )
 from semrush_core.security.jwt import (
+    TokenData,
     create_access_token,
     create_refresh_token,
     decode_token,
-    TokenData,
 )
 from semrush_core.security.password import (
     hash_password,

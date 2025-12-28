@@ -53,12 +53,12 @@ class User(Base, UUIDMixin, TimestampMixin):
     )
 
     # Relationships
-    projects: Mapped[list["Project"]] = relationship(
+    projects: Mapped[list[Project]] = relationship(
         back_populates="owner",
         cascade="all, delete-orphan",
         lazy="selectin",
     )
-    integration_accounts: Mapped[list["IntegrationAccount"]] = relationship(
+    integration_accounts: Mapped[list[IntegrationAccount]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan",
         lazy="selectin",

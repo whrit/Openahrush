@@ -7,7 +7,6 @@ Provides request/response models for:
 - Current user info (/me endpoint)
 """
 
-from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 

@@ -4,9 +4,8 @@ Tests for OAuth state management.
 Following TDD: These tests are written FIRST, then the implementation.
 """
 
-import pytest
 from datetime import datetime
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 from semrush_core.oauth.state import OAuthState
 

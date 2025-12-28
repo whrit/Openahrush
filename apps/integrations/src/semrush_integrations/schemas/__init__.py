@@ -2,12 +2,12 @@
 Pydantic schemas for integration data.
 """
 
-from semrush_integrations.schemas.search_data import SearchDataRow, SearchDataResponse
-from semrush_integrations.schemas.analytics_data import AnalyticsDataRow, AnalyticsDataResponse
+from semrush_integrations.schemas.analytics_data import AnalyticsDataResponse, AnalyticsDataRow
+from semrush_integrations.schemas.search_data import SearchDataResponse, SearchDataRow
 
 __all__ = [
-    "SearchDataRow",
-    "SearchDataResponse",
-    "AnalyticsDataRow",
     "AnalyticsDataResponse",
+    "AnalyticsDataRow",
+    "SearchDataResponse",
+    "SearchDataRow",
 ]

@@ -50,6 +50,6 @@ class Site(Base, UUIDMixin, TimestampMixin):
     )
 
     # Relationships
-    project: Mapped["Project"] = relationship(
+    project: Mapped[Project] = relationship(
         back_populates="sites",
     )

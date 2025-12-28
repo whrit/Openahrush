@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, Protocol
 
 from sqlalchemy import select, update
@@ -83,7 +83,7 @@ class PropertySyncJob(Job):
 
     async def execute(
         self,
-        db_session: "AsyncSession",
+        db_session: AsyncSession,
         discovery_service: PropertyDiscoveryServiceProtocol | None = None,
         **kwargs: Any,
     ) -> dict[str, Any]:
@@ -147,7 +147,7 @@ class PropertySyncJob(Job):
 
     async def _update_account_last_synced(
         self,
-        db_session: "AsyncSession",
+        db_session: AsyncSession,
     ) -> None:
         """
         Update the integration account's last synced timestamp.
@@ -160,12 +160,12 @@ class PropertySyncJob(Job):
         await db_session.execute(
             update(IntegrationAccount)
             .where(IntegrationAccount.id == self.integration_account_id)
-            .values(last_sync_at=datetime.now(timezone.utc))
+            .values(last_sync_at=datetime.now(UTC))
         )
 
     async def _upsert_properties(
         self,
-        db_session: "AsyncSession",
+        db_session: AsyncSession,
         properties: list[dict[str, Any]],
     ) -> None:
         """

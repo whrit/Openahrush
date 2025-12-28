@@ -10,9 +10,10 @@ from __future__ import annotations
 import asyncio
 import logging
 from abc import ABC, abstractmethod
+from collections.abc import Iterator
 from dataclasses import dataclass
 from datetime import date, timedelta
-from typing import TYPE_CHECKING, Iterator, Union
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from semrush_integrations.schemas.analytics_data import AnalyticsDataResponse
@@ -109,7 +110,7 @@ class DataAdapter(ABC):
         property_id: str,
         date_range: DateRange,
         **kwargs,
-    ) -> Union["SearchDataResponse", "AnalyticsDataResponse"]:
+    ) -> SearchDataResponse | AnalyticsDataResponse:
         """
         Fetch data from the provider for a specific property.
 

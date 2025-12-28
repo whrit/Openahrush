@@ -191,7 +191,7 @@ class ProjectSettingsSchema(BaseModel):
             try:
                 re.compile(pattern)
             except re.error as e:
-                raise ValueError(f"Invalid regex pattern '{pattern}': {e}")
+                raise ValueError(f"Invalid regex pattern '{pattern}': {e}") from e
         return v
 
     @field_validator("required_selectors")
@@ -272,7 +272,7 @@ class ProjectSettingsUpdate(BaseModel):
                 try:
                     re.compile(pattern)
                 except re.error as e:
-                    raise ValueError(f"Invalid regex pattern '{pattern}': {e}")
+                    raise ValueError(f"Invalid regex pattern '{pattern}': {e}") from e
         return v
 
     @field_validator("required_selectors")

@@ -8,8 +8,8 @@ from __future__ import annotations
 
 import logging
 import uuid
-from datetime import datetime, timezone
-from typing import TYPE_CHECKING, Any
+from datetime import UTC, datetime
+from typing import TYPE_CHECKING
 
 from semrush_integrations.adapters.data.base import DataAdapter, DateRange
 from semrush_integrations.adapters.data.bwt_data import BWTDataAdapter
@@ -19,10 +19,9 @@ from semrush_integrations.schemas.analytics_data import AnalyticsDataRow
 from semrush_integrations.schemas.search_data import SearchDataRow
 
 if TYPE_CHECKING:
-    from sqlalchemy.ext.asyncio import AsyncSession
-
     from semrush_core.models.integration_mapping import IntegrationMapping
     from semrush_core.models.sync_run import SyncRun
+    from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +50,7 @@ class DataSyncService:
         >>> print(f"Synced {sync_run.records_written} records")
     """
 
-    def __init__(self, session: "AsyncSession") -> None:
+    def __init__(self, session: AsyncSession) -> None:
         """
         Initialize the sync service.
 
@@ -62,9 +61,9 @@ class DataSyncService:
 
     async def sync_search_data(
         self,
-        mapping: "IntegrationMapping",
+        mapping: IntegrationMapping,
         date_range: DateRange,
-    ) -> "SyncRun":
+    ) -> SyncRun:
         """
         Sync search data for an integration mapping.
 
@@ -89,7 +88,7 @@ class DataSyncService:
             status=SyncStatus.RUNNING.value,
             date_range_start=date_range.start_date,
             date_range_end=date_range.end_date,
-            started_at=datetime.now(timezone.utc),
+            started_at=datetime.now(UTC),
         )
         self.session.add(sync_run)
 
@@ -108,9 +107,9 @@ class DataSyncService:
 
     async def sync_analytics_data(
         self,
-        mapping: "IntegrationMapping",
+        mapping: IntegrationMapping,
         date_range: DateRange,
-    ) -> "SyncRun":
+    ) -> SyncRun:
         """
         Sync analytics data for an integration mapping.
 
@@ -135,7 +134,7 @@ class DataSyncService:
             status=SyncStatus.RUNNING.value,
             date_range_start=date_range.start_date,
             date_range_end=date_range.end_date,
-            started_at=datetime.now(timezone.utc),
+            started_at=datetime.now(UTC),
         )
         self.session.add(sync_run)
 
@@ -154,7 +153,7 @@ class DataSyncService:
 
     async def _fetch_and_store_search_data(
         self,
-        mapping: "IntegrationMapping",
+        mapping: IntegrationMapping,
         date_range: DateRange,
     ) -> int:
         """
@@ -192,7 +191,7 @@ class DataSyncService:
 
     async def _fetch_and_store_analytics_data(
         self,
-        mapping: "IntegrationMapping",
+        mapping: IntegrationMapping,
         date_range: DateRange,
     ) -> int:
         """

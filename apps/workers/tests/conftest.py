@@ -7,16 +7,16 @@ Uses fakeredis for mocking Redis and provides common test utilities.
 from __future__ import annotations
 
 import uuid
-from datetime import date, datetime, timezone
-from typing import Any, AsyncGenerator
+from collections.abc import AsyncGenerator
+from datetime import UTC, date, datetime
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 import fakeredis.aioredis
 import pytest
 import pytest_asyncio
 from redis.asyncio import Redis
-
-from semrush_core.models.sync_run import SyncMode, SyncRun, SyncStatus
+from semrush_core.models.sync_run import SyncMode, SyncStatus
 
 
 @pytest.fixture
@@ -63,7 +63,7 @@ def sample_sync_run(sample_mapping_id: uuid.UUID) -> dict[str, Any]:
         "error_message": None,
         "started_at": None,
         "completed_at": None,
-        "created_at": datetime.now(timezone.utc),
+        "created_at": datetime.now(UTC),
     }
 
 

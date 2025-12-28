@@ -4,10 +4,10 @@ Tests for OAuth provider base class.
 Following TDD: These tests are written FIRST, then the implementation.
 """
 
-import pytest
 from datetime import datetime, timedelta
 from urllib.parse import parse_qs, urlparse
 
+import pytest
 from semrush_integrations.oauth.base import OAuthProvider, OAuthTokens, OAuthUserInfo
 
 

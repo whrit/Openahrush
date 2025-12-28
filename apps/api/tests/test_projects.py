@@ -12,12 +12,10 @@ Tests cover:
 """
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-
-from semrush_core.models import Project, Site, Competitor
 
 
 class TestProjectsCRUD:
@@ -128,8 +126,8 @@ class TestProjectsCRUD:
         created_project.id = uuid.UUID("ffffffff-ffff-ffff-ffff-ffffffffffff")
         created_project.owner_id = test_user_id
         created_project.name = "My SEO Project"
-        created_project.created_at = datetime(2024, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
-        created_project.updated_at = datetime(2024, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
+        created_project.created_at = datetime(2024, 1, 1, 0, 0, 0, tzinfo=UTC)
+        created_project.updated_at = datetime(2024, 1, 1, 0, 0, 0, tzinfo=UTC)
 
         mock_db_session.add = MagicMock()
         mock_db_session.commit = AsyncMock()
@@ -408,7 +406,7 @@ class TestSites:
         created_site.project_id = test_project.id
         created_site.domain = "example.com"
         created_site.base_url = "https://example.com"
-        created_site.created_at = datetime(2024, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
+        created_site.created_at = datetime(2024, 1, 1, 0, 0, 0, tzinfo=UTC)
 
         mock_db_session.execute = AsyncMock(return_value=mock_project_result)
         mock_db_session.add = MagicMock()
@@ -511,7 +509,7 @@ class TestCompetitors:
         created_competitor.project_id = test_project.id
         created_competitor.domain = "competitor.com"
         created_competitor.created_at = datetime(
-            2024, 1, 1, 0, 0, 0, tzinfo=timezone.utc
+            2024, 1, 1, 0, 0, 0, tzinfo=UTC
         )
 
         mock_db_session.execute = AsyncMock(return_value=mock_project_result)

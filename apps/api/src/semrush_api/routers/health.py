@@ -7,15 +7,14 @@ Provides endpoints for:
 """
 
 import time
-from datetime import datetime, timezone
-from typing import Any
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Response, status
 from pydantic import BaseModel, Field
+from semrush_core import get_settings
 from sqlalchemy import text
 
 from semrush_api.deps import DbSession
-from semrush_core import get_settings
 
 router = APIRouter()
 
@@ -91,7 +90,7 @@ async def healthz() -> HealthzResponse:
     return HealthzResponse(
         ok=True,
         version="0.1.0",
-        timestamp=datetime.now(timezone.utc),
+        timestamp=datetime.now(UTC),
     )
 
 
@@ -149,7 +148,7 @@ async def readyz(db: DbSession, response: Response) -> ReadyzResponse:
     return ReadyzResponse(
         ok=all_healthy,
         version="0.1.0",
-        timestamp=datetime.now(timezone.utc),
+        timestamp=datetime.now(UTC),
         environment=settings.environment,
         checks=checks,
     )
@@ -200,7 +199,7 @@ async def health_check() -> HealthStatus:
     """
     return HealthStatus(
         status="healthy",
-        timestamp=datetime.now(timezone.utc),
+        timestamp=datetime.now(UTC),
         version="0.1.0",
     )
 
@@ -249,7 +248,7 @@ async def readiness_check(db: DbSession) -> ReadinessStatus:
 
     return ReadinessStatus(
         status="ready" if all_healthy else "not_ready",
-        timestamp=datetime.now(timezone.utc),
+        timestamp=datetime.now(UTC),
         version="0.1.0",
         environment=settings.environment,
         dependencies=dependencies,
