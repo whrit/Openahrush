@@ -20,7 +20,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 
-from semrush_api.routers import auth, health, projects, settings
+from semrush_api.routers import auth, health, integrations, projects, settings
 from semrush_core import get_settings
 from semrush_core.database import dispose_engine, get_engine
 from semrush_core.security.jwt import TokenError
@@ -211,6 +211,9 @@ def register_routers(app: FastAPI) -> None:
 
     # Project settings (no prefix - /projects/{id}/settings)
     app.include_router(settings.router, tags=["Settings"])
+
+    # Integrations (no prefix - /integrations)
+    app.include_router(integrations.router, tags=["Integrations"])
 
 
 # Create the application instance

@@ -6,16 +6,17 @@ Contains all FastAPI routers organized by resource:
 - auth: Authentication endpoints (login, logout, me)
 - settings: Project settings management
 - projects: Project management
-- crawls: Site crawl operations
 - integrations: Third-party integrations (GSC, GA4, etc.)
+- crawls: Site crawl operations
 - reports: Report generation and export
 """
 
-from semrush_api.routers import auth, health, projects, settings
+from semrush_api.routers import auth, health, integrations, projects, settings
 
 __all__ = [
     "auth",
     "health",
+    "integrations",
     "projects",
     "settings",
 ]

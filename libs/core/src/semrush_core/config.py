@@ -138,6 +138,20 @@ class Settings(BaseSettings):
         description="Google OAuth redirect URI",
     )
 
+    # Microsoft OAuth (Optional)
+    microsoft_client_id: str | None = Field(
+        default=None,
+        description="Microsoft OAuth client ID",
+    )
+    microsoft_client_secret: SecretStr | None = Field(
+        default=None,
+        description="Microsoft OAuth client secret",
+    )
+    microsoft_redirect_uri: str | None = Field(
+        default=None,
+        description="Microsoft OAuth redirect URI",
+    )
+
     # Encryption key for sensitive data storage
     encryption_key: SecretStr | None = Field(
         default=None,

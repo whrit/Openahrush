@@ -5,6 +5,7 @@ Organized by domain:
 - auth: Authentication-related schemas (login, logout, user info)
 - project: Project, Site, and Competitor schemas
 - settings: Project settings schemas
+- integration: OAuth integration schemas (connect, callback, status)
 """
 
 from semrush_api.schemas.auth import (
@@ -12,6 +13,15 @@ from semrush_api.schemas.auth import (
     LoginResponse,
     LogoutResponse,
     UserResponse,
+)
+from semrush_api.schemas.integration import (
+    IntegrationCallbackRequest,
+    IntegrationCallbackResponse,
+    IntegrationConnectResponse,
+    IntegrationDisconnectResponse,
+    IntegrationListResponse,
+    IntegrationProvider,
+    IntegrationStatus,
 )
 from semrush_api.schemas.project import (
     CompetitorCreate,
@@ -54,4 +64,12 @@ __all__ = [
     "ProjectSettingsUpdate",
     "SettingsUpdateResponse",
     "DEFAULT_SETTINGS",
+    # Integration schemas
+    "IntegrationConnectResponse",
+    "IntegrationCallbackRequest",
+    "IntegrationCallbackResponse",
+    "IntegrationStatus",
+    "IntegrationListResponse",
+    "IntegrationDisconnectResponse",
+    "IntegrationProvider",
 ]
