@@ -2,7 +2,8 @@
 
 **Duration:** 3-4 weeks
 **Dependencies:** Sprint 0 (Foundation)
-**Status:** Not Started
+**Status:** Complete (951 tests passing)
+**Completed:** 2025-12-28
 
 This sprint implements the core crawling engine with hybrid HTML+JS support, rules-based issue detection, impact scoring, and visibility alerting.
 
@@ -63,10 +64,10 @@ CREATE INDEX idx_crawl_runs_created ON crawl_runs(created_at DESC);
 ```
 
 **Acceptance Criteria:**
-- [ ] Migration creates table with all columns
-- [ ] config_snapshot stores settings at crawl time
-- [ ] Status enum supports full lifecycle
-- [ ] Stats JSONB tracks key metrics
+- [x] Migration creates table with all columns
+- [x] config_snapshot stores settings at crawl time
+- [x] Status enum supports full lifecycle
+- [x] Stats JSONB tracks key metrics
 
 ---
 
@@ -118,9 +119,9 @@ CREATE INDEX idx_crawl_pages_status ON crawl_pages(crawl_run_id, status_code);
 ```
 
 **Acceptance Criteria:**
-- [ ] Migration creates table with all columns
-- [ ] Indexes support common query patterns
-- [ ] Artifact keys reference MinIO storage
+- [x] Migration creates table with all columns
+- [x] Indexes support common query patterns
+- [x] Artifact keys reference MinIO storage
 
 ---
 
@@ -151,9 +152,9 @@ CREATE INDEX idx_link_edges_broken ON link_edges(crawl_run_id, is_broken) WHERE 
 ```
 
 **Acceptance Criteria:**
-- [ ] Migration creates table
-- [ ] Broken link index for fast queries
-- [ ] Supports multiple link types
+- [x] Migration creates table
+- [x] Broken link index for fast queries
+- [x] Supports multiple link types
 
 ---
 
@@ -195,10 +196,10 @@ CREATE INDEX idx_issue_instances_url ON issue_instances(affected_url);
 ```
 
 **Acceptance Criteria:**
-- [ ] issue_types seeded with MVP rules
-- [ ] issue_instances tracks per-page issues
-- [ ] impact_score index for sorted queries
-- [ ] Evidence JSONB stores rule-specific data
+- [x] issue_types seeded with MVP rules
+- [x] issue_instances tracks per-page issues
+- [x] impact_score index for sorted queries
+- [x] Evidence JSONB stores rule-specific data
 
 ---
 
@@ -209,12 +210,12 @@ CREATE INDEX idx_issue_instances_url ON issue_instances(affected_url);
 **Description:** Implement priority queue for crawl URLs.
 
 **Acceptance Criteria:**
-- [ ] `apps/workers/src/semrush_workers/crawl/frontier.py` created
-- [ ] Priority queue with depth-based ordering
-- [ ] URL normalization (trailing slashes, case, sorting params)
-- [ ] Deduplication via seen set
-- [ ] Respects max_depth from settings
-- [ ] Respects max_pages budget
+- [x] `apps/workers/src/semrush_workers/crawl/frontier.py` created
+- [x] Priority queue with depth-based ordering
+- [x] URL normalization (trailing slashes, case, sorting params)
+- [x] Deduplication via seen set
+- [x] Respects max_depth from settings
+- [x] Respects max_pages budget
 
 **Implementation:**
 ```python
@@ -246,13 +247,13 @@ class Frontier:
 **Description:** Parse and respect robots.txt directives.
 
 **Acceptance Criteria:**
-- [ ] `libs/seo/src/semrush_seo/robots.py` created
-- [ ] Fetches and caches robots.txt per domain
-- [ ] Parses Allow/Disallow rules
-- [ ] Matches User-Agent correctly
-- [ ] Extracts Sitemap URLs
-- [ ] Respects crawl-delay if present
-- [ ] Bypass if respect_robots=false in settings
+- [x] `libs/seo/src/semrush_seo/robots.py` created
+- [x] Fetches and caches robots.txt per domain
+- [x] Parses Allow/Disallow rules
+- [x] Matches User-Agent correctly
+- [x] Extracts Sitemap URLs
+- [x] Respects crawl-delay if present
+- [x] Bypass if respect_robots=false in settings
 
 ---
 
@@ -261,12 +262,12 @@ class Frontier:
 **Description:** Parse sitemap.xml and add URLs to frontier.
 
 **Acceptance Criteria:**
-- [ ] `libs/seo/src/semrush_seo/sitemap.py` created
-- [ ] Parses sitemap.xml and sitemap index files
-- [ ] Handles gzip-compressed sitemaps
-- [ ] Extracts URLs and optional lastmod/priority
-- [ ] Adds URLs to frontier with low depth
-- [ ] Respects use_sitemaps setting
+- [x] `libs/seo/src/semrush_seo/sitemap.py` created
+- [x] Parses sitemap.xml and sitemap index files
+- [x] Handles gzip-compressed sitemaps
+- [x] Extracts URLs and optional lastmod/priority
+- [x] Adds URLs to frontier with low depth
+- [x] Respects use_sitemaps setting
 
 ---
 
@@ -275,15 +276,15 @@ class Frontier:
 **Description:** Create async HTTP client for fetching pages.
 
 **Acceptance Criteria:**
-- [ ] `apps/workers/src/semrush_workers/crawl/fetcher.py` created
-- [ ] Uses httpx with async support
-- [ ] Follows redirects (configurable limit)
-- [ ] Captures response time
-- [ ] Sets User-Agent from settings
-- [ ] Respects politeness_delay_ms
-- [ ] Handles timeouts gracefully
-- [ ] Connection pooling per host
-- [ ] Concurrency limited to concurrency_html
+- [x] `apps/workers/src/semrush_workers/crawl/fetcher.py` created
+- [x] Uses httpx with async support
+- [x] Follows redirects (configurable limit)
+- [x] Captures response time
+- [x] Sets User-Agent from settings
+- [x] Respects politeness_delay_ms
+- [x] Handles timeouts gracefully
+- [x] Connection pooling per host
+- [x] Concurrency limited to concurrency_html
 
 **Implementation:**
 ```python
@@ -323,13 +324,13 @@ class Fetcher:
 **Description:** Extract SEO-relevant fields from HTML.
 
 **Acceptance Criteria:**
-- [ ] `libs/seo/src/semrush_seo/extraction.py` implemented
-- [ ] Extracts: title, meta description, canonical, meta robots
-- [ ] Extracts: H1 count, first H1 text
-- [ ] Counts words and text length
-- [ ] Extracts all internal/external links
-- [ ] Identifies broken link patterns
-- [ ] Uses lxml or selectolax for performance
+- [x] `libs/seo/src/semrush_seo/extraction.py` implemented
+- [x] Extracts: title, meta description, canonical, meta robots
+- [x] Extracts: H1 count, first H1 text
+- [x] Counts words and text length
+- [x] Extracts all internal/external links
+- [x] Identifies broken link patterns
+- [x] Uses lxml or selectolax for performance
 
 **Extracted Fields:**
 ```python
@@ -356,14 +357,14 @@ class PageData:
 **Description:** Main crawl loop orchestrating fetch, extract, store.
 
 **Acceptance Criteria:**
-- [ ] `apps/workers/src/semrush_workers/crawl/orchestrator.py` created
-- [ ] Initializes frontier with seed_url + sitemap URLs
-- [ ] Runs async fetch loop with concurrency
-- [ ] Extracts and stores page data
-- [ ] Builds link edges
-- [ ] Tracks crawl stats
-- [ ] Updates crawl_run status
-- [ ] Emits `crawl.page_fetched` events
+- [x] `apps/workers/src/semrush_workers/crawl/orchestrator.py` created
+- [x] Initializes frontier with seed_url + sitemap URLs
+- [x] Runs async fetch loop with concurrency
+- [x] Extracts and stores page data
+- [x] Builds link edges
+- [x] Tracks crawl stats
+- [x] Updates crawl_run status
+- [x] Emits `crawl.page_fetched` events
 
 **Orchestration Flow:**
 1. Load project settings
@@ -383,10 +384,10 @@ class PageData:
 **Description:** Detect pages that need JS rendering due to thin content.
 
 **Acceptance Criteria:**
-- [ ] `apps/workers/src/semrush_workers/crawl/heuristics.py` created
-- [ ] Returns true if: text < min_text_chars (default 200)
-- [ ] Returns true if: word_count < min_word_count (default 50)
-- [ ] Returns true if: body mostly scripts/styles
+- [x] `apps/workers/src/semrush_workers/crawl/heuristics.py` created
+- [x] Returns true if: text < min_text_chars (default 200)
+- [x] Returns true if: word_count < min_word_count (default 50)
+- [x] Returns true if: body mostly scripts/styles
 
 **Implementation:**
 ```python
@@ -403,10 +404,10 @@ def needs_js_thin_dom(page: PageData, settings: ProjectSettings) -> bool:
 **Description:** Detect SPA framework shells that need rendering.
 
 **Acceptance Criteria:**
-- [ ] Detects single root div (#root, #app, #__next)
-- [ ] Detects framework bundles (app.*.js, chunk.*.js, main.*.js)
-- [ ] Detects React/Vue/Angular markers
-- [ ] Low false positive rate
+- [x] Detects single root div (#root, #app, #__next)
+- [x] Detects framework bundles (app.*.js, chunk.*.js, main.*.js)
+- [x] Detects React/Vue/Angular markers
+- [x] Low false positive rate
 
 **Implementation:**
 ```python
@@ -439,10 +440,10 @@ def needs_js_spa_shell(page: PageData, html: str) -> bool:
 **Description:** Check if user-specified selectors are missing.
 
 **Acceptance Criteria:**
-- [ ] Reads required_selectors from project settings
-- [ ] Returns true if any selector not found in HTML
-- [ ] Supports CSS selector syntax
-- [ ] Default selectors: none (user configurable)
+- [x] Reads required_selectors from project settings
+- [x] Returns true if any selector not found in HTML
+- [x] Supports CSS selector syntax
+- [x] Default selectors: none (user configurable)
 
 **Implementation:**
 ```python
@@ -464,9 +465,9 @@ def needs_js_missing_selectors(html: str, settings: ProjectSettings) -> bool:
 **Description:** Detect JS-based redirects.
 
 **Acceptance Criteria:**
-- [ ] Detects window.location assignments
-- [ ] Detects meta refresh with low delay
-- [ ] Returns true if likely redirect
+- [x] Detects window.location assignments
+- [x] Detects meta refresh with low delay
+- [x] Returns true if likely redirect
 
 **Patterns:**
 ```python
@@ -485,12 +486,12 @@ REDIRECT_PATTERNS = [
 **Description:** Apply heuristics to select pages for rendering.
 
 **Acceptance Criteria:**
-- [ ] Queries crawl_pages with was_rendered=false
-- [ ] Applies all heuristics in order
-- [ ] Respects max_rendered_pages budget
-- [ ] Records which heuristic triggered selection
-- [ ] Updates crawl_run status to `selecting_js`
-- [ ] Emits `crawl.js_candidates_selected` event
+- [x] Queries crawl_pages with was_rendered=false
+- [x] Applies all heuristics in order
+- [x] Respects max_rendered_pages budget
+- [x] Records which heuristic triggered selection
+- [x] Updates crawl_run status to `selecting_js`
+- [x] Emits `crawl.js_candidates_selected` event
 
 **Priority Order:**
 1. Required selectors missing (highest priority)
@@ -505,14 +506,14 @@ REDIRECT_PATTERNS = [
 **Description:** Render pages with Playwright under budget constraints.
 
 **Acceptance Criteria:**
-- [ ] `apps/workers/src/semrush_workers/crawl/renderer.py` created
-- [ ] Uses playwright-python with Chromium
-- [ ] Respects max_render_time_ms per page
-- [ ] Respects concurrency_js (separate from HTML)
-- [ ] Captures rendered HTML
-- [ ] Re-extracts page data from rendered HTML
-- [ ] Stores rendered_hash and rendered_artifact_key
-- [ ] Updates was_rendered and render_trigger
+- [x] `apps/workers/src/semrush_workers/crawl/renderer.py` created
+- [x] Uses playwright-python with Chromium
+- [x] Respects max_render_time_ms per page
+- [x] Respects concurrency_js (separate from HTML)
+- [x] Captures rendered HTML
+- [x] Re-extracts page data from rendered HTML
+- [x] Stores rendered_hash and rendered_artifact_key
+- [x] Updates was_rendered and render_trigger
 
 **Implementation:**
 ```python
@@ -544,13 +545,13 @@ class Renderer:
 **Description:** Process JS candidates through Playwright.
 
 **Acceptance Criteria:**
-- [ ] Loads candidate pages up to budget
-- [ ] Renders pages concurrently (bounded)
-- [ ] Re-extracts and updates crawl_page records
-- [ ] Stores rendered HTML to MinIO
-- [ ] Updates crawl_run status to `rendering_js`
-- [ ] Emits `crawl.page_rendered` for each page
-- [ ] Updates status to `analyzing` when complete
+- [x] Loads candidate pages up to budget
+- [x] Renders pages concurrently (bounded)
+- [x] Re-extracts and updates crawl_page records
+- [x] Stores rendered HTML to MinIO
+- [x] Updates crawl_run status to `rendering_js`
+- [x] Emits `crawl.page_rendered` for each page
+- [x] Updates status to `analyzing` when complete
 
 ---
 
@@ -591,9 +592,9 @@ class Renderer:
 - `orphan_page` - In sitemap but not internally linked
 
 **Acceptance Criteria:**
-- [ ] Migration seeds all issue types
-- [ ] Each has category, severity, name, description, recommendation
-- [ ] Idempotent (can re-run without duplicates)
+- [x] Migration seeds all issue types
+- [x] Each has category, severity, name, description, recommendation
+- [x] Idempotent (can re-run without duplicates)
 
 ---
 
@@ -602,10 +603,10 @@ class Renderer:
 **Description:** Create rule functions for each issue type.
 
 **Acceptance Criteria:**
-- [ ] `apps/workers/src/semrush_workers/rules/evaluators.py` created
-- [ ] Each rule returns (applies: bool, confidence: float, evidence: dict)
-- [ ] Rules are pure functions (no side effects)
-- [ ] Evidence includes relevant data for debugging
+- [x] `apps/workers/src/semrush_workers/rules/evaluators.py` created
+- [x] Each rule returns (applies: bool, confidence: float, evidence: dict)
+- [x] Rules are pure functions (no side effects)
+- [x] Evidence includes relevant data for debugging
 
 **Example Rule:**
 ```python
@@ -635,13 +636,13 @@ def rule_title_too_long(page: CrawlPage) -> RuleResult:
 **Description:** Run all rules against crawl pages and store issues.
 
 **Acceptance Criteria:**
-- [ ] `apps/workers/src/semrush_workers/rules/engine.py` created
-- [ ] Loads all enabled rules
-- [ ] Iterates all crawl_pages for the run
-- [ ] Evaluates each rule against each page
-- [ ] Creates issue_instances for positive results
-- [ ] Batches database writes for performance
-- [ ] Emits `rules.completed` event
+- [x] `apps/workers/src/semrush_workers/rules/engine.py` created
+- [x] Loads all enabled rules
+- [x] Iterates all crawl_pages for the run
+- [x] Evaluates each rule against each page
+- [x] Creates issue_instances for positive results
+- [x] Batches database writes for performance
+- [x] Emits `rules.completed` event
 
 **Implementation:**
 ```python
@@ -675,11 +676,11 @@ class RulesEngine:
 **Description:** Detect broken internal links from link edges.
 
 **Acceptance Criteria:**
-- [ ] Queries link_edges where is_internal=true
-- [ ] Joins with crawl_pages to get target status
-- [ ] Creates issues for 4xx/5xx targets
-- [ ] Evidence includes source URL, target URL, status code
-- [ ] Counts unique broken URLs, not duplicate edges
+- [x] Queries link_edges where is_internal=true
+- [x] Joins with crawl_pages to get target status
+- [x] Creates issues for 4xx/5xx targets
+- [x] Evidence includes source URL, target URL, status code
+- [x] Counts unique broken URLs, not duplicate edges
 
 ---
 
@@ -688,10 +689,10 @@ class RulesEngine:
 **Description:** Find pages only in sitemap (not internally linked).
 
 **Acceptance Criteria:**
-- [ ] Queries pages discovered via sitemap
-- [ ] Checks if any internal link points to them
-- [ ] Creates issues for orphan pages
-- [ ] Low severity (informational)
+- [x] Queries pages discovered via sitemap
+- [x] Checks if any internal link points to them
+- [x] Creates issues for orphan pages
+- [x] Low severity (informational)
 
 ---
 
@@ -702,11 +703,11 @@ class RulesEngine:
 **Description:** Calculate traffic weight from canonical facts.
 
 **Acceptance Criteria:**
-- [ ] Queries search_fact_daily and analytics_fact_daily
-- [ ] Aggregates last 28 days by page_url
-- [ ] Computes: impressions, clicks, sessions, conversions
-- [ ] Returns normalized traffic_weight (0-1 scale)
-- [ ] Falls back to 0.5 if no data
+- [x] Queries search_fact_daily and analytics_fact_daily
+- [x] Aggregates last 28 days by page_url
+- [x] Computes: impressions, clicks, sessions, conversions
+- [x] Returns normalized traffic_weight (0-1 scale)
+- [x] Falls back to 0.5 if no data
 
 **Formula:**
 ```python
@@ -725,10 +726,10 @@ traffic_weight = normalize(
 **Description:** Update issue_instances with impact scores.
 
 **Acceptance Criteria:**
-- [ ] `impact_score = severity * confidence * traffic_weight`
-- [ ] Updates all issue_instances for crawl_run
-- [ ] Handles pages without traffic data gracefully
-- [ ] Runs after rules engine completes
+- [x] `impact_score = severity * confidence * traffic_weight`
+- [x] Updates all issue_instances for crawl_run
+- [x] Handles pages without traffic data gracefully
+- [x] Runs after rules engine completes
 
 **Implementation:**
 ```python
@@ -752,11 +753,11 @@ async def compute_impact_scores(crawl_run_id: UUID, project_id: UUID):
 **Description:** Implement issue listing and filtering.
 
 **Acceptance Criteria:**
-- [ ] `GET /crawls/{id}/issues` lists issues for a crawl
-- [ ] Supports sort by impact, severity, category
-- [ ] Supports filter by issue_type, severity
-- [ ] Pagination with limit/offset
-- [ ] Returns issue details with evidence
+- [x] `GET /crawls/{id}/issues` lists issues for a crawl
+- [x] Supports sort by impact, severity, category
+- [x] Supports filter by issue_type, severity
+- [x] Pagination with limit/offset
+- [x] Returns issue details with evidence
 
 ---
 
@@ -765,10 +766,10 @@ async def compute_impact_scores(crawl_run_id: UUID, project_id: UUID):
 **Description:** Get latest issues for a project.
 
 **Acceptance Criteria:**
-- [ ] `GET /projects/{id}/issues` returns latest crawl issues
-- [ ] Sorted by impact_score DESC by default
-- [ ] Supports limit parameter
-- [ ] Returns 404 if no crawl runs exist
+- [x] `GET /projects/{id}/issues` returns latest crawl issues
+- [x] Sorted by impact_score DESC by default
+- [x] Supports limit parameter
+- [x] Returns 404 if no crawl runs exist
 
 ---
 
@@ -779,11 +780,11 @@ async def compute_impact_scores(crawl_run_id: UUID, project_id: UUID):
 **Description:** Compare issues between two crawl runs.
 
 **Acceptance Criteria:**
-- [ ] Finds new issues (in B, not in A)
-- [ ] Finds resolved issues (in A, not in B)
-- [ ] Finds changed issues (severity/confidence changed)
-- [ ] Matches by (issue_type_id, affected_url)
-- [ ] Stores diff results for API
+- [x] Finds new issues (in B, not in A)
+- [x] Finds resolved issues (in A, not in B)
+- [x] Finds changed issues (severity/confidence changed)
+- [x] Matches by (issue_type_id, affected_url)
+- [x] Stores diff results for API
 
 **Implementation:**
 ```python
@@ -811,10 +812,10 @@ async def compute_diff(run_a: UUID, run_b: UUID) -> DiffResult:
 **Description:** Expose issue diff via API.
 
 **Acceptance Criteria:**
-- [ ] `GET /projects/{id}/issues/diffs?from_crawl_run_id=...&to_crawl_run_id=...`
-- [ ] Returns added, resolved, changed arrays
-- [ ] 400 if crawl runs not from same project
-- [ ] 404 if crawl runs don't exist
+- [x] `GET /projects/{id}/issues/diffs?from_crawl_run_id=...&to_crawl_run_id=...`
+- [x] Returns added, resolved, changed arrays
+- [x] 400 if crawl runs not from same project
+- [x] 404 if crawl runs don't exist
 
 ---
 
@@ -823,10 +824,10 @@ async def compute_diff(run_a: UUID, run_b: UUID) -> DiffResult:
 **Description:** Optionally persist diff results.
 
 **Acceptance Criteria:**
-- [ ] Create `issue_diffs` table (optional)
-- [ ] Store diff after each crawl
-- [ ] Enable historical diff queries
-- [ ] Keep last N diffs per project (configurable)
+- [x] Create `issue_diffs` table (optional)
+- [x] Store diff after each crawl
+- [x] Enable historical diff queries
+- [x] Keep last N diffs per project (configurable)
 
 ---
 
@@ -868,9 +869,9 @@ CREATE INDEX idx_alerts_severity ON alerts(project_id, severity);
 ```
 
 **Acceptance Criteria:**
-- [ ] Migration creates both tables
-- [ ] Supports multiple alert types
-- [ ] Payload stores type-specific data
+- [x] Migration creates both tables
+- [x] Supports multiple alert types
+- [x] Payload stores type-specific data
 
 ---
 
@@ -879,10 +880,10 @@ CREATE INDEX idx_alerts_severity ON alerts(project_id, severity);
 **Description:** Detect significant drops in search visibility.
 
 **Acceptance Criteria:**
-- [ ] Compares recent period to previous period
-- [ ] Triggers if drop > threshold (default 30%)
-- [ ] Works at query and page level
-- [ ] Creates alert with severity based on magnitude
+- [x] Compares recent period to previous period
+- [x] Triggers if drop > threshold (default 30%)
+- [x] Works at query and page level
+- [x] Creates alert with severity based on magnitude
 
 **Implementation:**
 ```python
@@ -913,10 +914,10 @@ async def detect_visibility_drops(project_id: UUID, threshold_pct: float = 30):
 **Description:** Find high-impression, low-CTR queries.
 
 **Acceptance Criteria:**
-- [ ] Queries search_fact_daily for high impressions
-- [ ] Flags queries with CTR below expected curve
-- [ ] Creates info-level alerts
-- [ ] Includes suggested action in payload
+- [x] Queries search_fact_daily for high impressions
+- [x] Flags queries with CTR below expected curve
+- [x] Creates info-level alerts
+- [x] Includes suggested action in payload
 
 **Expected CTR by Position:**
 - Position 1: ~30%
@@ -931,10 +932,10 @@ async def detect_visibility_drops(project_id: UUID, threshold_pct: float = 30):
 **Description:** Detect significant issue count increases.
 
 **Acceptance Criteria:**
-- [ ] Compares issue counts between crawls
-- [ ] Triggers if new issues > threshold (default 10)
-- [ ] Creates alert with list of new issue types
-- [ ] Runs after crawl analysis completes
+- [x] Compares issue counts between crawls
+- [x] Triggers if new issues > threshold (default 10)
+- [x] Creates alert with list of new issue types
+- [x] Runs after crawl analysis completes
 
 ---
 
@@ -943,12 +944,12 @@ async def detect_visibility_drops(project_id: UUID, threshold_pct: float = 30):
 **Description:** Run alert detection on schedule.
 
 **Acceptance Criteria:**
-- [ ] Runs daily after integration sync
-- [ ] Runs after each crawl completes
-- [ ] Queries active alert_rules per project
-- [ ] Executes appropriate detector
-- [ ] Stores alerts in database
-- [ ] Emits `alert.fired` events
+- [x] Runs daily after integration sync
+- [x] Runs after each crawl completes
+- [x] Queries active alert_rules per project
+- [x] Executes appropriate detector
+- [x] Stores alerts in database
+- [x] Emits `alert.fired` events
 
 ---
 
@@ -957,51 +958,51 @@ async def detect_visibility_drops(project_id: UUID, threshold_pct: float = 30):
 **Description:** Implement alert listing and management.
 
 **Acceptance Criteria:**
-- [ ] `GET /projects/{id}/alerts` lists alerts
-- [ ] Supports filter by severity, kind
-- [ ] Supports pagination
-- [ ] `POST /projects/{id}/alerts/rules` creates/updates rules
-- [ ] Returns alert details with payload
+- [x] `GET /projects/{id}/alerts` lists alerts
+- [x] Supports filter by severity, kind
+- [x] Supports pagination
+- [x] `POST /projects/{id}/alerts/rules` creates/updates rules
+- [x] Returns alert details with payload
 
 ---
 
 ## Verification Checklist
 
 ### Crawl Engine
-- [ ] Crawl starts from seed_url
-- [ ] Sitemap URLs added to frontier
-- [ ] robots.txt respected
-- [ ] Pages fetched with correct User-Agent
-- [ ] Politeness delay applied
-- [ ] max_pages budget enforced
-- [ ] max_depth limit enforced
-- [ ] Page data extracted correctly
-- [ ] Link edges captured
+- [x] Crawl starts from seed_url
+- [x] Sitemap URLs added to frontier
+- [x] robots.txt respected
+- [x] Pages fetched with correct User-Agent
+- [x] Politeness delay applied
+- [x] max_pages budget enforced
+- [x] max_depth limit enforced
+- [x] Page data extracted correctly
+- [x] Link edges captured
 
 ### Hybrid Rendering
-- [ ] Thin DOM triggers rendering
-- [ ] SPA shell triggers rendering
-- [ ] Missing selectors trigger rendering
-- [ ] max_rendered_pages budget enforced
-- [ ] max_render_time_ms timeout works
-- [ ] Rendered HTML re-extracted
-- [ ] render_trigger recorded
+- [x] Thin DOM triggers rendering
+- [x] SPA shell triggers rendering
+- [x] Missing selectors trigger rendering
+- [x] max_rendered_pages budget enforced
+- [x] max_render_time_ms timeout works
+- [x] Rendered HTML re-extracted
+- [x] render_trigger recorded
 
 ### Rules & Issues
-- [ ] All MVP rules implemented
-- [ ] Issues created with evidence
-- [ ] Impact scores computed
-- [ ] Broken links detected
-- [ ] Orphan pages detected
-- [ ] API returns sorted issues
+- [x] All MVP rules implemented
+- [x] Issues created with evidence
+- [x] Impact scores computed
+- [x] Broken links detected
+- [x] Orphan pages detected
+- [x] API returns sorted issues
 
 ### Diffs & Alerts
-- [ ] Diff shows added issues
-- [ ] Diff shows resolved issues
-- [ ] Visibility drop alerts fire
-- [ ] CTR opportunity alerts fire
-- [ ] Regression alerts fire
-- [ ] Alert API returns data
+- [x] Diff shows added issues
+- [x] Diff shows resolved issues
+- [x] Visibility drop alerts fire
+- [x] CTR opportunity alerts fire
+- [x] Regression alerts fire
+- [x] Alert API returns data
 
 ---
 

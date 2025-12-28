@@ -12,11 +12,11 @@ This document tracks overall progress across all sprints. Each task references i
 |--------|--------|-------|-----------|----------|
 | Sprint 0: Foundation | Complete | 25 | 25 | 100% |
 | Sprint 1: Integrations | Complete | 24 | 24 | 100% |
-| Sprint 2: Crawl & Audit | Not Started | 31 | 0 | 0% |
+| Sprint 2: Crawl & Audit | Complete | 31 | 31 | 100% |
 | Sprint 3: Backlinks | Not Started | 22 | 0 | 0% |
 | Sprint 4: Reports | Not Started | 22 | 0 | 0% |
 | Sprint 5: Hardening | Not Started | 18 | 0 | 0% |
-| **Total** | | **142** | **49** | **35%** |
+| **Total** | | **142** | **80** | **56%** |
 
 ---
 
@@ -136,70 +136,70 @@ This document tracks overall progress across all sprints. Each task references i
 
 ## Sprint 2: Hybrid Crawl & Site Audit
 
-**Status:** Not Started | **Doc:** [SPRINT-2-CRAWL-AUDIT.md](./SPRINT-2-CRAWL-AUDIT.md)
+**Status:** Complete | **Doc:** [SPRINT-2-CRAWL-AUDIT.md](./SPRINT-2-CRAWL-AUDIT.md)
 
 ### Epic 2.1: Crawl Infrastructure
 | Task | Description | Status | Assignee | Notes |
 |------|-------------|--------|----------|-------|
-| 2.1.1 | Create crawl_runs table | [ ] | | |
-| 2.1.2 | Create crawl_pages table | [ ] | | |
-| 2.1.3 | Create link_edges table | [ ] | | |
-| 2.1.4 | Create issue tables | [ ] | | |
+| 2.1.1 | Create crawl_runs table | [x] | Agent | 004_crawl_infrastructure.py |
+| 2.1.2 | Create crawl_pages table | [x] | Agent | With SEO fields, hashes, artifacts |
+| 2.1.3 | Create link_edges table | [x] | Agent | With broken link tracking |
+| 2.1.4 | Create issue tables | [x] | Agent | issue_types seeded with 25 MVP issues |
 
 ### Epic 2.2: HTML Crawler
 | Task | Description | Status | Assignee | Notes |
 |------|-------------|--------|----------|-------|
-| 2.2.1 | Create URL frontier manager | [ ] | | |
-| 2.2.2 | Implement robots.txt parser | [ ] | | |
-| 2.2.3 | Implement sitemap parser | [ ] | | |
-| 2.2.4 | Implement HTTP fetcher | [ ] | | |
-| 2.2.5 | Implement HTML extractor | [ ] | | |
-| 2.2.6 | Build crawl orchestrator | [ ] | | |
+| 2.2.1 | Create URL frontier manager | [x] | Agent | crawl/frontier.py (32 tests) |
+| 2.2.2 | Implement robots.txt parser | [x] | Agent | libs/seo/robots.py |
+| 2.2.3 | Implement sitemap parser | [x] | Agent | libs/seo/sitemap.py |
+| 2.2.4 | Implement HTTP fetcher | [x] | Agent | crawl/fetcher.py (23 tests) |
+| 2.2.5 | Implement HTML extractor | [x] | Agent | libs/seo/extraction.py |
+| 2.2.6 | Build crawl orchestrator | [x] | Agent | crawl/orchestrator.py (21 tests) |
 
 ### Epic 2.3: Hybrid JS Rendering
 | Task | Description | Status | Assignee | Notes |
 |------|-------------|--------|----------|-------|
-| 2.3.1 | Implement thin DOM heuristic | [ ] | | |
-| 2.3.2 | Implement SPA shell heuristic | [ ] | | |
-| 2.3.3 | Implement selectors heuristic | [ ] | | |
-| 2.3.4 | Implement redirect heuristic | [ ] | | |
-| 2.3.5 | Build JS candidate selector | [ ] | | |
-| 2.3.6 | Implement Playwright renderer | [ ] | | |
-| 2.3.7 | Build render orchestrator | [ ] | | |
+| 2.3.1 | Implement thin DOM heuristic | [x] | Agent | crawl/heuristics.py (36 tests) |
+| 2.3.2 | Implement SPA shell heuristic | [x] | Agent | SPA_ROOT_IDS detection |
+| 2.3.3 | Implement selectors heuristic | [x] | Agent | CSS selector matching |
+| 2.3.4 | Implement redirect heuristic | [x] | Agent | JS redirect patterns |
+| 2.3.5 | Build JS candidate selector | [x] | Agent | crawl/js_selector.py (17 tests) |
+| 2.3.6 | Implement Playwright renderer | [x] | Agent | crawl/renderer.py (14 tests) |
+| 2.3.7 | Build render orchestrator | [x] | Agent | crawl/render_orchestrator.py (12 tests) |
 
 ### Epic 2.4: Rules Engine
 | Task | Description | Status | Assignee | Notes |
 |------|-------------|--------|----------|-------|
-| 2.4.1 | Seed issue types | [ ] | | |
-| 2.4.2 | Implement rule evaluators | [ ] | | |
-| 2.4.3 | Implement rules engine | [ ] | | |
-| 2.4.4 | Implement broken link detection | [ ] | | |
-| 2.4.5 | Implement orphan page detection | [ ] | | |
+| 2.4.1 | Seed issue types | [x] | Agent | 25 MVP issue types in migration |
+| 2.4.2 | Implement rule evaluators | [x] | Agent | rules/evaluators.py (68 tests) |
+| 2.4.3 | Implement rules engine | [x] | Agent | rules/engine.py (14 tests) |
+| 2.4.4 | Implement broken link detection | [x] | Agent | rules/broken_links.py (12 tests) |
+| 2.4.5 | Implement orphan page detection | [x] | Agent | rules/orphan_pages.py (12 tests) |
 
 ### Epic 2.5: Impact Scoring
 | Task | Description | Status | Assignee | Notes |
 |------|-------------|--------|----------|-------|
-| 2.5.1 | Implement traffic weight computation | [ ] | | |
-| 2.5.2 | Compute and store impact scores | [ ] | | |
-| 2.5.3 | Create issue API endpoints | [ ] | | |
-| 2.5.4 | Create project issues endpoint | [ ] | | |
+| 2.5.1 | Implement traffic weight computation | [x] | Agent | scoring/traffic_weight.py (15 tests) |
+| 2.5.2 | Compute and store impact scores | [x] | Agent | scoring/impact.py (12 tests) |
+| 2.5.3 | Create issue API endpoints | [x] | Agent | routers/issues.py |
+| 2.5.4 | Create project issues endpoint | [x] | Agent | GET /projects/{id}/issues |
 
 ### Epic 2.6: Diff Engine
 | Task | Description | Status | Assignee | Notes |
 |------|-------------|--------|----------|-------|
-| 2.6.1 | Implement issue diff computation | [ ] | | |
-| 2.6.2 | Implement diff API endpoint | [ ] | | |
-| 2.6.3 | Store diff snapshots | [ ] | | |
+| 2.6.1 | Implement issue diff computation | [x] | Agent | diff/diff_engine.py (14 tests) |
+| 2.6.2 | Implement diff API endpoint | [x] | Agent | routers/diffs.py |
+| 2.6.3 | Store diff snapshots | [x] | Agent | Via DiffResult model |
 
 ### Epic 2.7: Visibility & Alerts
 | Task | Description | Status | Assignee | Notes |
 |------|-------------|--------|----------|-------|
-| 2.7.1 | Create alerts table | [ ] | | |
-| 2.7.2 | Implement visibility drop detector | [ ] | | |
-| 2.7.3 | Implement CTR opportunity detector | [ ] | | |
-| 2.7.4 | Implement regression detector | [ ] | | |
-| 2.7.5 | Build alert scheduler | [ ] | | |
-| 2.7.6 | Create alert API endpoints | [ ] | | |
+| 2.7.1 | Create alerts table | [x] | Agent | alert_rules + alerts tables |
+| 2.7.2 | Implement visibility drop detector | [x] | Agent | alerts/visibility_detector.py (12 tests) |
+| 2.7.3 | Implement CTR opportunity detector | [x] | Agent | alerts/ctr_detector.py (15 tests) |
+| 2.7.4 | Implement regression detector | [x] | Agent | alerts/regression_detector.py (12 tests) |
+| 2.7.5 | Build alert scheduler | [x] | Agent | alerts/scheduler.py (7 tests) |
+| 2.7.6 | Create alert API endpoints | [x] | Agent | routers/alerts.py |
 
 ---
 
@@ -344,7 +344,7 @@ This document tracks overall progress across all sprints. Each task references i
 ### Epic 5.4: Testing
 | Task | Description | Status | Assignee | Notes |
 |------|-------------|--------|----------|-------|
-| 5.4.1 | Unit test coverage | [~] | Agent | 419 tests passing |
+| 5.4.1 | Unit test coverage | [~] | Agent | 951 tests passing |
 | 5.4.2 | Integration tests | [ ] | | |
 | 5.4.3 | End-to-end tests | [ ] | | |
 | 5.4.4 | Load testing | [ ] | | |
@@ -371,6 +371,7 @@ This document tracks overall progress across all sprints. Each task references i
 
 | Date | Change |
 |------|--------|
+| 2025-12-28 | Sprint 2 marked complete (951 tests passing) |
 | 2025-12-28 | Sprint 0 and Sprint 1 marked complete (419 tests passing) |
 | 2025-01-28 | Initial task tracker created |
 
