@@ -1,0 +1,33 @@
+version: "3.9"
+
+# Override file to add ClickHouse service for Common Crawl ingestion
+# Usage: docker compose -f docker-compose.yml -f docker-compose.clickhouse.yml up -d
+
+services:
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    container_name: openahrush-clickhouse
+    environment:
+      CLICKHOUSE_DB: openahrush
+      CLICKHOUSE_USER: default
+      CLICKHOUSE_PASSWORD: default
+    ports:
+      - "8123:8123"  # HTTP interface
+      - "9000:9000"  # Native interface
+      - "9440:9440"  # HTTPS interface
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+      - ../clickhouse/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8123/ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - openahrush
+    restart: unless-stopped
+
+volumes:
+  clickhouse_data:
+    driver: local

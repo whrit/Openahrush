@@ -10,11 +10,8 @@ authors = [{ name = "whrit" }]
 # Root project has no runtime deps; packages live in apps/ and libs/
 dependencies = []
 
-[tool.uv]
-# uv workspace: editable installs for local dev
-workspace = true
-
 [tool.uv.workspace]
+# uv workspace: editable installs for local dev
 members = [
   "libs/core",
   "libs/seo",
@@ -27,7 +24,10 @@ members = [
 ]
 
 [tool.uv.sources]
-# If you later want to pin workspace packages as sources, keep this section.
+# Workspace packages - these resolve to local editable installs
+semrush-core = { workspace = true }
+semrush-seo = { workspace = true }
+semrush-backlinks = { workspace = true }
 
 [tool.ruff]
 target-version = "py312"
