@@ -336,7 +336,7 @@ class TestRenderOrchestratorFullFlow:
         orchestrator = RenderOrchestrator()
 
         # Mock all components
-        mock_db = AsyncMock()
+        _mock_db = AsyncMock()
         mock_storage = AsyncMock()
         mock_storage.put_object = AsyncMock(return_value="key")
         orchestrator._storage = mock_storage

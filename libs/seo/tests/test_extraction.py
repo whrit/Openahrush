@@ -13,15 +13,13 @@ TDD tests covering:
 
 from __future__ import annotations
 
-import pytest
-
 from semrush_seo.extraction import (
     Link,
     PageData,
-    extract_page_data,
+    compute_html_hash,
     extract_links,
     extract_meta_tags,
-    compute_html_hash,
+    extract_page_data,
 )
 
 

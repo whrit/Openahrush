@@ -960,6 +960,11 @@ dev = [
     { name = "respx" },
 ]
 
+[package.dev-dependencies]
+dev = [
+    { name = "respx" },
+]
+
 [package.metadata]
 requires-dist = [
     { name = "httpx", specifier = ">=0.26" },
@@ -971,6 +976,9 @@ requires-dist = [
     { name = "semrush-core", editable = "libs/core" },
 ]
 provides-extras = ["dev"]
+
+[package.metadata.requires-dev]
+dev = [{ name = "respx", specifier = ">=0.22.0" }]
 
 [[package]]
 name = "semrush-reports"

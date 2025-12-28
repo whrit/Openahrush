@@ -12,16 +12,15 @@ TDD tests covering:
 from __future__ import annotations
 
 import gzip
-from unittest.mock import AsyncMock, patch
+from unittest.mock import patch
 
 import pytest
-
 from semrush_seo.sitemap import (
     SitemapEntry,
     SitemapParser,
     SitemapSettings,
-    parse_sitemap_xml,
     parse_sitemap_index,
+    parse_sitemap_xml,
 )
 
 

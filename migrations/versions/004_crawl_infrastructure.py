@@ -1,21 +1,24 @@
-"""Crawl infrastructure tables.
+"""Crawl infrastructure and alerts tables.
 
 Revision ID: 004_crawl_infrastructure
 Revises: 003_fact_tables
 Create Date: 2024-12-28
 
-Creates the crawl infrastructure tables for Epic 2.1:
+Creates the crawl infrastructure tables for Sprint 2:
 - crawl_runs: Track crawl jobs with status, timing, and configuration
 - crawl_pages: Per-page crawl results with SEO fields and artifacts
 - link_edges: Internal link graph for link analysis
 - issue_types: Issue taxonomy (seeded with MVP issues)
 - issue_instances: Per-page issues with confidence and impact scores
+- alert_rules: User-configured alert rules for visibility, CTR, and regression
+- alerts: Generated alerts based on rules
 
 These tables enable the core site audit functionality including:
 - HTML-first crawling with JS rendering fallback
 - Content extraction and hash comparison
 - Link graph analysis and broken link detection
 - SEO issue detection and reporting
+- Visibility drop, CTR opportunity, and regression alerting
 """
 
 from collections.abc import Sequence
@@ -541,8 +544,143 @@ def upgrade() -> None:
         unique=False,
     )
 
+    # Create alert_rules table
+    # User-configured alert rules for visibility, CTR, and regression alerts
+    op.create_table(
+        "alert_rules",
+        sa.Column(
+            "id",
+            postgresql.UUID(as_uuid=True),
+            server_default=sa.text("gen_random_uuid()"),
+            nullable=False,
+        ),
+        sa.Column("project_id", postgresql.UUID(as_uuid=True), nullable=False),
+        sa.Column("rule_type", sa.Text(), nullable=False),
+        sa.Column(
+            "config",
+            postgresql.JSONB(astext_type=sa.Text()),
+            server_default=sa.text("'{}'::jsonb"),
+            nullable=False,
+        ),
+        sa.Column(
+            "is_enabled",
+            sa.Boolean(),
+            server_default=sa.text("true"),
+            nullable=False,
+        ),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+        sa.ForeignKeyConstraint(
+            ["project_id"],
+            ["projects.id"],
+            name=op.f("fk_alert_rules_project_id_projects"),
+            ondelete="CASCADE",
+        ),
+        sa.PrimaryKeyConstraint("id", name=op.f("pk_alert_rules")),
+    )
+
+    # Indexes for alert_rules
+    op.create_index(
+        "idx_alert_rules_project_id",
+        "alert_rules",
+        ["project_id"],
+        unique=False,
+    )
+    op.create_index(
+        "idx_alert_rules_type",
+        "alert_rules",
+        ["rule_type"],
+        unique=False,
+    )
+
+    # Create alerts table
+    # Generated alerts based on rules (visibility drops, CTR opportunities, regressions)
+    op.create_table(
+        "alerts",
+        sa.Column(
+            "id",
+            postgresql.UUID(as_uuid=True),
+            server_default=sa.text("gen_random_uuid()"),
+            nullable=False,
+        ),
+        sa.Column("project_id", postgresql.UUID(as_uuid=True), nullable=False),
+        sa.Column("alert_rule_id", postgresql.UUID(as_uuid=True), nullable=True),
+        sa.Column("kind", sa.Text(), nullable=False),
+        sa.Column("entity_type", sa.Text(), nullable=False),
+        sa.Column("entity_key", sa.Text(), nullable=False),
+        sa.Column("severity", sa.Text(), nullable=False),
+        sa.Column(
+            "payload",
+            postgresql.JSONB(astext_type=sa.Text()),
+            server_default=sa.text("'{}'::jsonb"),
+            nullable=False,
+        ),
+        sa.Column(
+            "is_acknowledged",
+            sa.Boolean(),
+            server_default=sa.text("false"),
+            nullable=False,
+        ),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+        sa.ForeignKeyConstraint(
+            ["project_id"],
+            ["projects.id"],
+            name=op.f("fk_alerts_project_id_projects"),
+            ondelete="CASCADE",
+        ),
+        sa.ForeignKeyConstraint(
+            ["alert_rule_id"],
+            ["alert_rules.id"],
+            name=op.f("fk_alerts_alert_rule_id_alert_rules"),
+            ondelete="SET NULL",
+        ),
+        sa.PrimaryKeyConstraint("id", name=op.f("pk_alerts")),
+    )
+
+    # Indexes for alerts
+    op.create_index(
+        "idx_alerts_project_created",
+        "alerts",
+        ["project_id", "created_at"],
+        unique=False,
+        postgresql_using="btree",
+        postgresql_ops={"created_at": "DESC"},
+    )
+    op.create_index(
+        "idx_alerts_project_severity",
+        "alerts",
+        ["project_id", "severity"],
+        unique=False,
+    )
+    op.create_index(
+        "idx_alerts_kind",
+        "alerts",
+        ["kind"],
+        unique=False,
+    )
+
 
 def downgrade() -> None:
+    # Drop alerts table and indexes
+    op.drop_index("idx_alerts_kind", table_name="alerts")
+    op.drop_index("idx_alerts_project_severity", table_name="alerts")
+    op.drop_index("idx_alerts_project_created", table_name="alerts")
+    op.drop_table("alerts")
+
+    # Drop alert_rules table and indexes
+    op.drop_index("idx_alert_rules_type", table_name="alert_rules")
+    op.drop_index("idx_alert_rules_project_id", table_name="alert_rules")
+    op.drop_table("alert_rules")
+
     # Drop issue_instances table and indexes
     op.drop_index("idx_issue_instances_affected_url", table_name="issue_instances")
     op.drop_index("idx_issue_instances_impact_score", table_name="issue_instances")

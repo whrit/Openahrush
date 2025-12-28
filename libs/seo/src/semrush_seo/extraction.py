@@ -14,7 +14,6 @@ Provides extraction of SEO-relevant data from HTML including:
 from __future__ import annotations
 
 import hashlib
-import re
 from dataclasses import dataclass, field
 from urllib.parse import urljoin, urlparse
 

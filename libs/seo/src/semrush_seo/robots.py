@@ -11,7 +11,6 @@ Provides parsing and caching of robots.txt files with:
 
 from __future__ import annotations
 
-import fnmatch
 import re
 import time
 from dataclasses import dataclass, field

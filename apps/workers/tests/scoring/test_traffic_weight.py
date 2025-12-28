@@ -236,7 +236,7 @@ class TestGetTrafficWeightsForProject:
         )
 
         # All weights should be between 0 and 1
-        for url, weight in weights.items():
+        for _url, weight in weights.items():
             assert 0.0 <= weight <= 1.0
 
         # High traffic page should have highest weight
