@@ -11,11 +11,30 @@ Provides:
 - OAuth2 authentication flows
 - Data sync and normalization
 - Token refresh and management
-
-Note: This is a placeholder package. Full implementation pending.
 """
 
+from semrush_integrations.oauth.base import OAuthProvider, OAuthTokens, OAuthUserInfo
+from semrush_integrations.oauth.google import GoogleOAuthProvider
+from semrush_integrations.oauth.microsoft import MicrosoftOAuthProvider
+from semrush_integrations.services.token_service import TokenService
+
 __version__ = "0.1.0"
+
+__all__ = [
+    # OAuth base
+    "OAuthProvider",
+    "OAuthTokens",
+    "OAuthUserInfo",
+    # OAuth providers
+    "GoogleOAuthProvider",
+    "MicrosoftOAuthProvider",
+    # Services
+    "TokenService",
+    # Utilities
+    "register_provider",
+    "get_provider",
+    "PROVIDERS",
+]
 
 # Integration providers will be registered here
 PROVIDERS: dict[str, type] = {}

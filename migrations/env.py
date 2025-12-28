@@ -18,11 +18,19 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 # Import Base metadata and all models for autogenerate
 from semrush_core.models import Base
 from semrush_core.models import (  # noqa: F401 - imports needed for autogenerate
+    # Core models
+    AnalyticsFactDaily,
     Competitor,
     IntegrationAccount,
+    IntegrationMapping,
+    IntegrationProperty,
+    IntegrationToken,
+    LinkFact,
     Project,
     ProjectSettings,
+    SearchFactDaily,
     Site,
+    SyncRun,
     User,
 )
 

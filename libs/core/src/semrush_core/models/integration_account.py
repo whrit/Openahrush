@@ -19,6 +19,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from semrush_core.models.base import Base, TimestampMixin, UUIDMixin
 
 if TYPE_CHECKING:
+    from semrush_core.models.integration_property import IntegrationProperty
+    from semrush_core.models.integration_token import IntegrationToken
     from semrush_core.models.user import User
 
 
@@ -113,6 +115,15 @@ class IntegrationAccount(Base, UUIDMixin, TimestampMixin):
     # Relationships
     user: Mapped["User"] = relationship(
         back_populates="integration_accounts",
+    )
+    token: Mapped["IntegrationToken | None"] = relationship(
+        back_populates="account",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
+    properties: Mapped[list["IntegrationProperty"]] = relationship(
+        back_populates="account",
+        cascade="all, delete-orphan",
     )
 
     def is_token_expired(self) -> bool:
