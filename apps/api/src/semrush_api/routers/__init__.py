@@ -7,16 +7,30 @@ Contains all FastAPI routers organized by resource:
 - settings: Project settings management
 - projects: Project management
 - integrations: Third-party integrations (GSC, GA4, etc.)
+- diffs: Issue diff comparison
+- alerts: Alert management
 - crawls: Site crawl operations
 - reports: Report generation and export
 """
 
-from semrush_api.routers import auth, health, integrations, projects, settings
+from semrush_api.routers import (
+    alerts,
+    auth,
+    diffs,
+    health,
+    integrations,
+    issues,
+    projects,
+    settings,
+)
 
 __all__ = [
+    "alerts",
     "auth",
+    "diffs",
     "health",
     "integrations",
+    "issues",
     "projects",
     "settings",
 ]

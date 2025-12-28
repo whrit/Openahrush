@@ -234,8 +234,9 @@ def _create_token(
     if extra_claims:
         claims.update(extra_claims)
 
-    return jwt.encode(
+    token: str = jwt.encode(
         claims,
         settings.jwt_secret.get_secret_value(),
         algorithm=settings.jwt_algorithm,
     )
+    return token

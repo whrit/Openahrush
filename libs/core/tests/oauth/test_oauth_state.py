@@ -79,6 +79,7 @@ class TestOAuthStateValidation:
         state_mgr = OAuthState()
         state = state_mgr.generate("user1", "google", {"redirect": "/dashboard"})
         data = state_mgr.validate(state)
+        assert data is not None
         assert data["user_id"] == "user1"
         assert data["provider"] == "google"
         assert data["extra"]["redirect"] == "/dashboard"
@@ -142,6 +143,7 @@ class TestOAuthStateWithRedis:
         data = state_mgr.validate("test_state")
 
         mock_redis.get.assert_called_once_with("oauth_state:test_state")
+        assert data is not None
         assert data["user_id"] == "user1"
 
     def test_redis_delete_called_after_validate(self):

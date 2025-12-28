@@ -100,11 +100,12 @@ class BWTAdapter(PropertyAdapter):
             response.raise_for_status()
 
             # BWT API returns a JSON array directly
-            data = response.json()
+            data: Any = response.json()
 
             # Handle both direct array response and wrapped response
             if isinstance(data, list):
-                return data
+                return list(data)
             elif isinstance(data, dict):
-                return data.get("d", [])
+                result = data.get("d", [])
+                return list(result) if isinstance(result, list) else []
             return []

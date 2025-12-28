@@ -98,7 +98,7 @@ class Job:
             jitter_factor = 0.5 + random.random()  # 0.5 to 1.5
             delay = delay * jitter_factor
 
-        return delay
+        return float(delay)
 
     def record_attempt(self) -> None:
         """Record a job execution attempt."""

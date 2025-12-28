@@ -43,7 +43,7 @@ def get_test_settings() -> Settings:
     return Settings(
         database_url="postgresql+asyncpg://test:test@localhost:5432/test_db",
         redis_url="redis://localhost:6379/0",
-        jwt_secret="test-secret-key-that-is-at-least-32-characters-long",
+        jwt_secret="test-secret-key-that-is-at-least-32-characters-long",  # type: ignore[arg-type]
         environment="development",
         debug=True,
     )

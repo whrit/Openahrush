@@ -164,7 +164,7 @@ class SyncJob(Job):
 
             # Try to mark SyncRun as failed
             try:
-                sync_run = await self._get_sync_run(db_session)
+                sync_run = await self._get_sync_run(db_session)  # type: ignore[assignment]
                 if sync_run:
                     sync_run.mark_failed(error_message)
                     await db_session.commit()
@@ -214,7 +214,7 @@ class SyncJob(Job):
         await db_session.commit()
         await db_session.refresh(sync_run)
 
-        self.sync_run_id = sync_run.id
+        self.sync_run_id = sync_run.id  # type: ignore[assignment]
         return sync_run
 
     async def _get_sync_run(

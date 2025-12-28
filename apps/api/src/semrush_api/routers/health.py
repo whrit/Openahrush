@@ -166,7 +166,7 @@ async def _check_database(db: DbSession) -> DependencyCheck:
         await db.execute(text("SELECT 1"))
         latency = (time.perf_counter() - start) * 1000
 
-        return DependencyCheck(
+        return DependencyCheck(  # type: ignore[call-arg]
             status="ok",
             latency_ms=round(latency, 2),
         )
@@ -263,7 +263,7 @@ async def _check_database_legacy(db: DbSession) -> DependencyStatus:
         await db.execute(text("SELECT 1"))
         latency = (time.perf_counter() - start) * 1000
 
-        return DependencyStatus(
+        return DependencyStatus(  # type: ignore[call-arg]
             name="database",
             status="ok",
             latency_ms=round(latency, 2),

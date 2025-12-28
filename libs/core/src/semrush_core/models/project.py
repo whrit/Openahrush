@@ -16,7 +16,10 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from semrush_core.models.base import Base, TimestampMixin, UUIDMixin
 
 if TYPE_CHECKING:
+    from semrush_core.models.alert import Alert
+    from semrush_core.models.alert_rule import AlertRule
     from semrush_core.models.competitor import Competitor
+    from semrush_core.models.crawl_run import CrawlRun
     from semrush_core.models.settings import ProjectSettings
     from semrush_core.models.site import Site
     from semrush_core.models.user import User
@@ -30,6 +33,8 @@ class Project(Base, UUIDMixin, TimestampMixin):
     - One or more sites to monitor
     - Competitors to track
     - Project-specific settings for crawling, audits, alerts
+    - Crawl runs for site audits
+    - Alert rules and alerts
 
     Attributes:
         owner_id: UUID of the user who owns this project.
@@ -38,6 +43,9 @@ class Project(Base, UUIDMixin, TimestampMixin):
         sites: Sites being monitored in this project.
         competitors: Competitor domains being tracked.
         settings: Project-specific settings (one-to-one).
+        crawl_runs: Crawl runs for this project.
+        alert_rules: Alert rules for this project.
+        alerts: Alerts for this project.
     """
 
     __tablename__ = "projects"
@@ -71,4 +79,19 @@ class Project(Base, UUIDMixin, TimestampMixin):
         uselist=False,
         cascade="all, delete-orphan",
         lazy="selectin",
+    )
+    crawl_runs: Mapped[list[CrawlRun]] = relationship(
+        back_populates="project",
+        cascade="all, delete-orphan",
+        lazy="dynamic",
+    )
+    alert_rules: Mapped[list[AlertRule]] = relationship(
+        back_populates="project",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
+    alerts: Mapped[list[Alert]] = relationship(
+        back_populates="project",
+        cascade="all, delete-orphan",
+        lazy="dynamic",
     )

@@ -106,14 +106,18 @@ def encrypt_token(plaintext: str | bytes) -> str | bytes:
     """
     fernet = _get_fernet()
 
-    is_string = isinstance(plaintext, str)
-    data = plaintext.encode("utf-8") if is_string else plaintext
-
-    try:
-        encrypted = fernet.encrypt(data)
-        return encrypted.decode("utf-8") if is_string else encrypted
-    except Exception as e:
-        raise EncryptionError(f"Encryption failed: {e}") from e
+    if isinstance(plaintext, str):
+        data = plaintext.encode("utf-8")
+        try:
+            encrypted = fernet.encrypt(data)
+            return encrypted.decode("utf-8")
+        except Exception as e:
+            raise EncryptionError(f"Encryption failed: {e}") from e
+    else:
+        try:
+            return fernet.encrypt(plaintext)
+        except Exception as e:
+            raise EncryptionError(f"Encryption failed: {e}") from e
 
 
 @overload
@@ -145,21 +149,32 @@ def decrypt_token(ciphertext: str | bytes) -> str | bytes:
     """
     fernet = _get_fernet()
 
-    is_string = isinstance(ciphertext, str)
-    data = ciphertext.encode("utf-8") if is_string else ciphertext
-
-    try:
-        decrypted = fernet.decrypt(data)
-        return decrypted.decode("utf-8") if is_string else decrypted
-    except InvalidToken as e:
-        raise DecryptionError(
-            "Decryption failed. This may be due to: "
-            "1) Wrong encryption key, "
-            "2) Corrupted ciphertext, or "
-            "3) Token was encrypted with a different key"
-        ) from e
-    except Exception as e:
-        raise DecryptionError(f"Decryption failed: {e}") from e
+    if isinstance(ciphertext, str):
+        data = ciphertext.encode("utf-8")
+        try:
+            decrypted = fernet.decrypt(data)
+            return decrypted.decode("utf-8")
+        except InvalidToken as e:
+            raise DecryptionError(
+                "Decryption failed. This may be due to: "
+                "1) Wrong encryption key, "
+                "2) Corrupted ciphertext, or "
+                "3) Token was encrypted with a different key"
+            ) from e
+        except Exception as e:
+            raise DecryptionError(f"Decryption failed: {e}") from e
+    else:
+        try:
+            return fernet.decrypt(ciphertext)
+        except InvalidToken as e:
+            raise DecryptionError(
+                "Decryption failed. This may be due to: "
+                "1) Wrong encryption key, "
+                "2) Corrupted ciphertext, or "
+                "3) Token was encrypted with a different key"
+            ) from e
+        except Exception as e:
+            raise DecryptionError(f"Decryption failed: {e}") from e
 
 
 def encrypt_dict_values(

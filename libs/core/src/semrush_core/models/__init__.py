@@ -17,18 +17,32 @@ Models are organized by domain:
 - IntegrationProperty: Discovered provider properties
 - IntegrationMapping: Property-to-project mappings
 - SyncRun: Sync job execution tracking
+- CrawlRun: Crawl job execution tracking
+- CrawlPage: Per-page crawl results
+- LinkEdge: Links discovered during crawls
+- IssueType: Issue taxonomy (seeded)
+- IssueInstance: SEO issues found during crawls
 - SearchFactDaily: Search console metrics (GSC, BWT)
 - AnalyticsFactDaily: Web analytics metrics (GA4)
 - LinkFact: Backlink data from multiple sources
+- AlertRule: User-configured alert rules
+- Alert: Generated alerts
 """
 
+from semrush_core.models.alert import Alert, AlertEntityType, AlertKind, AlertSeverity
+from semrush_core.models.alert_rule import AlertRule, AlertRuleType
 from semrush_core.models.analytics_fact import AnalyticsFactDaily
 from semrush_core.models.base import Base, SoftDeleteMixin, TimestampMixin, UUIDMixin
 from semrush_core.models.competitor import Competitor
+from semrush_core.models.crawl_page import CrawlPage, RenderMode
+from semrush_core.models.crawl_run import CrawlRun, CrawlStatus
 from semrush_core.models.integration_account import IntegrationAccount, IntegrationProvider
 from semrush_core.models.integration_mapping import IntegrationMapping
 from semrush_core.models.integration_property import IntegrationProperty
 from semrush_core.models.integration_token import IntegrationToken
+from semrush_core.models.issue_instance import IssueInstance
+from semrush_core.models.issue_type import MVP_ISSUE_TYPES, IssueCategory, IssueType
+from semrush_core.models.link_edge import LinkEdge, LinkType
 from semrush_core.models.link_fact import LinkFact, LinkSource, RelFlag
 from semrush_core.models.project import Project
 from semrush_core.models.search_fact import (
@@ -64,6 +78,18 @@ __all__ = [
     "SyncRun",
     "SyncMode",
     "SyncStatus",
+    # Crawl models
+    "CrawlRun",
+    "CrawlStatus",
+    "CrawlPage",
+    "RenderMode",
+    "LinkEdge",
+    "LinkType",
+    # Issue models
+    "IssueType",
+    "IssueCategory",
+    "MVP_ISSUE_TYPES",
+    "IssueInstance",
     # Fact table models
     "SearchFactDaily",
     "SearchEngine",
@@ -73,4 +99,11 @@ __all__ = [
     "LinkFact",
     "LinkSource",
     "RelFlag",
+    # Alert models
+    "AlertRule",
+    "AlertRuleType",
+    "Alert",
+    "AlertKind",
+    "AlertSeverity",
+    "AlertEntityType",
 ]

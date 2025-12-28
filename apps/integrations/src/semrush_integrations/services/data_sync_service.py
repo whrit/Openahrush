@@ -168,7 +168,7 @@ class DataSyncService:
         """
         provider = mapping.integration_property.provider
         property_id = mapping.integration_property.property_id
-        access_token = mapping.integration_property.account.access_token
+        access_token = mapping.integration_property.account.access_token  # type: ignore[attr-defined]
 
         # Get appropriate adapter
         adapter = self._get_data_adapter(provider, access_token)
@@ -206,7 +206,7 @@ class DataSyncService:
         """
         provider = mapping.integration_property.provider
         property_id = mapping.integration_property.property_id
-        access_token = mapping.integration_property.account.access_token
+        access_token = mapping.integration_property.account.access_token  # type: ignore[attr-defined]
 
         # Get appropriate adapter
         adapter = self._get_data_adapter(provider, access_token)

@@ -127,7 +127,8 @@ class OAuthState:
             raw_data = self.redis.get(f"oauth_state:{state}")
             if raw_data:
                 self.redis.delete(f"oauth_state:{state}")  # One-time use
-                return json.loads(raw_data)
+                result: dict[str, Any] = json.loads(raw_data)
+                return result
             return None
         else:
             return self._memory_store.pop(state, None)

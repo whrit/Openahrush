@@ -129,7 +129,8 @@ class GA4Adapter(PropertyAdapter):
                 timeout=30.0,
             )
             response.raise_for_status()
-            return response.json()
+            result: dict[str, Any] = response.json()
+            return result
 
     async def _fetch_properties(
         self,
@@ -166,4 +167,5 @@ class GA4Adapter(PropertyAdapter):
                 timeout=30.0,
             )
             response.raise_for_status()
-            return response.json()
+            result: dict[str, Any] = response.json()
+            return result

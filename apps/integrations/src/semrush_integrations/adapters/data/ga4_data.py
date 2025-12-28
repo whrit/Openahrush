@@ -185,7 +185,8 @@ class GA4DataAdapter(DataAdapter):
                 timeout=60.0,
             )
             response.raise_for_status()
-            return response.json()
+            result: dict[str, Any] = response.json()
+            return result
 
     def _parse_row(
         self,

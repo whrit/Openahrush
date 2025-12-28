@@ -180,7 +180,7 @@ class Scheduler:
 
         # Track job by mapping ID for easy lookup
         mapping_key = f"{self.MAPPING_JOBS_PREFIX}{mapping_id}"
-        await self._redis.sadd(mapping_key, job_id)
+        await self._redis.sadd(mapping_key, job_id)  # type: ignore[misc]
 
         return job_id
 
@@ -200,7 +200,8 @@ class Scheduler:
         if data is None:
             return None
 
-        return json.loads(data)
+        result: dict[str, Any] = json.loads(data)
+        return result
 
     async def get_pending_jobs(self) -> list[dict[str, Any]]:
         """
@@ -432,7 +433,7 @@ class Scheduler:
             List of job data dictionaries.
         """
         mapping_key = f"{self.MAPPING_JOBS_PREFIX}{mapping_id}"
-        job_ids = await self._redis.smembers(mapping_key)
+        job_ids = await self._redis.smembers(mapping_key)  # type: ignore[misc]
 
         jobs = []
         for job_id in job_ids:

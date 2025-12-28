@@ -22,7 +22,16 @@ from semrush_core import get_settings
 from semrush_core.database import dispose_engine, get_engine
 from semrush_core.security.jwt import TokenError
 
-from semrush_api.routers import auth, health, integrations, projects, settings
+from semrush_api.routers import (
+    alerts,
+    auth,
+    diffs,
+    health,
+    integrations,
+    issues,
+    projects,
+    settings,
+)
 
 # Configure logging
 logging.basicConfig(
@@ -213,6 +222,15 @@ def register_routers(app: FastAPI) -> None:
 
     # Integrations (no prefix - /integrations)
     app.include_router(integrations.router, tags=["Integrations"])
+
+    # Issues (no prefix - /crawls/{id}/issues, /projects/{id}/issues)
+    app.include_router(issues.router, tags=["Issues"])
+
+    # Diffs (no prefix - /projects/{id}/issues/diffs)
+    app.include_router(diffs.router, tags=["Diffs"])
+
+    # Alerts (no prefix - /projects/{id}/alerts)
+    app.include_router(alerts.router, tags=["Alerts"])
 
 
 # Create the application instance

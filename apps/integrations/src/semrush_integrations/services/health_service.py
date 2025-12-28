@@ -320,7 +320,7 @@ class IntegrationHealthService:
 
         results = []
         for mapping in mappings:
-            status = self.get_sync_status(mapping.id)
+            status = self.get_sync_status(mapping.id)  # type: ignore[arg-type]
             if status:
                 results.append(status)
 
@@ -347,7 +347,7 @@ class IntegrationHealthService:
 
         results = []
         for mapping in mappings:
-            freshness = self.get_data_freshness(mapping.id, lookback_days)
+            freshness = self.get_data_freshness(mapping.id, lookback_days)  # type: ignore[arg-type]
             if freshness:
                 results.append(freshness)
 

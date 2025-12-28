@@ -310,7 +310,7 @@ def extract_domain(url: str) -> str:
         'example.com'
     """
     extracted = tldextract.extract(url)
-    return extracted.registered_domain
+    return str(extracted.registered_domain)
 
 
 def parse_url(url: str) -> URLInfo:

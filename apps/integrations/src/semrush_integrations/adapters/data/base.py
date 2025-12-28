@@ -168,7 +168,7 @@ class DataAdapter(ABC):
         """
         import httpx
 
-        last_exception = None
+        last_exception: Exception | None = None
 
         for attempt in range(self.retry_count):
             try:
@@ -190,5 +190,7 @@ class DataAdapter(ABC):
                     # Client error - don't retry
                     raise
 
-        # All retries exhausted
-        raise last_exception
+        # All retries exhausted - last_exception is always set if we reach here
+        if last_exception is not None:
+            raise last_exception
+        raise RuntimeError("Retry loop exhausted without exception")

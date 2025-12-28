@@ -198,7 +198,8 @@ class BWTDataAdapter(DataAdapter):
                 timeout=30.0,
             )
             response.raise_for_status()
-            return response.json()
+            result: list[dict[str, Any]] = response.json()
+            return result
 
     def _parse_query_stats(
         self,
