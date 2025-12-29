@@ -1,0 +1,261 @@
+{% extends "base.html" %}
+
+{% block title %}Performance Report{% endblock %}
+
+{% block content %}
+<div class="report-header">
+    <h1>Performance Report</h1>
+    <div class="subtitle">{{ project_name }}</div>
+    <div class="date">{{ date_range.start }} to {{ date_range.end }}</div>
+</div>
+
+<!-- Summary Section -->
+<div class="section">
+    <h2 class="section-title">Performance Summary</h2>
+    <div class="summary-grid">
+        <div class="summary-card">
+            <div class="value">{{ summary.total_clicks | default(0) | int }}</div>
+            <div class="label">Total Clicks</div>
+        </div>
+        <div class="summary-card">
+            <div class="value">{{ summary.total_impressions | default(0) | int }}</div>
+            <div class="label">Total Impressions</div>
+        </div>
+        <div class="summary-card">
+            <div class="value">{{ summary.avg_ctr | default(0) | round(2) }}%</div>
+            <div class="label">Avg CTR</div>
+        </div>
+        <div class="summary-card">
+            <div class="value">{{ summary.avg_position | default(0) | round(1) }}</div>
+            <div class="label">Avg Position</div>
+        </div>
+    </div>
+</div>
+
+<!-- Trend Comparison -->
+{% if trends %}
+<div class="section">
+    <h2 class="section-title">Trend Comparison</h2>
+    <div class="summary-grid">
+        <div class="summary-card {% if trends.clicks_change >= 0 %}low{% else %}high{% endif %}">
+            <div class="value">{% if trends.clicks_change >= 0 %}+{% endif %}{{ trends.clicks_change | round(1) }}%</div>
+            <div class="label">Clicks vs Previous</div>
+        </div>
+        <div class="summary-card {% if trends.impressions_change >= 0 %}low{% else %}high{% endif %}">
+            <div class="value">{% if trends.impressions_change >= 0 %}+{% endif %}{{ trends.impressions_change | round(1) }}%</div>
+            <div class="label">Impressions vs Previous</div>
+        </div>
+        <div class="summary-card {% if trends.ctr_change >= 0 %}low{% else %}high{% endif %}">
+            <div class="value">{% if trends.ctr_change >= 0 %}+{% endif %}{{ trends.ctr_change | round(2) }}%</div>
+            <div class="label">CTR Change</div>
+        </div>
+        <div class="summary-card {% if trends.position_change <= 0 %}low{% else %}high{% endif %}">
+            <div class="value">{% if trends.position_change > 0 %}+{% endif %}{{ trends.position_change | round(1) }}</div>
+            <div class="label">Position Change</div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Traffic Over Time Chart -->
+{% if charts and charts.traffic_trend %}
+<div class="section">
+    <h2 class="section-title">Traffic Over Time</h2>
+    <div class="chart-container">
+        <img src="data:image/png;base64,{{ charts.traffic_trend }}" class="chart-image" alt="Traffic Trend">
+    </div>
+</div>
+{% endif %}
+
+{% if top_queries %}
+<!-- Top Queries -->
+<div class="section">
+    <h2 class="section-title">Top Search Queries</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Query</th>
+                <th class="text-right">Clicks</th>
+                <th class="text-right">Impressions</th>
+                <th class="text-right">CTR</th>
+                <th class="text-right">Avg Position</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for query in top_queries[:30] %}
+            <tr class="no-break">
+                <td>{{ query.query }}</td>
+                <td class="text-right">{{ query.clicks | int }}</td>
+                <td class="text-right">{{ query.impressions | int }}</td>
+                <td class="text-right">{{ query.ctr | round(2) }}%</td>
+                <td class="text-right">{{ query.position | round(1) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{% if top_pages %}
+<!-- Top Pages -->
+<div class="section page-break">
+    <h2 class="section-title">Top Pages</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Page URL</th>
+                <th class="text-right">Clicks</th>
+                <th class="text-right">Impressions</th>
+                <th class="text-right">CTR</th>
+                <th class="text-right">Avg Position</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for page in top_pages[:30] %}
+            <tr class="no-break">
+                <td class="url-cell">{{ page.url }}</td>
+                <td class="text-right">{{ page.clicks | int }}</td>
+                <td class="text-right">{{ page.impressions | int }}</td>
+                <td class="text-right">{{ page.ctr | round(2) }}%</td>
+                <td class="text-right">{{ page.position | round(1) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{% if top_countries %}
+<!-- Top Countries -->
+<div class="section">
+    <h2 class="section-title">Traffic by Country</h2>
+    {% if charts and charts.countries %}
+    <div class="chart-container">
+        <img src="data:image/png;base64,{{ charts.countries }}" class="chart-image" alt="Traffic by Country">
+    </div>
+    {% else %}
+    <table>
+        <thead>
+            <tr>
+                <th>Country</th>
+                <th class="text-right">Clicks</th>
+                <th class="text-right">Impressions</th>
+                <th class="text-right">CTR</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for country in top_countries[:15] %}
+            <tr>
+                <td>{{ country.country }}</td>
+                <td class="text-right">{{ country.clicks | int }}</td>
+                <td class="text-right">{{ country.impressions | int }}</td>
+                <td class="text-right">{{ country.ctr | round(2) }}%</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+</div>
+{% endif %}
+
+{% if devices %}
+<!-- Device Breakdown -->
+<div class="section">
+    <h2 class="section-title">Traffic by Device</h2>
+    {% if charts and charts.devices %}
+    <div class="chart-container">
+        <img src="data:image/png;base64,{{ charts.devices }}" class="chart-image" alt="Traffic by Device">
+    </div>
+    {% else %}
+    <table>
+        <thead>
+            <tr>
+                <th>Device</th>
+                <th class="text-right">Clicks</th>
+                <th class="text-right">Impressions</th>
+                <th class="text-right">CTR</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for device in devices %}
+            <tr>
+                <td>{{ device.device | capitalize }}</td>
+                <td class="text-right">{{ device.clicks | int }}</td>
+                <td class="text-right">{{ device.impressions | int }}</td>
+                <td class="text-right">{{ device.ctr | round(2) }}%</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+</div>
+{% endif %}
+
+{% if rising_queries %}
+<!-- Rising Queries -->
+<div class="section">
+    <h2 class="section-title">Rising Queries</h2>
+    <p class="text-muted text-small mb-10">Queries with significant growth compared to previous period</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Query</th>
+                <th class="text-right">Clicks</th>
+                <th class="text-right">Growth</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for query in rising_queries[:15] %}
+            <tr>
+                <td>{{ query.query }}</td>
+                <td class="text-right">{{ query.clicks | int }}</td>
+                <td class="text-right" style="color: #16a34a;">+{{ query.growth | round(1) }}%</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{% if declining_queries %}
+<!-- Declining Queries -->
+<div class="section">
+    <h2 class="section-title">Declining Queries</h2>
+    <p class="text-muted text-small mb-10">Queries with significant decline compared to previous period</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Query</th>
+                <th class="text-right">Clicks</th>
+                <th class="text-right">Change</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for query in declining_queries[:15] %}
+            <tr>
+                <td>{{ query.query }}</td>
+                <td class="text-right">{{ query.clicks | int }}</td>
+                <td class="text-right" style="color: #dc2626;">{{ query.change | round(1) }}%</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{% if recommendations %}
+<!-- Recommendations -->
+<div class="section">
+    <h2 class="section-title">Recommendations</h2>
+    <ul style="padding-left: 20px;">
+        {% for rec in recommendations %}
+        <li style="margin-bottom: 10px;">
+            <strong>{{ rec.title }}</strong>
+            <p class="text-muted text-small">{{ rec.description }}</p>
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+{% endblock %}

@@ -20,6 +20,7 @@ if TYPE_CHECKING:
     from semrush_core.models.alert_rule import AlertRule
     from semrush_core.models.competitor import Competitor
     from semrush_core.models.crawl_run import CrawlRun
+    from semrush_core.models.export import Export, ExportSchedule
     from semrush_core.models.settings import ProjectSettings
     from semrush_core.models.site import Site
     from semrush_core.models.user import User
@@ -37,6 +38,7 @@ class Project(Base, UUIDMixin, TimestampMixin):
     - Crawl runs for site audits
     - Alert rules and alerts
     - Webhook configurations for event notifications
+    - Export jobs and schedules
 
     Attributes:
         owner_id: UUID of the user who owns this project.
@@ -49,6 +51,8 @@ class Project(Base, UUIDMixin, TimestampMixin):
         alert_rules: Alert rules for this project.
         alerts: Alerts for this project.
         webhook_configs: Webhook configurations for this project.
+        exports: Export jobs for this project.
+        export_schedules: Scheduled export configurations for this project.
     """
 
     __tablename__ = "projects"
@@ -99,6 +103,16 @@ class Project(Base, UUIDMixin, TimestampMixin):
         lazy="dynamic",
     )
     webhook_configs: Mapped[list[WebhookConfig]] = relationship(
+        back_populates="project",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
+    exports: Mapped[list[Export]] = relationship(
+        back_populates="project",
+        cascade="all, delete-orphan",
+        lazy="dynamic",
+    )
+    export_schedules: Mapped[list[ExportSchedule]] = relationship(
         back_populates="project",
         cascade="all, delete-orphan",
         lazy="selectin",

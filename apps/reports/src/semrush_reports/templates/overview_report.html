@@ -1,0 +1,281 @@
+{% extends "base.html" %}
+
+{% block title %}Project Overview Report{% endblock %}
+
+{% block content %}
+<div class="report-header">
+    <h1>Project Overview Report</h1>
+    <div class="subtitle">{{ project_name }}</div>
+    <div class="date">{{ date_range.start }} to {{ date_range.end }}</div>
+</div>
+
+<!-- Executive Summary -->
+<div class="section">
+    <h2 class="section-title">Executive Summary</h2>
+    <div class="summary-grid">
+        {% if health_score is defined %}
+        <div class="summary-card {% if health_score >= 80 %}low{% elif health_score >= 60 %}medium{% else %}critical{% endif %}">
+            <div class="value">{{ health_score | round(0) }}</div>
+            <div class="label">Health Score</div>
+        </div>
+        {% endif %}
+        <div class="summary-card">
+            <div class="value">{{ audit.issues_total | default(0) }}</div>
+            <div class="label">Total Issues</div>
+        </div>
+        <div class="summary-card">
+            <div class="value">{{ backlinks.total_backlinks | default(0) }}</div>
+            <div class="label">Backlinks</div>
+        </div>
+        <div class="summary-card">
+            <div class="value">{{ performance.total_clicks | default(0) | int }}</div>
+            <div class="label">Organic Clicks</div>
+        </div>
+    </div>
+</div>
+
+<!-- Site Audit Overview -->
+<div class="section">
+    <h2 class="section-title">Site Audit Overview</h2>
+    <div class="summary-grid">
+        <div class="summary-card critical">
+            <div class="value">{{ audit.critical | default(0) }}</div>
+            <div class="label">Critical</div>
+        </div>
+        <div class="summary-card high">
+            <div class="value">{{ audit.high | default(0) }}</div>
+            <div class="label">High</div>
+        </div>
+        <div class="summary-card medium">
+            <div class="value">{{ audit.medium | default(0) }}</div>
+            <div class="label">Medium</div>
+        </div>
+        <div class="summary-card low">
+            <div class="value">{{ audit.low | default(0) }}</div>
+            <div class="label">Low</div>
+        </div>
+    </div>
+
+    {% if audit.top_issues %}
+    <h3 style="font-size: 14px; color: #475569; margin: 15px 0 10px 0;">Top Issues</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Issue Type</th>
+                <th>Category</th>
+                <th class="text-right">Count</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for issue in audit.top_issues[:5] %}
+            <tr class="no-break">
+                <td>{{ issue.type }}</td>
+                <td>{{ issue.category }}</td>
+                <td class="text-right">{{ issue.count }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+</div>
+
+<!-- Backlinks Overview -->
+<div class="section">
+    <h2 class="section-title">Backlinks Overview</h2>
+    <div class="summary-grid">
+        <div class="summary-card">
+            <div class="value">{{ backlinks.total_backlinks | default(0) }}</div>
+            <div class="label">Total Backlinks</div>
+        </div>
+        <div class="summary-card">
+            <div class="value">{{ backlinks.referring_domains | default(0) }}</div>
+            <div class="label">Referring Domains</div>
+        </div>
+        <div class="summary-card">
+            <div class="value">{{ backlinks.dofollow_pct | default(0) | round(1) }}%</div>
+            <div class="label">Dofollow</div>
+        </div>
+        <div class="summary-card">
+            <div class="value">{{ backlinks.new_this_month | default(0) }}</div>
+            <div class="label">New This Month</div>
+        </div>
+    </div>
+
+    {% if backlinks.top_domains %}
+    <h3 style="font-size: 14px; color: #475569; margin: 15px 0 10px 0;">Top Referring Domains</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Domain</th>
+                <th class="text-right">Backlinks</th>
+                <th class="text-right">Dofollow</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for domain in backlinks.top_domains[:5] %}
+            <tr class="no-break">
+                <td>{{ domain.domain }}</td>
+                <td class="text-right">{{ domain.backlinks }}</td>
+                <td class="text-right">{{ domain.dofollow }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+</div>
+
+<!-- Performance Overview -->
+<div class="section page-break">
+    <h2 class="section-title">Search Performance Overview</h2>
+    <div class="summary-grid">
+        <div class="summary-card">
+            <div class="value">{{ performance.total_clicks | default(0) | int }}</div>
+            <div class="label">Total Clicks</div>
+        </div>
+        <div class="summary-card">
+            <div class="value">{{ performance.total_impressions | default(0) | int }}</div>
+            <div class="label">Total Impressions</div>
+        </div>
+        <div class="summary-card">
+            <div class="value">{{ performance.avg_ctr | default(0) | round(2) }}%</div>
+            <div class="label">Average CTR</div>
+        </div>
+        <div class="summary-card">
+            <div class="value">{{ performance.avg_position | default(0) | round(1) }}</div>
+            <div class="label">Average Position</div>
+        </div>
+    </div>
+
+    {% if charts and charts.traffic_trend %}
+    <div class="chart-container">
+        <img src="data:image/png;base64,{{ charts.traffic_trend }}" class="chart-image" alt="Traffic Trend">
+    </div>
+    {% endif %}
+
+    {% if performance.top_queries %}
+    <h3 style="font-size: 14px; color: #475569; margin: 15px 0 10px 0;">Top Search Queries</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Query</th>
+                <th class="text-right">Clicks</th>
+                <th class="text-right">Impressions</th>
+                <th class="text-right">CTR</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for query in performance.top_queries[:10] %}
+            <tr class="no-break">
+                <td>{{ query.query }}</td>
+                <td class="text-right">{{ query.clicks | int }}</td>
+                <td class="text-right">{{ query.impressions | int }}</td>
+                <td class="text-right">{{ query.ctr | round(2) }}%</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+</div>
+
+<!-- Crawl Statistics -->
+{% if crawl_stats %}
+<div class="section">
+    <h2 class="section-title">Crawl Statistics</h2>
+    <div class="summary-grid">
+        <div class="summary-card">
+            <div class="value">{{ crawl_stats.pages_crawled | default(0) }}</div>
+            <div class="label">Pages Crawled</div>
+        </div>
+        <div class="summary-card">
+            <div class="value">{{ crawl_stats.pages_with_issues | default(0) }}</div>
+            <div class="label">Pages with Issues</div>
+        </div>
+        <div class="summary-card">
+            <div class="value">{{ crawl_stats.avg_response_time | default(0) }}ms</div>
+            <div class="label">Avg Response Time</div>
+        </div>
+        <div class="summary-card">
+            <div class="value">{{ crawl_stats.error_rate | default(0) | round(1) }}%</div>
+            <div class="label">Error Rate</div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Key Recommendations -->
+{% if recommendations %}
+<div class="section">
+    <h2 class="section-title">Key Recommendations</h2>
+    <ul style="padding-left: 20px;">
+        {% for rec in recommendations %}
+        <li style="margin-bottom: 10px;">
+            <strong>{{ rec.title }}</strong>
+            {% if rec.priority %}
+            <span class="severity severity-{{ rec.priority_level | default(3) }}">{{ rec.priority }}</span>
+            {% endif %}
+            <p class="text-muted text-small">{{ rec.description }}</p>
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+<!-- Month-over-Month Comparison -->
+{% if comparison %}
+<div class="section">
+    <h2 class="section-title">Month-over-Month Comparison</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Metric</th>
+                <th class="text-right">Previous</th>
+                <th class="text-right">Current</th>
+                <th class="text-right">Change</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for metric in comparison %}
+            <tr>
+                <td>{{ metric.name }}</td>
+                <td class="text-right">{{ metric.previous }}</td>
+                <td class="text-right">{{ metric.current }}</td>
+                <td class="text-right" style="color: {% if metric.change >= 0 %}#16a34a{% else %}#dc2626{% endif %};">
+                    {% if metric.change >= 0 %}+{% endif %}{{ metric.change | round(1) }}%
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<!-- Action Items -->
+{% if action_items %}
+<div class="section">
+    <h2 class="section-title">Action Items</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Priority</th>
+                <th>Action</th>
+                <th>Expected Impact</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in action_items %}
+            <tr class="no-break">
+                <td>
+                    <span class="severity severity-{{ item.priority_level | default(3) }}">
+                        {{ item.priority | default('Medium') }}
+                    </span>
+                </td>
+                <td>{{ item.action }}</td>
+                <td>{{ item.impact }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{% endblock %}

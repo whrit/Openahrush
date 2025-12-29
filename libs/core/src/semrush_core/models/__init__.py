@@ -48,9 +48,15 @@ from semrush_core.models.commoncrawl import (
     SnapshotStatus,
 )
 from semrush_core.models.competitor import Competitor
-from semrush_core.models.export import Export, ExportFormat, ExportResource, ExportStatus
 from semrush_core.models.crawl_page import CrawlPage, RenderMode
 from semrush_core.models.crawl_run import CrawlRun, CrawlStatus
+from semrush_core.models.export import (
+    Export,
+    ExportFormat,
+    ExportResource,
+    ExportSchedule,
+    ExportStatus,
+)
 from semrush_core.models.integration_account import IntegrationAccount, IntegrationProvider
 from semrush_core.models.integration_mapping import IntegrationMapping
 from semrush_core.models.integration_property import IntegrationProperty
@@ -72,8 +78,8 @@ from semrush_core.models.site import Site
 from semrush_core.models.sync_run import SyncMode, SyncRun, SyncStatus
 from semrush_core.models.user import User
 from semrush_core.models.webhook import (
-    DeliveryStatus,
     VALID_WEBHOOK_EVENTS,
+    DeliveryStatus,
     WebhookConfig,
     WebhookDelivery,
 )
@@ -141,6 +147,7 @@ __all__ = [
     "Export",
     "ExportFormat",
     "ExportResource",
+    "ExportSchedule",
     "ExportStatus",
     # Webhook models
     "WebhookConfig",

@@ -175,3 +175,26 @@ def mock_storage() -> MagicMock:
     storage.exists = MagicMock(return_value=True)
     storage.get_size = MagicMock(return_value=1024)
     return storage
+
+
+@pytest.fixture
+def mock_search_facts(test_project_id: uuid.UUID) -> list[MagicMock]:
+    """Create mock search facts."""
+    from datetime import date
+
+    facts = []
+    for i in range(10):
+        fact = MagicMock()
+        fact.project_id = test_project_id
+        fact.clicks = 100 + i * 10
+        fact.impressions = 1000 + i * 100
+        fact.ctr = Decimal("0.1")
+        fact.avg_position = Decimal(str(5 + i * 0.5))
+        fact.query = f"test query {i}" if i < 5 else None
+        fact.page_url = f"https://example.com/page-{i}" if i >= 3 else None
+        fact.country = ["US", "UK", "DE", "FR", "CA"][i % 5]
+        fact.device = ["desktop", "mobile", "tablet"][i % 3]
+        fact.engine = "google"
+        fact.date = date(2024, 1, 15)
+        facts.append(fact)
+    return facts

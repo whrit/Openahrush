@@ -251,3 +251,204 @@ class TestReportBuilder:
         recs = builder._generate_recommendations(severity_counts, top_issues)
 
         assert any("Broken Links" in rec["title"] for rec in recs)
+
+
+class TestTemplateRendering:
+    """Tests for template rendering."""
+
+    def test_render_performance_report_html(self) -> None:
+        """Test rendering performance report template."""
+        renderer = PDFRenderer()
+
+        context = {
+            "project_name": "Test Project",
+            "generated_at": "2024-01-15 10:00 UTC",
+            "date_range": {"start": "2024-01-01", "end": "2024-01-15"},
+            "summary": {
+                "total_clicks": 5000,
+                "total_impressions": 100000,
+                "avg_ctr": 5.0,
+                "avg_position": 8.5,
+            },
+            "trends": {
+                "clicks_change": 10.5,
+                "impressions_change": 5.2,
+                "ctr_change": 0.5,
+                "position_change": -1.2,
+            },
+            "top_queries": [
+                {"query": "test query", "clicks": 100, "impressions": 1000, "ctr": 10.0, "position": 5.0}
+            ],
+            "top_pages": [
+                {"url": "https://example.com/page", "clicks": 200, "impressions": 2000, "ctr": 10.0, "position": 3.0}
+            ],
+            "top_countries": [
+                {"country": "US", "clicks": 3000, "impressions": 60000, "ctr": 5.0}
+            ],
+            "devices": [
+                {"device": "desktop", "clicks": 2000, "impressions": 40000, "ctr": 5.0}
+            ],
+            "rising_queries": [],
+            "declining_queries": [],
+            "recommendations": [
+                {"title": "Test Rec", "description": "Test description"}
+            ],
+        }
+
+        result = renderer.render_html("performance_report.html", context)
+
+        assert "Test Project" in result
+        assert "Performance Report" in result
+        assert "5000" in result  # Total clicks
+        assert "100000" in result  # Total impressions
+
+    def test_render_overview_report_html(self) -> None:
+        """Test rendering overview report template."""
+        renderer = PDFRenderer()
+
+        context = {
+            "project_name": "Test Project",
+            "generated_at": "2024-01-15 10:00 UTC",
+            "date_range": {"start": "2024-01-01", "end": "2024-01-15"},
+            "health_score": 85.0,
+            "audit": {
+                "critical": 2,
+                "high": 5,
+                "medium": 10,
+                "low": 20,
+                "issues_total": 37,
+                "top_issues": [
+                    {"type": "missing_title", "category": "content", "count": 5}
+                ],
+            },
+            "backlinks": {
+                "total_backlinks": 500,
+                "referring_domains": 100,
+                "dofollow_pct": 75.0,
+                "new_this_month": 20,
+                "top_domains": [
+                    {"domain": "example.com", "backlinks": 10, "dofollow": 8}
+                ],
+            },
+            "performance": {
+                "total_clicks": 5000,
+                "total_impressions": 100000,
+                "avg_ctr": 5.0,
+                "avg_position": 8.5,
+                "top_queries": [
+                    {"query": "test", "clicks": 100, "impressions": 1000, "ctr": 10.0}
+                ],
+            },
+            "crawl_stats": {
+                "pages_crawled": 500,
+                "pages_with_issues": 50,
+                "avg_response_time": 150,
+                "error_rate": 2.0,
+            },
+            "recommendations": [
+                {"title": "Fix Critical Issues", "description": "Address critical issues.", "priority": "High", "priority_level": 4}
+            ],
+            "action_items": [
+                {"priority": "High", "priority_level": 4, "action": "Fix issues", "impact": "Improve rankings"}
+            ],
+        }
+
+        result = renderer.render_html("overview_report.html", context)
+
+        assert "Test Project" in result
+        assert "Project Overview Report" in result
+        assert "85" in result  # Health score
+        assert "500" in result  # Total backlinks
+
+    def test_render_backlinks_report_html(self) -> None:
+        """Test rendering backlinks report template."""
+        renderer = PDFRenderer()
+
+        context = {
+            "project_name": "Test Project",
+            "generated_at": "2024-01-15 10:00 UTC",
+            "summary": {
+                "total_backlinks": 1000,
+                "referring_domains": 200,
+                "dofollow_links": 750,
+                "nofollow_links": 250,
+            },
+            "distribution": {
+                "dofollow_pct": 75.0,
+                "nofollow_pct": 25.0,
+                "ugc_pct": 5.0,
+                "sponsored_pct": 2.0,
+            },
+            "backlinks_by_source": {"commoncrawl": 800, "manual": 200},
+            "top_referring_domains": [
+                {"domain": "example.com", "backlinks": 50, "dofollow": 40, "first_seen": "2024-01-01"}
+            ],
+            "top_anchor_texts": [
+                {"text": "click here", "count": 100, "percentage": 10.0}
+            ],
+            "top_target_urls": [
+                {"url": "https://mysite.com/", "backlinks": 200, "domains": 50}
+            ],
+            "new_backlinks": [
+                {"source_url": "https://source.com/page", "target_url": "https://mysite.com/", "anchor": "test", "discovered_at": "2024-01-10"}
+            ],
+        }
+
+        result = renderer.render_html("backlinks_report.html", context)
+
+        assert "Test Project" in result
+        assert "Backlinks Report" in result
+        assert "1000" in result  # Total backlinks
+        assert "200" in result  # Referring domains
+
+    def test_render_audit_report_html(self) -> None:
+        """Test rendering audit report template."""
+        renderer = PDFRenderer()
+
+        context = {
+            "project_name": "Test Project",
+            "generated_at": "2024-01-15 10:00 UTC",
+            "date_range": {"start": "2024-01-01", "end": "2024-01-15"},
+            "issues_summary": {"critical": 5, "high": 10, "medium": 20, "low": 30, "total": 65},
+            "issues_by_category": {"content": 30, "performance": 20, "links": 15},
+            "top_issues": [
+                {"type": "missing_title", "category": "content", "severity": 4, "severity_label": "High", "count": 10, "impact": 50.0}
+            ],
+            "affected_urls": [
+                {"url": "https://example.com/page", "total_issues": 5, "critical": 1, "high": 2}
+            ],
+            "crawl_stats": {
+                "pages_crawled": 100,
+                "pages_with_issues": 50,
+                "avg_response_time": 200,
+                "error_rate": 5.0,
+            },
+            "status_codes": [
+                {"code": 200, "description": "OK", "count": 90, "percentage": 90.0}
+            ],
+            "recommendations": [
+                {"title": "Fix Critical Issues", "description": "Address critical issues immediately."}
+            ],
+        }
+
+        result = renderer.render_html("audit_report.html", context)
+
+        assert "Test Project" in result
+        assert "Site Audit Report" in result
+        assert "65" in result  # Total issues
+
+    def test_templates_exist(self) -> None:
+        """Verify all expected templates exist."""
+        renderer = PDFRenderer()
+
+        expected_templates = [
+            "base.html",
+            "audit_report.html",
+            "backlinks_report.html",
+            "performance_report.html",
+            "overview_report.html",
+        ]
+
+        for template_name in expected_templates:
+            template_path = renderer.template_dir / template_name
+            assert template_path.exists(), f"Template {template_name} not found"
