@@ -13,23 +13,27 @@ Provides endpoints for:
 - POST /projects/{project_id}/mappings/{mapping_id}/sync - Trigger manual sync
 """
 
-import secrets
+import asyncio
+import logging
 from typing import Any
 from uuid import UUID
 
+import redis.asyncio as aioredis
 from fastapi import APIRouter, HTTPException, status
 from semrush_core import get_settings
-from semrush_core.models import IntegrationMapping, Project, SyncRun
+from semrush_core.models import IntegrationMapping, SyncRun
 from semrush_core.models.integration_account import IntegrationAccount
 from semrush_core.models.sync_run import SyncStatus as SyncRunStatus
+from semrush_core.oauth.state import AsyncOAuthStateManager
+from semrush_core.security.encryption import DecryptionError, decrypt_token
 from semrush_integrations.oauth.google import GoogleOAuthProvider
 from semrush_integrations.oauth.microsoft import MicrosoftOAuthProvider
 from semrush_integrations.services.health_service import IntegrationHealthService
 from semrush_integrations.services.property_service import PropertyMappingService, PropertyService
-from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy import create_engine, select
+from sqlalchemy.orm import Session, sessionmaker
 
-from semrush_api.deps import CurrentUser, DbSession
+from semrush_api.deps import CurrentUser, DbSession, UserProject
 from semrush_api.schemas.integration import (
     IntegrationCallbackRequest,
     IntegrationCallbackResponse,
@@ -57,10 +61,127 @@ from semrush_api.schemas.sync import (
 
 router = APIRouter()
 
-# In-memory state storage for CSRF protection
-# In production, use Redis or database with TTL
-_oauth_states: dict[str, dict[str, Any]] = {}
 
+# =============================================================================
+# Redis-based OAuth State Management (FIX Issue 1)
+# =============================================================================
+
+logger = logging.getLogger(__name__)
+
+# Module-level state manager singleton (with Redis or in-memory fallback)
+_oauth_state_manager: AsyncOAuthStateManager | None = None
+
+
+def _try_get_redis_client() -> aioredis.Redis | None:  # type: ignore[type-arg]
+    """
+    Try to get an async Redis client for OAuth state storage.
+
+    Returns None if Redis is not configured or unavailable.
+
+    Returns:
+        Async Redis client instance or None.
+    """
+    try:
+        settings = get_settings()
+        return aioredis.from_url(settings.redis_url, decode_responses=True)
+    except Exception as e:
+        logger.warning(f"Redis client creation failed, using in-memory fallback: {e}")
+        return None
+
+
+def get_oauth_state_manager() -> AsyncOAuthStateManager:
+    """
+    Get the OAuth state manager with Redis backend (or in-memory fallback).
+
+    Uses Redis as the primary storage for production (multi-instance safe).
+    Falls back to in-memory storage when Redis is unavailable (for testing).
+
+    Returns:
+        AsyncOAuthStateManager configured with 10-minute TTL.
+    """
+    global _oauth_state_manager
+
+    if _oauth_state_manager is None:
+        redis_client = _try_get_redis_client()
+        _oauth_state_manager = AsyncOAuthStateManager(redis_client, ttl_seconds=600)
+
+    return _oauth_state_manager
+
+
+def reset_oauth_state_manager() -> None:
+    """
+    Reset the OAuth state manager singleton.
+
+    Used for testing to ensure a fresh state between tests.
+    """
+    global _oauth_state_manager
+    _oauth_state_manager = None
+
+
+# =============================================================================
+# Singleton Sync Engine (FIX Issue 4)
+# =============================================================================
+
+# Module-level sync engine singleton to avoid connection pool exhaustion
+_sync_engine: Any = None
+_sync_session_factory: sessionmaker[Session] | None = None
+
+
+def _get_sync_engine() -> Any:
+    """
+    Get or create a singleton sync engine for synchronous database operations.
+
+    This prevents connection pool exhaustion by reusing a single engine
+    instead of creating a new one per request.
+
+    Returns:
+        SQLAlchemy sync Engine instance.
+    """
+    global _sync_engine
+    if _sync_engine is None:
+        settings = get_settings()
+        # Convert async URL to sync URL
+        sync_url = settings.database_url.replace("+asyncpg", "").replace("+psycopg", "")
+        _sync_engine = create_engine(
+            sync_url,
+            pool_size=5,
+            max_overflow=10,
+            pool_pre_ping=True,
+            pool_recycle=3600,
+        )
+    return _sync_engine
+
+
+def _get_sync_session_factory() -> sessionmaker[Session]:
+    """
+    Get or create a singleton session factory for sync sessions.
+
+    Returns:
+        SQLAlchemy sessionmaker instance.
+    """
+    global _sync_session_factory
+    if _sync_session_factory is None:
+        engine = _get_sync_engine()
+        _sync_session_factory = sessionmaker(bind=engine, expire_on_commit=False)
+    return _sync_session_factory
+
+
+def get_sync_session() -> Session:
+    """
+    Get a synchronous session for services that require sync operations.
+
+    Uses a module-level singleton engine to prevent connection pool exhaustion.
+
+    Returns:
+        Synchronous SQLAlchemy Session.
+    """
+    factory = _get_sync_session_factory()
+    return factory()
+
+
+# =============================================================================
+# Provider Configuration
+# =============================================================================
 
 VALID_PROVIDERS = {
     IntegrationProvider.GOOGLE_SEARCH_CONSOLE.value,
@@ -124,49 +245,6 @@ def get_oauth_provider(provider: str) -> GoogleOAuthProvider | MicrosoftOAuthPro
             client_secret=client_secret,
             redirect_uri=settings.microsoft_redirect_uri or "",
         )
-
-
-def store_oauth_state(state: str, user_id: str, provider: str) -> None:
-    """
-    Store OAuth state for CSRF validation.
-
-    Args:
-        state: State token to store.
-        user_id: User ID initiating the flow.
-        provider: Provider for the OAuth flow.
-    """
-    _oauth_states[state] = {
-        "user_id": user_id,
-        "provider": provider,
-    }
-
-
-def get_oauth_state(state: str) -> str | None:
-    """
-    Retrieve and validate OAuth state.
-
-    Args:
-        state: State token to retrieve.
-
-    Returns:
-        The stored state if valid, None otherwise.
-    """
-    if state in _oauth_states:
-        return state
-    return None
-
-
-def consume_oauth_state(state: str) -> dict[str, Any] | None:
-    """
-    Consume OAuth state (retrieve and remove).
-
-    Args:
-        state: State token to consume.
-
-    Returns:
-        The state data if valid, None otherwise.
-    """
-    return _oauth_states.pop(state, None)
 
 
 # =============================================================================
@@ -247,9 +325,9 @@ async def connect_integration(
             detail=f"Integration {provider} is already connected",
         )
 
-    # Generate state token for CSRF protection
-    state = secrets.token_urlsafe(32)
-    store_oauth_state(state, str(current_user.user_id), provider)
+    # Generate state token using Redis-backed state manager
+    state_manager = get_oauth_state_manager()
+    state = await state_manager.generate(str(current_user.user_id), provider)
 
     # Get OAuth provider and generate authorization URL
     oauth_provider = get_oauth_provider(provider)
@@ -319,20 +397,27 @@ async def oauth_callback(
     """
     validate_provider(provider)
 
-    # Validate state token
-    stored_state = get_oauth_state(callback_data.state)
-    if stored_state is None or stored_state != callback_data.state:
+    # Validate and consume state token using Redis-backed state manager
+    state_manager = get_oauth_state_manager()
+    state_data = await state_manager.validate(callback_data.state)
+
+    if state_data is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid or expired state token",
         )
 
-    # Consume the state (one-time use)
-    state_data = consume_oauth_state(callback_data.state)
-    if state_data is None:
+    # Verify the state matches the current user and provider
+    if state_data.get("user_id") != str(current_user.user_id):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid or expired state token",
+            detail="State token does not match current user",
+        )
+
+    if state_data.get("provider") != provider:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="State token does not match provider",
         )
 
     # Get OAuth provider
@@ -379,7 +464,7 @@ async def oauth_callback(
 
 
 # =============================================================================
-# Disconnect Endpoint
+# Disconnect Endpoint (FIX Issue 3)
 # =============================================================================
 
 
@@ -448,13 +533,30 @@ async def disconnect_integration(
             detail=f"Integration {provider} is not connected",
         )
 
-    # Attempt to revoke token (best effort)
+    # Attempt to revoke token with provider (best effort)
     try:
         oauth_provider = get_oauth_provider(provider)
-        # Note: In production, we would decrypt and revoke the actual token
-        await oauth_provider.revoke_token("")
+
+        # Get the actual access token from the token relationship
+        access_token = None
+        if integration_account.token and integration_account.token.access_token_encrypted:
+            try:
+                # Decrypt the stored token
+                encrypted_token = integration_account.token.access_token_encrypted
+                if isinstance(encrypted_token, bytes):
+                    access_token = decrypt_token(encrypted_token).decode("utf-8")
+                else:
+                    access_token = decrypt_token(encrypted_token)
+            except DecryptionError:
+                # If decryption fails, log and continue - token might be corrupted
+                pass
+
+        # Only attempt revocation if we have a valid token
+        if access_token:
+            await oauth_provider.revoke_token(access_token)
     except Exception:
         # Log but don't fail - token revocation is best effort
+        # The provider may have already invalidated the token
         pass
 
     # Delete the integration account
@@ -501,9 +603,7 @@ async def list_integrations(
         IntegrationListResponse with list of connected integrations.
     """
     result = await db.execute(
-        select(IntegrationAccount).where(
-            IntegrationAccount.user_id == current_user.user_id
-        )
+        select(IntegrationAccount).where(IntegrationAccount.user_id == current_user.user_id)
     )
     accounts = result.scalars().all()
 
@@ -601,25 +701,6 @@ async def get_integration_status(
 # =============================================================================
 
 
-def get_sync_session(async_session: DbSession) -> Session:
-    """
-    Get a synchronous session wrapper for the health service.
-
-    The health service uses synchronous SQLAlchemy operations for simplicity.
-    In a production environment, you might want to refactor to async or use
-    run_sync.
-    """
-    # Note: This is a simplified approach. In production, you'd use
-    # a proper sync/async bridge or refactor the service to be async.
-    from sqlalchemy import create_engine
-    from sqlalchemy.orm import sessionmaker
-
-    settings = get_settings()
-    sync_engine = create_engine(settings.database_url.replace("+asyncpg", ""))
-    SyncSession = sessionmaker(bind=sync_engine)
-    return SyncSession()
-
-
 @router.get(
     "/integrations/{provider}/health",
     response_model=IntegrationHealthResponse,
@@ -678,8 +759,8 @@ async def get_integration_health(
             status_message="Integration is not connected",
         )
 
-    # Use synchronous session for health service
-    sync_session = get_sync_session(db)
+    # Use synchronous session for health service (using singleton engine)
+    sync_session = get_sync_session()
     try:
         health_service = IntegrationHealthService(sync_session)
         health_list = health_service.get_integration_health(current_user.user_id)
@@ -716,42 +797,6 @@ async def get_integration_health(
 # =============================================================================
 
 
-async def verify_project_ownership(
-    db: DbSession,
-    project_id: UUID,
-    current_user: CurrentUser,
-) -> Project:
-    """
-    Verify that the current user owns the project.
-
-    Args:
-        db: Database session.
-        project_id: Project UUID.
-        current_user: Current authenticated user.
-
-    Returns:
-        Project if found and owned by user.
-
-    Raises:
-        HTTPException: 404 if project not found or not owned by user.
-    """
-    result = await db.execute(
-        select(Project).where(
-            Project.id == project_id,
-            Project.owner_id == current_user.user_id,
-        )
-    )
-    project = result.scalar_one_or_none()
-
-    if project is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Project not found",
-        )
-
-    return project
-
-
 @router.get(
     "/projects/{project_id}/sync-status",
     response_model=ProjectSyncStatusResponse,
@@ -768,9 +813,7 @@ async def verify_project_ownership(
     },
 )
 async def get_project_sync_status(
-    project_id: UUID,
-    current_user: CurrentUser,
-    db: DbSession,
+    project: UserProject,
 ) -> ProjectSyncStatusResponse:
     """
     Get sync status for all mappings in a project.
@@ -779,9 +822,7 @@ async def get_project_sync_status(
     next scheduled sync, error count, and health status.
 
     Args:
-        project_id: Project UUID.
-        current_user: Current authenticated user.
-        db: Database session.
+        project: Project retrieved via dependency (validates ownership).
 
     Returns:
         ProjectSyncStatusResponse with sync status for all mappings.
@@ -789,10 +830,10 @@ async def get_project_sync_status(
     Raises:
         HTTPException: 404 if project not found.
     """
-    await verify_project_ownership(db, project_id, current_user)
+    project_id = project.id
 
-    # Use synchronous session for health service
-    sync_session = get_sync_session(db)
+    # Use synchronous session for health service (using singleton engine)
+    sync_session = get_sync_session()
     try:
         health_service = IntegrationHealthService(sync_session)
         statuses = health_service.get_project_sync_status(project_id)
@@ -813,7 +854,9 @@ async def get_project_sync_status(
             for s in statuses
         ]
 
-        overall_healthy = all(s.is_healthy for s in mapping_responses) if mapping_responses else True
+        overall_healthy = (
+            all(s.is_healthy for s in mapping_responses) if mapping_responses else True
+        )
 
         return ProjectSyncStatusResponse(
             project_id=project_id,
@@ -845,9 +888,7 @@ async def get_project_sync_status(
     },
 )
 async def get_project_data_freshness(
-    project_id: UUID,
-    current_user: CurrentUser,
-    db: DbSession,
+    project: UserProject,
 ) -> ProjectDataFreshnessResponse:
     """
     Get data freshness for all mappings in a project.
@@ -856,9 +897,7 @@ async def get_project_data_freshness(
     days behind, and coverage percentage.
 
     Args:
-        project_id: Project UUID.
-        current_user: Current authenticated user.
-        db: Database session.
+        project: Project retrieved via dependency (validates ownership).
 
     Returns:
         ProjectDataFreshnessResponse with freshness for all mappings.
@@ -866,10 +905,10 @@ async def get_project_data_freshness(
     Raises:
         HTTPException: 404 if project not found.
     """
-    await verify_project_ownership(db, project_id, current_user)
+    project_id = project.id
 
-    # Use synchronous session for health service
-    sync_session = get_sync_session(db)
+    # Use synchronous session for health service (using singleton engine)
+    sync_session = get_sync_session()
     try:
         health_service = IntegrationHealthService(sync_session)
         freshness_list = health_service.get_project_data_freshness(project_id)
@@ -924,11 +963,10 @@ async def get_project_data_freshness(
     },
 )
 async def trigger_manual_sync(
-    project_id: UUID,
     mapping_id: UUID,
     sync_request: TriggerSyncRequest,
-    current_user: CurrentUser,
     db: DbSession,
+    project: UserProject,
 ) -> TriggerSyncResponse:
     """
     Trigger a manual sync for an integration mapping.
@@ -937,11 +975,10 @@ async def trigger_manual_sync(
     by the worker service.
 
     Args:
-        project_id: Project UUID.
         mapping_id: Integration mapping UUID.
         sync_request: Sync configuration (mode, date range).
-        current_user: Current authenticated user.
         db: Database session.
+        project: Project retrieved via dependency (validates ownership).
 
     Returns:
         TriggerSyncResponse with sync run ID and status.
@@ -949,8 +986,7 @@ async def trigger_manual_sync(
     Raises:
         HTTPException: 404 if project/mapping not found, 409 if sync in progress.
     """
-    # Verify project ownership
-    await verify_project_ownership(db, project_id, current_user)
+    project_id = project.id
 
     # Find the mapping
     result = await db.execute(
@@ -1050,8 +1086,8 @@ async def list_properties(
     """
     validate_provider(provider)
 
-    # Get properties from database
-    sync_session = get_sync_session(db)
+    # Get properties from database using singleton sync session
+    sync_session = get_sync_session()
     try:
         property_service = PropertyService(sync_session)
         properties = property_service.get_user_properties(current_user.user_id, provider)
@@ -1073,6 +1109,11 @@ async def list_properties(
         )
     finally:
         sync_session.close()
+
+
+# =============================================================================
+# Property Sync Endpoint (FIX Issue 2)
+# =============================================================================
 
 
 @router.post(
@@ -1114,18 +1155,21 @@ async def sync_properties(
     """
     validate_provider(provider)
 
-    # Get existing count for comparison
-    sync_session = get_sync_session(db)
+    # Get existing count for comparison using singleton sync session
+    sync_session = get_sync_session()
     try:
         property_service = PropertyService(sync_session)
 
         existing = property_service.get_user_properties(current_user.user_id, provider)
         existing_ids = {p.property_id for p in existing}
 
-        # Sync properties
-        import asyncio
-        properties = asyncio.get_event_loop().run_until_complete(
-            property_service.sync_properties(current_user.user_id, provider)
+        # Sync properties using asyncio.to_thread to avoid blocking the event loop
+        # The sync_properties method is async but uses sync DB operations internally
+        properties = await asyncio.to_thread(
+            _sync_properties_sync,
+            sync_session,
+            current_user.user_id,
+            provider,
         )
 
         # Count new properties
@@ -1145,6 +1189,36 @@ async def sync_properties(
         ) from e
     finally:
         sync_session.close()
+
+
+def _sync_properties_sync(
+    sync_session: Session,
+    user_id: UUID,
+    provider: str,
+) -> list[Any]:
+    """
+    Synchronous wrapper for property sync to run in thread pool.
+
+    This function runs the async sync_properties in a new event loop
+    within a thread to avoid blocking the main event loop.
+
+    Args:
+        sync_session: Synchronous SQLAlchemy session.
+        user_id: User UUID.
+        provider: Provider name.
+
+    Returns:
+        List of synced IntegrationProperty records.
+    """
+    property_service = PropertyService(sync_session)
+
+    # Create a new event loop for this thread
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    try:
+        return loop.run_until_complete(property_service.sync_properties(user_id, provider))
+    finally:
+        loop.close()
 
 
 # =============================================================================
@@ -1171,10 +1245,8 @@ async def sync_properties(
     },
 )
 async def create_mapping(
-    project_id: UUID,
     mapping_request: MappingCreateRequest,
-    current_user: CurrentUser,
-    db: DbSession,
+    project: UserProject,
 ) -> MappingResponse:
     """
     Create a mapping between a project and an integration property.
@@ -1183,18 +1255,15 @@ async def create_mapping(
     to enable data sync from that property.
 
     Args:
-        project_id: Project UUID.
         mapping_request: Mapping configuration.
-        current_user: Current authenticated user.
-        db: Database session.
+        project: Project retrieved via dependency (validates ownership).
 
     Returns:
         MappingResponse with created mapping details.
     """
-    # Verify project ownership
-    await verify_project_ownership(db, project_id, current_user)
+    project_id = project.id
 
-    sync_session = get_sync_session(db)
+    sync_session = get_sync_session()
     try:
         mapping_service = PropertyMappingService(sync_session)
 
@@ -1257,9 +1326,7 @@ async def create_mapping(
     },
 )
 async def list_mappings(
-    project_id: UUID,
-    current_user: CurrentUser,
-    db: DbSession,
+    project: UserProject,
 ) -> MappingListResponse:
     """
     List all property mappings for a project.
@@ -1267,17 +1334,14 @@ async def list_mappings(
     Returns all integration properties mapped to the specified project.
 
     Args:
-        project_id: Project UUID.
-        current_user: Current authenticated user.
-        db: Database session.
+        project: Project retrieved via dependency (validates ownership).
 
     Returns:
         MappingListResponse with list of mappings.
     """
-    # Verify project ownership
-    await verify_project_ownership(db, project_id, current_user)
+    project_id = project.id
 
-    sync_session = get_sync_session(db)
+    sync_session = get_sync_session()
     try:
         mapping_service = PropertyMappingService(sync_session)
         mappings = mapping_service.get_project_mappings(project_id)
@@ -1319,10 +1383,8 @@ async def list_mappings(
     },
 )
 async def delete_mapping(
-    project_id: UUID,
     mapping_id: UUID,
-    current_user: CurrentUser,
-    db: DbSession,
+    project: UserProject,
 ) -> None:
     """
     Delete a property mapping.
@@ -1331,15 +1393,12 @@ async def delete_mapping(
     This does not delete any synced data.
 
     Args:
-        project_id: Project UUID.
         mapping_id: Mapping UUID.
-        current_user: Current authenticated user.
-        db: Database session.
+        project: Project retrieved via dependency (validates ownership).
     """
-    # Verify project ownership
-    await verify_project_ownership(db, project_id, current_user)
+    project_id = project.id
 
-    sync_session = get_sync_session(db)
+    sync_session = get_sync_session()
     try:
         mapping_service = PropertyMappingService(sync_session)
         deleted = mapping_service.delete_mapping(project_id, mapping_id)

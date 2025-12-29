@@ -13,7 +13,7 @@ from fastapi import APIRouter, HTTPException, Query, status
 from semrush_core.models import CrawlRun, IssueInstance, IssueType, Project
 from sqlalchemy import desc, func, select
 
-from semrush_api.deps import CurrentUser, DbSession, Pagination, Sort
+from semrush_api.deps import CurrentUser, DbSession, Pagination, Sort, UserProject
 from semrush_api.schemas.issues import (
     IssueInstanceResponse,
     IssueListResponse,
@@ -21,42 +21,6 @@ from semrush_api.schemas.issues import (
 )
 
 router = APIRouter(tags=["Issues"])
-
-
-async def get_user_project(
-    db: DbSession,
-    project_id: UUID,
-    current_user: CurrentUser,
-) -> Project:
-    """
-    Get a project owned by the current user.
-
-    Args:
-        db: Database session.
-        project_id: Project UUID.
-        current_user: Current authenticated user.
-
-    Returns:
-        Project if found and owned by user.
-
-    Raises:
-        HTTPException: 404 if project not found or not owned by user.
-    """
-    result = await db.execute(
-        select(Project).where(
-            Project.id == project_id,
-            Project.owner_id == current_user.user_id,
-        )
-    )
-    project = result.scalar_one_or_none()
-
-    if project is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Project not found",
-        )
-
-    return project
 
 
 async def get_crawl_run_with_auth(
@@ -79,9 +43,7 @@ async def get_crawl_run_with_auth(
         HTTPException: 404 if not found or unauthorized.
     """
     # Get crawl run
-    result = await db.execute(
-        select(CrawlRun).where(CrawlRun.id == crawl_run_id)
-    )
+    result = await db.execute(select(CrawlRun).where(CrawlRun.id == crawl_run_id))
     crawl_run = result.scalar_one_or_none()
 
     if crawl_run is None:
@@ -197,9 +159,7 @@ async def list_crawl_issues(
     await get_crawl_run_with_auth(db, crawl_run_id, current_user)
 
     # Build base query
-    base_query = select(IssueInstance).where(
-        IssueInstance.crawl_run_id == crawl_run_id
-    )
+    base_query = select(IssueInstance).where(IssueInstance.crawl_run_id == crawl_run_id)
 
     # Track if we've joined with IssueType
     has_issue_type_join = False
@@ -265,15 +225,12 @@ async def list_crawl_issues(
     summary="Get project issues",
     description="Get issues from the latest crawl run for a project.",
     responses={
-        404: {
-            "description": "Project not found, not owned by user, or no crawl runs exist"
-        },
+        404: {"description": "Project not found, not owned by user, or no crawl runs exist"},
     },
 )
 async def get_project_issues(
-    project_id: UUID,
     db: DbSession,
-    current_user: CurrentUser,
+    project: UserProject,
     limit: Annotated[
         int,
         Query(ge=1, le=100, description="Maximum number of issues to return"),
@@ -285,9 +242,8 @@ async def get_project_issues(
     Returns issues sorted by impact_score descending.
 
     Args:
-        project_id: Project UUID.
         db: Database session.
-        current_user: Current authenticated user.
+        project: Project retrieved via dependency (validates ownership).
         limit: Maximum number of issues to return.
 
     Returns:
@@ -296,14 +252,11 @@ async def get_project_issues(
     Raises:
         HTTPException: 404 if project not found or no crawl runs exist.
     """
-    # Verify project ownership
-    await get_user_project(db, project_id, current_user)
-
     # Get latest completed crawl run
     crawl_result = await db.execute(
         select(CrawlRun)
         .where(
-            CrawlRun.project_id == project_id,
+            CrawlRun.project_id == project.id,
             CrawlRun.status == "completed",
         )
         .order_by(desc(CrawlRun.created_at))

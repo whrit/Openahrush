@@ -6,16 +6,19 @@ Provides reusable dependencies for:
 - Current user authentication
 - Settings access
 - Pagination
+- Project access validation
 """
 
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import Depends, Header, HTTPException, Query, status
+from fastapi import Depends, Header, HTTPException, Path, Query, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from semrush_core import Settings, get_settings
 from semrush_core.database import get_async_session
+from semrush_core.models import Project
 from semrush_core.security.jwt import TokenData, TokenError, decode_token
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 # Security scheme for JWT bearer tokens
@@ -249,3 +252,59 @@ def validate_project_access(project_id: UUID, current_user: CurrentUser) -> UUID
     # TODO: Implement actual project access check
     # For now, return the project_id (authentication is enough)
     return project_id
+
+
+# =============================================================================
+# Project Access Dependencies
+# =============================================================================
+
+
+async def get_user_project(
+    project_id: Annotated[UUID, Path(description="Project UUID")],
+    db: DbSession,
+    current_user: CurrentUser,
+) -> Project:
+    """
+    Get a project owned by the current user.
+
+    This is a reusable FastAPI dependency that fetches a project by ID
+    and validates that the current authenticated user owns it. Use this
+    dependency in any endpoint that requires project access verification.
+
+    Args:
+        project_id: Project UUID from path parameter.
+        db: Database session.
+        current_user: Current authenticated user.
+
+    Returns:
+        Project if found and owned by user.
+
+    Raises:
+        HTTPException: 404 if project not found or not owned by user.
+
+    Example:
+        @router.get("/{project_id}/details")
+        async def get_project_details(
+            project: Annotated[Project, Depends(get_user_project)],
+        ) -> ProjectResponse:
+            return ProjectResponse.model_validate(project)
+    """
+    result = await db.execute(
+        select(Project).where(
+            Project.id == project_id,
+            Project.owner_id == current_user.user_id,
+        )
+    )
+    project = result.scalar_one_or_none()
+
+    if project is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Project not found",
+        )
+
+    return project
+
+
+# Type alias for user project dependency
+UserProject = Annotated[Project, Depends(get_user_project)]

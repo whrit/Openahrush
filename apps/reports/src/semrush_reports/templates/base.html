@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Report{% endblock %} - Openahrush</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+            @top-center {
+                content: "{{ project_name | default('SEO Report') }}";
+                font-size: 10px;
+                color: #666;
+            }
+            @bottom-center {
+                content: "Page " counter(page) " of " counter(pages);
+                font-size: 10px;
+                color: #666;
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-size: 12px;
+            line-height: 1.5;
+            color: #333;
+            background: #fff;
+        }
+
+        .container {
+            max-width: 100%;
+            padding: 0;
+        }
+
+        /* Header */
+        .report-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #2563eb;
+        }
+
+        .report-header h1 {
+            font-size: 24px;
+            color: #1e40af;
+            margin-bottom: 10px;
+        }
+
+        .report-header .subtitle {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .report-header .date {
+            color: #888;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        /* Section styling */
+        .section {
+            margin-bottom: 30px;
+            page-break-inside: avoid;
+        }
+
+        .section-title {
+            font-size: 16px;
+            color: #1e40af;
+            margin-bottom: 15px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        /* Summary cards */
+        .summary-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .summary-card {
+            flex: 1;
+            min-width: 120px;
+            padding: 15px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .summary-card .value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1e40af;
+        }
+
+        .summary-card .label {
+            font-size: 11px;
+            color: #666;
+            text-transform: uppercase;
+        }
+
+        .summary-card.critical { border-left: 4px solid #dc2626; }
+        .summary-card.high { border-left: 4px solid #ea580c; }
+        .summary-card.medium { border-left: 4px solid #ca8a04; }
+        .summary-card.low { border-left: 4px solid #16a34a; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            font-size: 11px;
+        }
+
+        th, td {
+            padding: 8px 10px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        th {
+            background: #f1f5f9;
+            font-weight: 600;
+            color: #475569;
+            text-transform: uppercase;
+            font-size: 10px;
+        }
+
+        tr:nth-child(even) {
+            background: #f8fafc;
+        }
+
+        .url-cell {
+            max-width: 200px;
+            word-break: break-all;
+        }
+
+        /* Severity badges */
+        .severity {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        .severity-5 { background: #fef2f2; color: #dc2626; }
+        .severity-4 { background: #fff7ed; color: #ea580c; }
+        .severity-3 { background: #fefce8; color: #ca8a04; }
+        .severity-2 { background: #f0fdf4; color: #16a34a; }
+        .severity-1 { background: #f0f9ff; color: #0284c7; }
+
+        /* Charts placeholder */
+        .chart-container {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .chart-image {
+            max-width: 100%;
+            height: auto;
+        }
+
+        /* Footer */
+        .report-footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            text-align: center;
+            color: #888;
+            font-size: 10px;
+        }
+
+        /* Utilities */
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .text-muted { color: #666; }
+        .text-small { font-size: 10px; }
+        .mb-10 { margin-bottom: 10px; }
+        .mb-20 { margin-bottom: 20px; }
+
+        /* Page break controls */
+        .page-break { page-break-after: always; }
+        .no-break { page-break-inside: avoid; }
+    </style>
+    {% block extra_styles %}{% endblock %}
+</head>
+<body>
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+
+    <div class="report-footer">
+        Generated by Openahrush | {{ generated_at }}
+    </div>
+</body>
+</html>

@@ -3,15 +3,22 @@ Ingestion orchestrator for Common Crawl data.
 
 Coordinates the download, parsing, filtering, and storage of
 link edges from Common Crawl WAT files.
+Emits Common Crawl ingestion events per ARCHITECTURE.md Section 7.2.
 """
 
 from __future__ import annotations
 
+import time
+import uuid
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any, Protocol
 
 from semrush_commoncrawl.downloader import WatDownloader, fetch_wat_paths
+from semrush_commoncrawl.events import (
+    BaseCommonCrawlEventEmitter,
+    NoOpCommonCrawlEventEmitter,
+)
 from semrush_commoncrawl.filter import DomainFilter
 from semrush_commoncrawl.parser import Edge, parse_wat_records
 
@@ -133,14 +140,19 @@ class IngestionOrchestrator:
 
     Coordinates the full pipeline: downloading WAT files,
     parsing link edges, applying filters, and storing results.
+    Emits ingestion lifecycle events for monitoring.
 
     Attributes:
         storage: Edge storage backend.
         settings: Ingestion settings.
+        event_emitter: Event emitter for ingestion lifecycle events.
+        project_id: Optional project ID for scoped ingestion.
     """
 
     storage: EdgeStorageProtocol
     settings: IngestionSettings = field(default_factory=IngestionSettings)
+    event_emitter: BaseCommonCrawlEventEmitter = field(default_factory=NoOpCommonCrawlEventEmitter)
+    project_id: uuid.UUID | None = None
 
     # Internal state
     _progress: IngestionProgress = field(default_factory=IngestionProgress, init=False, repr=False)
@@ -166,6 +178,11 @@ class IngestionOrchestrator:
         4. Apply domain and sample rate filtering
         5. Batch insert edges into storage
 
+        Emits ingestion lifecycle events for monitoring:
+        - commoncrawl.ingest_requested at start
+        - commoncrawl.ingest_progress periodically
+        - commoncrawl.ingest_completed or commoncrawl.ingest_failed at end
+
         Args:
             snapshot_id: Common Crawl snapshot ID (e.g., "CC-MAIN-2024-10").
             spec: Ingestion specification (filters, limits).
@@ -174,11 +191,23 @@ class IngestionOrchestrator:
         Returns:
             IngestionResult with statistics and any errors.
         """
+        start_time = time.monotonic()
+
         # Initialize progress
         self._progress = IngestionProgress(is_running=True)
         errors: list[str] = []
         edges_ingested = 0
         files_processed = 0
+
+        # Emit ingest requested event
+        await self.event_emitter.emit_ingest_requested(
+            snapshot_id=snapshot_id,
+            target_domains=spec.target_domains,
+            sample_rate=spec.sample_rate,
+            max_edges=spec.max_edges,
+            max_files=spec.max_files,
+            project_id=self.project_id,
+        )
 
         # Create filter
         domain_filter = DomainFilter(
@@ -198,13 +227,27 @@ class IngestionOrchestrator:
             files_to_process = all_paths[: spec.max_files] if spec.max_files else all_paths
             self._progress.files_total = len(files_to_process)
         except Exception as e:
-            errors.append(f"Failed to fetch WAT paths: {e}")
+            error_msg = f"Failed to fetch WAT paths: {e}"
+            errors.append(error_msg)
             self._progress.is_running = False
+
+            # Emit ingest failed event
+            await self.event_emitter.emit_ingest_failed(
+                snapshot_id=snapshot_id,
+                error=error_msg,
+                files_processed=0,
+                edges_ingested=0,
+                project_id=self.project_id,
+            )
+
             return IngestionResult(edges_ingested=0, files_processed=0, errors=errors)
 
         # Edge batch for efficient storage
         edge_batch: list[Edge] = []
         max_edges_reached = False
+
+        # Track progress event emission (emit every N files)
+        progress_emit_interval = max(1, self._progress.files_total // 10)
 
         # Process files
         try:
@@ -245,6 +288,17 @@ class IngestionOrchestrator:
                 self._progress.files_processed = files_processed
                 self._progress.edges_ingested = edges_ingested
 
+                # Emit progress event periodically
+                if files_processed % progress_emit_interval == 0:
+                    await self.event_emitter.emit_ingest_progress(
+                        snapshot_id=snapshot_id,
+                        files_processed=files_processed,
+                        files_total=self._progress.files_total,
+                        edges_ingested=edges_ingested,
+                        current_file=path,
+                        project_id=self.project_id,
+                    )
+
                 # Progress callback
                 if on_progress:
                     on_progress(
@@ -270,6 +324,30 @@ class IngestionOrchestrator:
                 errors.append(f"Storage error: {e}")
 
         self._progress.is_running = False
+
+        # Calculate duration
+        duration_seconds = time.monotonic() - start_time
+
+        # Emit completion or failure event
+        if errors:
+            # Has errors - emit completed with errors (non-fatal errors)
+            await self.event_emitter.emit_ingest_completed(
+                snapshot_id=snapshot_id,
+                files_processed=files_processed,
+                edges_ingested=edges_ingested,
+                duration_seconds=duration_seconds,
+                errors=errors,
+                project_id=self.project_id,
+            )
+        else:
+            # No errors - emit clean completion
+            await self.event_emitter.emit_ingest_completed(
+                snapshot_id=snapshot_id,
+                files_processed=files_processed,
+                edges_ingested=edges_ingested,
+                duration_seconds=duration_seconds,
+                project_id=self.project_id,
+            )
 
         return IngestionResult(
             edges_ingested=edges_ingested,

@@ -16,10 +16,9 @@ from urllib.parse import urlparse
 from uuid import UUID
 
 from fastapi import APIRouter, File, HTTPException, Query, UploadFile, status
-from semrush_core.models import Project
-from sqlalchemy import select, text
+from sqlalchemy import text
 
-from semrush_api.deps import CurrentUser, DbSession
+from semrush_api.deps import CurrentUser, DbSession, UserProject
 from semrush_api.schemas.backlinks import (
     AnchorListResponse,
     AnchorResponse,
@@ -45,42 +44,6 @@ links_router = APIRouter(prefix="/links", tags=["Backlinks"])
 
 # Router for project backlinks endpoints (/projects/{project_id}/backlinks/...)
 projects_router = APIRouter(prefix="/projects", tags=["Project Backlinks"])
-
-
-async def get_user_project(
-    db: DbSession,
-    project_id: UUID,
-    current_user: CurrentUser,
-) -> Project:
-    """
-    Get a project owned by the current user.
-
-    Args:
-        db: Database session.
-        project_id: Project UUID.
-        current_user: Current authenticated user.
-
-    Returns:
-        Project if found and owned by user.
-
-    Raises:
-        HTTPException: 404 if project not found or not owned by user.
-    """
-    result = await db.execute(
-        select(Project).where(
-            Project.id == project_id,
-            Project.owner_id == current_user.user_id,
-        )
-    )
-    project = result.scalar_one_or_none()
-
-    if project is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Project not found",
-        )
-
-    return project
 
 
 def is_valid_url(url: str) -> bool:
@@ -800,9 +763,8 @@ async def get_domain_intersect(
     description="Import backlinks from a CSV file with columns: source_url, target_url, anchor (optional).",
 )
 async def import_backlinks_csv(
-    project_id: UUID,
     db: DbSession,
-    current_user: CurrentUser,
+    project: UserProject,
     file: Annotated[UploadFile, File(description="CSV file with backlinks data")],
 ) -> ImportResponse:
     """
@@ -814,17 +776,13 @@ async def import_backlinks_csv(
     - anchor (optional): Link anchor text
 
     Args:
-        project_id: Project UUID.
         db: Database session.
-        current_user: Current authenticated user.
+        project: Project retrieved via dependency (validates ownership).
         file: Uploaded CSV file.
 
     Returns:
         Import statistics with counts and errors.
     """
-    # Verify project ownership
-    await get_user_project(db, project_id, current_user)
-
     # Read and parse CSV
     content = await file.read()
     try:
@@ -893,7 +851,7 @@ async def import_backlinks_csv(
             await db.execute(
                 insert_query,
                 {
-                    "project_id": str(project_id),
+                    "project_id": str(project.id),
                     "source_url": source_url,
                     "source_domain": source_domain,
                     "target_url": target_url,
@@ -923,9 +881,8 @@ async def import_backlinks_csv(
     description="Get aggregated backlink statistics for a project from all sources.",
 )
 async def get_project_backlinks_overview(
-    project_id: UUID,
     db: DbSession,
-    current_user: CurrentUser,
+    project: UserProject,
     include_commoncrawl: Annotated[
         bool,
         Query(description="Include Common Crawl edges for matching project domains"),
@@ -941,17 +898,13 @@ async def get_project_backlinks_overview(
     Deduplication is done by (source_domain, target_url) to avoid double-counting.
 
     Args:
-        project_id: Project UUID.
         db: Database session.
-        current_user: Current authenticated user.
+        project: Project retrieved via dependency (validates ownership).
         include_commoncrawl: Whether to include Common Crawl edges.
 
     Returns:
         Backlink overview statistics.
     """
-    # Verify project ownership and get project with sites
-    project = await get_user_project(db, project_id, current_user)
-
     # Get project domains from sites
     project_domains: list[str] = []
     if hasattr(project, "sites") and project.sites:
@@ -1019,7 +972,7 @@ async def get_project_backlinks_overview(
 
         result = await db.execute(
             query,
-            {"project_id": str(project_id), "project_domains": project_domains},
+            {"project_id": str(project.id), "project_domains": project_domains},
         )
     else:
         # Only project_backlinks (no Common Crawl or no project domains)
@@ -1035,7 +988,7 @@ async def get_project_backlinks_overview(
             WHERE project_id = :project_id
         """)
 
-        result = await db.execute(query, {"project_id": str(project_id)})
+        result = await db.execute(query, {"project_id": str(project.id)})
 
     row = result.mappings().one_or_none()
 
@@ -1067,9 +1020,8 @@ async def get_project_backlinks_overview(
     description="Get anchor text distribution for all backlinks in a project.",
 )
 async def get_project_backlinks_anchors(
-    project_id: UUID,
     db: DbSession,
-    current_user: CurrentUser,
+    project: UserProject,
     limit: Annotated[
         int,
         Query(ge=1, le=1000, description="Maximum number of results"),
@@ -1082,17 +1034,13 @@ async def get_project_backlinks_anchors(
     for the project.
 
     Args:
-        project_id: Project UUID.
         db: Database session.
-        current_user: Current authenticated user.
+        project: Project retrieved via dependency (validates ownership).
         limit: Maximum number of results.
 
     Returns:
         List of anchors with counts.
     """
-    # Verify project ownership
-    await get_user_project(db, project_id, current_user)
-
     query = text("""
         SELECT
             COALESCE(anchor, '') as anchor,
@@ -1104,7 +1052,7 @@ async def get_project_backlinks_anchors(
         LIMIT :limit
     """)
 
-    result = await db.execute(query, {"project_id": str(project_id), "limit": limit})
+    result = await db.execute(query, {"project_id": str(project.id), "limit": limit})
     rows = result.mappings().all()
 
     items = [
@@ -1131,9 +1079,8 @@ async def get_project_backlinks_anchors(
     description="Find referring domains that link to both the project's primary site and its competitors.",
 )
 async def get_project_backlinks_overlap(
-    project_id: UUID,
     db: DbSession,
-    current_user: CurrentUser,
+    project: UserProject,
     snapshot_id: Annotated[
         UUID | None,
         Query(description="Filter by snapshot ID"),
@@ -1151,9 +1098,8 @@ async def get_project_backlinks_overlap(
     and at least one competitor domain.
 
     Args:
-        project_id: Project UUID.
         db: Database session.
-        current_user: Current authenticated user.
+        project: Project retrieved via dependency (validates ownership).
         snapshot_id: Optional snapshot ID to filter by.
         limit: Maximum number of results (default 100, max 10000).
 
@@ -1161,11 +1107,8 @@ async def get_project_backlinks_overlap(
         Overlap analysis with shared referring domains.
 
     Raises:
-        HTTPException: 404 if project not found, 400 if no sites or competitors.
+        HTTPException: 400 if no sites or competitors configured.
     """
-    # Get project and verify ownership
-    project = await get_user_project(db, project_id, current_user)
-
     # Validate project has sites
     if not project.sites:
         raise HTTPException(
@@ -1229,7 +1172,7 @@ async def get_project_backlinks_overlap(
     ]
 
     return ProjectOverlapResponse(
-        project_id=project_id,
+        project_id=project.id,
         domain=primary_domain,
         competitors=competitor_domains,
         shared_ref_domains=shared_ref_domains,
@@ -1244,9 +1187,8 @@ async def get_project_backlinks_overlap(
     description="Find referring domains that link to competitors but not to the project's primary site.",
 )
 async def get_project_backlinks_intersect(
-    project_id: UUID,
     db: DbSession,
-    current_user: CurrentUser,
+    project: UserProject,
     snapshot_id: Annotated[
         UUID | None,
         Query(description="Filter by snapshot ID"),
@@ -1264,9 +1206,8 @@ async def get_project_backlinks_intersect(
     link to the primary site domain.
 
     Args:
-        project_id: Project UUID.
         db: Database session.
-        current_user: Current authenticated user.
+        project: Project retrieved via dependency (validates ownership).
         snapshot_id: Optional snapshot ID to filter by.
         limit: Maximum number of results (default 100, max 10000).
 
@@ -1274,11 +1215,8 @@ async def get_project_backlinks_intersect(
         Intersect analysis with link building opportunities.
 
     Raises:
-        HTTPException: 404 if project not found, 400 if no sites or competitors.
+        HTTPException: 400 if no sites or competitors configured.
     """
-    # Get project and verify ownership
-    project = await get_user_project(db, project_id, current_user)
-
     # Validate project has sites
     if not project.sites:
         raise HTTPException(
@@ -1345,7 +1283,7 @@ async def get_project_backlinks_intersect(
     ]
 
     return ProjectIntersectResponse(
-        project_id=project_id,
+        project_id=project.id,
         domain=primary_domain,
         competitors=competitor_domains,
         intersect_ref_domains=intersect_ref_domains,
@@ -1365,9 +1303,8 @@ async def get_project_backlinks_intersect(
     description="Get time series of new/lost backlinks based on discovered_at timestamps.",
 )
 async def get_project_backlinks_new_lost(
-    project_id: UUID,
     db: DbSession,
-    current_user: CurrentUser,
+    project: UserProject,
     limit: Annotated[
         int,
         Query(ge=1, le=50, description="Maximum number of data points"),
@@ -1384,18 +1321,14 @@ async def get_project_backlinks_new_lost(
     timestamps. Groups by date and counts new/lost backlinks.
 
     Args:
-        project_id: Project UUID.
         db: Database session.
-        current_user: Current authenticated user.
+        project: Project retrieved via dependency (validates ownership).
         limit: Maximum number of data points (default 10, max 50).
         days: Number of days to include (default 30, max 365).
 
     Returns:
         Time series of new/lost backlink counts.
     """
-    # Verify project ownership
-    await get_user_project(db, project_id, current_user)
-
     # Calculate date range
     end_date = datetime.now(UTC)
     start_date = end_date - timedelta(days=days)
@@ -1441,7 +1374,7 @@ async def get_project_backlinks_new_lost(
     result = await db.execute(
         query,
         {
-            "project_id": str(project_id),
+            "project_id": str(project.id),
             "start_date": start_date,
             "end_date": end_date,
             "limit": limit,
@@ -1458,4 +1391,4 @@ async def get_project_backlinks_new_lost(
         for row in rows
     ]
 
-    return ProjectNewLostResponse(project_id=project_id, items=items)
+    return ProjectNewLostResponse(project_id=project.id, items=items)

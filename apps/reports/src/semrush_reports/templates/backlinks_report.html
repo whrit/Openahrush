@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}Backlinks Report{% endblock %}
+
+{% block content %}
+<div class="report-header">
+    <h1>Backlinks Report</h1>
+    <div class="subtitle">{{ project_name }}</div>
+    <div class="date">Generated: {{ generated_at }}</div>
+</div>
+
+<!-- Summary Section -->
+<div class="section">
+    <h2 class="section-title">Backlinks Summary</h2>
+    <div class="summary-grid">
+        <div class="summary-card">
+            <div class="value">{{ summary.total_backlinks | default(0) }}</div>
+            <div class="label">Total Backlinks</div>
+        </div>
+        <div class="summary-card">
+            <div class="value">{{ summary.referring_domains | default(0) }}</div>
+            <div class="label">Referring Domains</div>
+        </div>
+        <div class="summary-card">
+            <div class="value">{{ summary.dofollow_links | default(0) }}</div>
+            <div class="label">Dofollow Links</div>
+        </div>
+        <div class="summary-card">
+            <div class="value">{{ summary.nofollow_links | default(0) }}</div>
+            <div class="label">Nofollow Links</div>
+        </div>
+    </div>
+</div>
+
+<!-- Link Quality Distribution -->
+<div class="section">
+    <h2 class="section-title">Link Distribution</h2>
+    <div class="summary-grid">
+        <div class="summary-card">
+            <div class="value">{{ distribution.dofollow_pct | default(0) | round(1) }}%</div>
+            <div class="label">Dofollow</div>
+        </div>
+        <div class="summary-card">
+            <div class="value">{{ distribution.nofollow_pct | default(0) | round(1) }}%</div>
+            <div class="label">Nofollow</div>
+        </div>
+        <div class="summary-card">
+            <div class="value">{{ distribution.ugc_pct | default(0) | round(1) }}%</div>
+            <div class="label">UGC</div>
+        </div>
+        <div class="summary-card">
+            <div class="value">{{ distribution.sponsored_pct | default(0) | round(1) }}%</div>
+            <div class="label">Sponsored</div>
+        </div>
+    </div>
+</div>
+
+{% if backlinks_by_source %}
+<!-- Backlinks by Source -->
+<div class="section">
+    <h2 class="section-title">Backlinks by Source</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Source</th>
+                <th class="text-right">Count</th>
+                <th class="text-right">Percentage</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for source, count in backlinks_by_source.items() %}
+            <tr>
+                <td>{{ source | capitalize }}</td>
+                <td class="text-right">{{ count }}</td>
+                <td class="text-right">{{ ((count / summary.total_backlinks) * 100) | round(1) }}%</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{% if top_referring_domains %}
+<!-- Top Referring Domains -->
+<div class="section">
+    <h2 class="section-title">Top Referring Domains</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Domain</th>
+                <th class="text-right">Backlinks</th>
+                <th class="text-right">Dofollow</th>
+                <th class="text-right">First Seen</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for domain in top_referring_domains[:30] %}
+            <tr class="no-break">
+                <td>{{ domain.domain }}</td>
+                <td class="text-right">{{ domain.backlinks }}</td>
+                <td class="text-right">{{ domain.dofollow }}</td>
+                <td class="text-right">{{ domain.first_seen }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{% if top_anchor_texts %}
+<!-- Top Anchor Texts -->
+<div class="section page-break">
+    <h2 class="section-title">Top Anchor Texts</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Anchor Text</th>
+                <th class="text-right">Count</th>
+                <th class="text-right">Percentage</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for anchor in top_anchor_texts[:20] %}
+            <tr class="no-break">
+                <td>{{ anchor.text if anchor.text else '[empty]' }}</td>
+                <td class="text-right">{{ anchor.count }}</td>
+                <td class="text-right">{{ anchor.percentage | round(1) }}%</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{% if top_target_urls %}
+<!-- Most Linked Pages -->
+<div class="section">
+    <h2 class="section-title">Most Linked Pages</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Target URL</th>
+                <th class="text-right">Backlinks</th>
+                <th class="text-right">Domains</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for url in top_target_urls[:20] %}
+            <tr class="no-break">
+                <td class="url-cell">{{ url.url }}</td>
+                <td class="text-right">{{ url.backlinks }}</td>
+                <td class="text-right">{{ url.domains }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{% if new_backlinks %}
+<!-- New Backlinks -->
+<div class="section">
+    <h2 class="section-title">Recently Discovered Backlinks</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Source URL</th>
+                <th>Target URL</th>
+                <th>Anchor</th>
+                <th>Discovered</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for bl in new_backlinks[:20] %}
+            <tr class="no-break">
+                <td class="url-cell">{{ bl.source_url }}</td>
+                <td class="url-cell">{{ bl.target_url }}</td>
+                <td>{{ bl.anchor if bl.anchor else '-' }}</td>
+                <td>{{ bl.discovered_at }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{% endblock %}

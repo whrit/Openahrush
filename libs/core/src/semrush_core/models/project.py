@@ -23,6 +23,7 @@ if TYPE_CHECKING:
     from semrush_core.models.settings import ProjectSettings
     from semrush_core.models.site import Site
     from semrush_core.models.user import User
+    from semrush_core.models.webhook import WebhookConfig
 
 
 class Project(Base, UUIDMixin, TimestampMixin):
@@ -35,6 +36,7 @@ class Project(Base, UUIDMixin, TimestampMixin):
     - Project-specific settings for crawling, audits, alerts
     - Crawl runs for site audits
     - Alert rules and alerts
+    - Webhook configurations for event notifications
 
     Attributes:
         owner_id: UUID of the user who owns this project.
@@ -46,6 +48,7 @@ class Project(Base, UUIDMixin, TimestampMixin):
         crawl_runs: Crawl runs for this project.
         alert_rules: Alert rules for this project.
         alerts: Alerts for this project.
+        webhook_configs: Webhook configurations for this project.
     """
 
     __tablename__ = "projects"
@@ -94,4 +97,9 @@ class Project(Base, UUIDMixin, TimestampMixin):
         back_populates="project",
         cascade="all, delete-orphan",
         lazy="dynamic",
+    )
+    webhook_configs: Mapped[list[WebhookConfig]] = relationship(
+        back_populates="project",
+        cascade="all, delete-orphan",
+        lazy="selectin",
     )

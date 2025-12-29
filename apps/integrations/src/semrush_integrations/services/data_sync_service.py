@@ -2,6 +2,7 @@
 Data synchronization service for fetching and storing provider data.
 
 Orchestrates data fetching from external providers and storing to fact tables.
+Emits integration sync events per ARCHITECTURE.md Section 7.2.
 """
 
 from __future__ import annotations
@@ -15,6 +16,10 @@ from semrush_integrations.adapters.data.base import DataAdapter, DateRange
 from semrush_integrations.adapters.data.bwt_data import BWTDataAdapter
 from semrush_integrations.adapters.data.ga4_data import GA4DataAdapter
 from semrush_integrations.adapters.data.gsc_data import GSCDataAdapter
+from semrush_integrations.events import (
+    BaseIntegrationEventEmitter,
+    NoOpIntegrationEventEmitter,
+)
 from semrush_integrations.schemas.analytics_data import AnalyticsDataRow
 from semrush_integrations.schemas.search_data import SearchDataRow
 
@@ -50,14 +55,21 @@ class DataSyncService:
         >>> print(f"Synced {sync_run.records_written} records")
     """
 
-    def __init__(self, session: AsyncSession) -> None:
+    def __init__(
+        self,
+        session: AsyncSession,
+        event_emitter: BaseIntegrationEventEmitter | None = None,
+    ) -> None:
         """
         Initialize the sync service.
 
         Args:
             session: SQLAlchemy async session for database operations.
+            event_emitter: Optional event emitter for sync lifecycle events.
+                If not provided, a NoOpIntegrationEventEmitter is used.
         """
         self.session = session
+        self.event_emitter = event_emitter or NoOpIntegrationEventEmitter()
 
     async def sync_search_data(
         self,
@@ -68,7 +80,8 @@ class DataSyncService:
         Sync search data for an integration mapping.
 
         Fetches search performance data from the provider and stores
-        it in the search_fact_daily table.
+        it in the search_fact_daily table. Emits integration sync events
+        for tracking and monitoring.
 
         Args:
             mapping: Integration mapping with property and account info.
@@ -79,11 +92,26 @@ class DataSyncService:
         """
         from semrush_core.models.sync_run import SyncMode, SyncRun, SyncStatus
 
+        provider = mapping.integration_property.provider
+        property_id = mapping.integration_property.property_id
+        account_id = mapping.integration_property.account_id
+
+        # Emit sync requested event
+        await self.event_emitter.emit_sync_requested(
+            project_id=mapping.project_id,
+            provider=provider,
+            integration_account_id=account_id,
+            property_id=property_id,
+            date_range_start=date_range.start_date,
+            date_range_end=date_range.end_date,
+            mode=SyncMode.INCREMENTAL.value,
+        )
+
         # Create sync run record
         sync_run = SyncRun(
             integration_mapping_id=mapping.id,
-            provider=mapping.integration_property.provider,
-            property_id=mapping.integration_property.property_id,
+            provider=provider,
+            property_id=property_id,
             mode=SyncMode.INCREMENTAL.value,
             status=SyncStatus.RUNNING.value,
             date_range_start=date_range.start_date,
@@ -98,9 +126,30 @@ class DataSyncService:
                 date_range=date_range,
             )
             sync_run.mark_completed(records_written)
+
+            # Emit sync completed event
+            await self.event_emitter.emit_sync_completed(
+                project_id=mapping.project_id,
+                provider=provider,
+                integration_account_id=account_id,
+                property_id=property_id,
+                date_range_start=date_range.start_date,
+                date_range_end=date_range.end_date,
+                mode=SyncMode.INCREMENTAL.value,
+                records_written=records_written,
+            )
         except Exception as e:
             logger.exception(f"Error syncing search data for mapping {mapping.id}")
             sync_run.mark_failed(str(e))
+
+            # Emit sync failed event
+            await self.event_emitter.emit_sync_failed(
+                project_id=mapping.project_id,
+                provider=provider,
+                integration_account_id=account_id,
+                property_id=property_id,
+                error=str(e),
+            )
 
         await self.session.commit()
         return sync_run
@@ -114,7 +163,8 @@ class DataSyncService:
         Sync analytics data for an integration mapping.
 
         Fetches analytics data from the provider and stores
-        it in the analytics_fact_daily table.
+        it in the analytics_fact_daily table. Emits integration sync events
+        for tracking and monitoring.
 
         Args:
             mapping: Integration mapping with property and account info.
@@ -125,11 +175,26 @@ class DataSyncService:
         """
         from semrush_core.models.sync_run import SyncMode, SyncRun, SyncStatus
 
+        provider = mapping.integration_property.provider
+        property_id = mapping.integration_property.property_id
+        account_id = mapping.integration_property.account_id
+
+        # Emit sync requested event
+        await self.event_emitter.emit_sync_requested(
+            project_id=mapping.project_id,
+            provider=provider,
+            integration_account_id=account_id,
+            property_id=property_id,
+            date_range_start=date_range.start_date,
+            date_range_end=date_range.end_date,
+            mode=SyncMode.INCREMENTAL.value,
+        )
+
         # Create sync run record
         sync_run = SyncRun(
             integration_mapping_id=mapping.id,
-            provider=mapping.integration_property.provider,
-            property_id=mapping.integration_property.property_id,
+            provider=provider,
+            property_id=property_id,
             mode=SyncMode.INCREMENTAL.value,
             status=SyncStatus.RUNNING.value,
             date_range_start=date_range.start_date,
@@ -144,9 +209,30 @@ class DataSyncService:
                 date_range=date_range,
             )
             sync_run.mark_completed(records_written)
+
+            # Emit sync completed event
+            await self.event_emitter.emit_sync_completed(
+                project_id=mapping.project_id,
+                provider=provider,
+                integration_account_id=account_id,
+                property_id=property_id,
+                date_range_start=date_range.start_date,
+                date_range_end=date_range.end_date,
+                mode=SyncMode.INCREMENTAL.value,
+                records_written=records_written,
+            )
         except Exception as e:
             logger.exception(f"Error syncing analytics data for mapping {mapping.id}")
             sync_run.mark_failed(str(e))
+
+            # Emit sync failed event
+            await self.event_emitter.emit_sync_failed(
+                project_id=mapping.project_id,
+                provider=provider,
+                integration_account_id=account_id,
+                property_id=property_id,
+                error=str(e),
+            )
 
         await self.session.commit()
         return sync_run

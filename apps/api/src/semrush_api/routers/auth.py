@@ -2,6 +2,7 @@
 Authentication endpoints.
 
 Provides endpoints for:
+- POST /auth/register - create new user account
 - POST /auth/login - authenticate with email/password, receive JWT
 - POST /auth/logout - acknowledge logout (stateless)
 - GET /me - retrieve current authenticated user info
@@ -11,7 +12,7 @@ from fastapi import APIRouter, HTTPException, status
 from semrush_core import get_settings
 from semrush_core.models import User
 from semrush_core.security.jwt import create_access_token
-from semrush_core.security.password import verify_password
+from semrush_core.security.password import hash_password, verify_password
 from sqlalchemy import select
 
 from semrush_api.deps import CurrentUser, DbSession
@@ -19,10 +20,88 @@ from semrush_api.schemas.auth import (
     LoginRequest,
     LoginResponse,
     LogoutResponse,
+    RegisterRequest,
+    RegisterResponse,
     UserResponse,
 )
 
 router = APIRouter()
+
+
+@router.post(
+    "/auth/register",
+    response_model=RegisterResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Register new user",
+    description="Create a new user account with email and password.",
+    responses={
+        409: {
+            "description": "Email already registered",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "detail": "Email already registered",
+                    }
+                }
+            },
+        },
+        422: {
+            "description": "Validation error (invalid email or password too short)",
+        },
+    },
+)
+async def register(
+    registration: RegisterRequest,
+    db: DbSession,
+) -> RegisterResponse:
+    """
+    Register a new user account.
+
+    Creates a new user with the provided email, password, and optional name.
+    Password is hashed using bcrypt before storage.
+
+    Args:
+        registration: Registration request with email, password, and optional name.
+        db: Database session.
+
+    Returns:
+        RegisterResponse with created user information.
+
+    Raises:
+        HTTPException: 409 if email is already registered.
+        HTTPException: 422 if validation fails (invalid email or password too short).
+    """
+    # Check if email is already registered
+    result = await db.execute(select(User).where(User.email == registration.email))
+    existing_user = result.scalar_one_or_none()
+
+    if existing_user is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Email already registered",
+        )
+
+    # Hash the password
+    password_hash = hash_password(registration.password)
+
+    # Create the new user
+    new_user = User(
+        email=registration.email,
+        password_hash=password_hash,
+        name=registration.name,
+        is_active=True,
+    )
+
+    db.add(new_user)
+    await db.commit()
+    await db.refresh(new_user)
+
+    return RegisterResponse(
+        id=str(new_user.id),
+        email=new_user.email,
+        name=new_user.name,
+        is_active=new_user.is_active,
+    )
 
 
 @router.post(
@@ -71,9 +150,7 @@ async def login(
     settings = get_settings()
 
     # Look up user by email
-    result = await db.execute(
-        select(User).where(User.email == credentials.email)
-    )
+    result = await db.execute(select(User).where(User.email == credentials.email))
     user = result.scalar_one_or_none()
 
     # Check if user exists
@@ -189,9 +266,7 @@ async def get_current_user_info(
         HTTPException: 404 if user no longer exists in database.
     """
     # Look up user in database to get current info
-    result = await db.execute(
-        select(User).where(User.id == current_user.user_id)
-    )
+    result = await db.execute(select(User).where(User.id == current_user.user_id))
     user = result.scalar_one_or_none()
 
     if user is None:

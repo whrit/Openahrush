@@ -31,6 +31,9 @@ Models are organized by domain:
 - CommonCrawlEdge: Raw backlink edges from Common Crawl
 - CommonCrawlRefDomain: Aggregated referring domain data
 - CommonCrawlAnchor: Aggregated anchor text data
+- Export: Export job tracking for CSV/JSON/PDF generation
+- WebhookConfig: Per-project webhook configuration
+- WebhookDelivery: Webhook delivery tracking with retry support
 """
 
 from semrush_core.models.alert import Alert, AlertEntityType, AlertKind, AlertSeverity
@@ -45,6 +48,7 @@ from semrush_core.models.commoncrawl import (
     SnapshotStatus,
 )
 from semrush_core.models.competitor import Competitor
+from semrush_core.models.export import Export, ExportFormat, ExportResource, ExportStatus
 from semrush_core.models.crawl_page import CrawlPage, RenderMode
 from semrush_core.models.crawl_run import CrawlRun, CrawlStatus
 from semrush_core.models.integration_account import IntegrationAccount, IntegrationProvider
@@ -67,6 +71,12 @@ from semrush_core.models.settings import ProjectSettings
 from semrush_core.models.site import Site
 from semrush_core.models.sync_run import SyncMode, SyncRun, SyncStatus
 from semrush_core.models.user import User
+from semrush_core.models.webhook import (
+    DeliveryStatus,
+    VALID_WEBHOOK_EVENTS,
+    WebhookConfig,
+    WebhookDelivery,
+)
 
 __all__ = [
     # Base and mixins
@@ -127,4 +137,14 @@ __all__ = [
     "CommonCrawlRefDomain",
     "CommonCrawlAnchor",
     "SnapshotStatus",
+    # Export models
+    "Export",
+    "ExportFormat",
+    "ExportResource",
+    "ExportStatus",
+    # Webhook models
+    "WebhookConfig",
+    "WebhookDelivery",
+    "DeliveryStatus",
+    "VALID_WEBHOOK_EVENTS",
 ]

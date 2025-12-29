@@ -11,6 +11,7 @@ Contains all FastAPI routers organized by resource:
 - alerts: Alert management
 - crawls: Site crawl operations
 - reports: Report generation and export
+- webhooks: Webhook configuration and delivery
 """
 
 from semrush_api.routers import (
@@ -22,6 +23,7 @@ from semrush_api.routers import (
     issues,
     projects,
     settings,
+    webhooks,
 )
 
 __all__ = [
@@ -33,4 +35,5 @@ __all__ = [
     "issues",
     "projects",
     "settings",
+    "webhooks",
 ]

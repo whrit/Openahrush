@@ -28,11 +28,13 @@ from semrush_api.routers import (
     backlinks,
     commoncrawl,
     diffs,
+    exports,
     health,
     integrations,
     issues,
     projects,
     settings,
+    webhooks,
 )
 
 # Configure logging
@@ -242,6 +244,12 @@ def register_routers(app: FastAPI) -> None:
 
     # Common Crawl (/commoncrawl/...)
     app.include_router(commoncrawl.router, tags=["Common Crawl"])
+
+    # Webhooks (/projects/{id}/webhooks/...)
+    app.include_router(webhooks.router, tags=["Webhooks"])
+
+    # Exports (/projects/{id}/exports/...)
+    app.include_router(exports.router, tags=["Exports"])
 
 
 # Create the application instance

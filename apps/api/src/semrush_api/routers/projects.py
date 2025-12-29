@@ -12,13 +12,11 @@ Provides endpoints for:
 - GET /projects/{project_id}/competitors - List project competitors
 """
 
-from uuid import UUID
-
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, status
 from semrush_core.models import Competitor, Project, Site
 from sqlalchemy import func, select
 
-from semrush_api.deps import CurrentUser, DbSession, Pagination
+from semrush_api.deps import CurrentUser, DbSession, Pagination, UserProject
 from semrush_api.schemas.project import (
     CompetitorCreate,
     CompetitorList,
@@ -32,42 +30,6 @@ from semrush_api.schemas.project import (
 )
 
 router = APIRouter(prefix="/projects", tags=["Projects"])
-
-
-async def get_user_project(
-    db: DbSession,
-    project_id: UUID,
-    current_user: CurrentUser,
-) -> Project:
-    """
-    Get a project owned by the current user.
-
-    Args:
-        db: Database session.
-        project_id: Project UUID.
-        current_user: Current authenticated user.
-
-    Returns:
-        Project if found and owned by user.
-
-    Raises:
-        HTTPException: 404 if project not found or not owned by user.
-    """
-    result = await db.execute(
-        select(Project).where(
-            Project.id == project_id,
-            Project.owner_id == current_user.user_id,
-        )
-    )
-    project = result.scalar_one_or_none()
-
-    if project is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Project not found",
-        )
-
-    return project
 
 
 @router.get(
@@ -165,17 +127,13 @@ async def create_project(
     },
 )
 async def get_project(
-    project_id: UUID,
-    db: DbSession,
-    current_user: CurrentUser,
+    project: UserProject,
 ) -> ProjectResponse:
     """
     Get a specific project.
 
     Args:
-        project_id: Project UUID.
-        db: Database session.
-        current_user: Current authenticated user.
+        project: Project retrieved via dependency (validates ownership).
 
     Returns:
         Project details.
@@ -183,7 +141,6 @@ async def get_project(
     Raises:
         HTTPException: 404 if project not found or not owned by user.
     """
-    project = await get_user_project(db, project_id, current_user)
     return ProjectResponse.model_validate(project)
 
 
@@ -200,19 +157,17 @@ async def get_project(
     },
 )
 async def update_project(
-    project_id: UUID,
     data: ProjectUpdate,
     db: DbSession,
-    current_user: CurrentUser,
+    project: UserProject,
 ) -> ProjectResponse:
     """
     Update a project.
 
     Args:
-        project_id: Project UUID.
         data: Fields to update.
         db: Database session.
-        current_user: Current authenticated user.
+        project: Project retrieved via dependency (validates ownership).
 
     Returns:
         Updated project.
@@ -220,8 +175,6 @@ async def update_project(
     Raises:
         HTTPException: 404 if project not found or not owned by user.
     """
-    project = await get_user_project(db, project_id, current_user)
-
     # Apply updates for provided fields
     if data.name is not None:
         project.name = data.name
@@ -244,23 +197,19 @@ async def update_project(
     },
 )
 async def delete_project(
-    project_id: UUID,
     db: DbSession,
-    current_user: CurrentUser,
+    project: UserProject,
 ) -> None:
     """
     Delete a project.
 
     Args:
-        project_id: Project UUID.
         db: Database session.
-        current_user: Current authenticated user.
+        project: Project retrieved via dependency (validates ownership).
 
     Raises:
         HTTPException: 404 if project not found or not owned by user.
     """
-    project = await get_user_project(db, project_id, current_user)
-
     await db.delete(project)
     await db.commit()
 
@@ -283,19 +232,17 @@ async def delete_project(
     },
 )
 async def add_site(
-    project_id: UUID,
     data: SiteCreate,
     db: DbSession,
-    current_user: CurrentUser,
+    project: UserProject,
 ) -> SiteResponse:
     """
     Add a site to a project.
 
     Args:
-        project_id: Project UUID.
         data: Site creation data.
         db: Database session.
-        current_user: Current authenticated user.
+        project: Project retrieved via dependency (validates ownership).
 
     Returns:
         Created site.
@@ -303,11 +250,8 @@ async def add_site(
     Raises:
         HTTPException: 404 if project not found or not owned by user.
     """
-    # Verify project ownership
-    await get_user_project(db, project_id, current_user)
-
     site = Site(
-        project_id=project_id,
+        project_id=project.id,
         domain=data.domain,
         base_url=data.base_url,
     )
@@ -337,19 +281,17 @@ async def add_site(
     },
 )
 async def add_competitor(
-    project_id: UUID,
     data: CompetitorCreate,
     db: DbSession,
-    current_user: CurrentUser,
+    project: UserProject,
 ) -> CompetitorResponse:
     """
     Add a competitor to a project.
 
     Args:
-        project_id: Project UUID.
         data: Competitor creation data.
         db: Database session.
-        current_user: Current authenticated user.
+        project: Project retrieved via dependency (validates ownership).
 
     Returns:
         Created competitor.
@@ -357,11 +299,8 @@ async def add_competitor(
     Raises:
         HTTPException: 404 if project not found or not owned by user.
     """
-    # Verify project ownership
-    await get_user_project(db, project_id, current_user)
-
     competitor = Competitor(
-        project_id=project_id,
+        project_id=project.id,
         domain=data.domain,
     )
 
@@ -385,17 +324,15 @@ async def add_competitor(
     },
 )
 async def list_competitors(
-    project_id: UUID,
     db: DbSession,
-    current_user: CurrentUser,
+    project: UserProject,
 ) -> CompetitorList:
     """
     List all competitors for a project.
 
     Args:
-        project_id: Project UUID.
         db: Database session.
-        current_user: Current authenticated user.
+        project: Project retrieved via dependency (validates ownership).
 
     Returns:
         List of competitors.
@@ -403,16 +340,11 @@ async def list_competitors(
     Raises:
         HTTPException: 404 if project not found or not owned by user.
     """
-    # Verify project ownership
-    await get_user_project(db, project_id, current_user)
-
     result = await db.execute(
         select(Competitor)
-        .where(Competitor.project_id == project_id)
+        .where(Competitor.project_id == project.id)
         .order_by(Competitor.created_at)
     )
     competitors = result.scalars().all()
 
-    return CompetitorList(
-        items=[CompetitorResponse.model_validate(c) for c in competitors]
-    )
+    return CompetitorList(items=[CompetitorResponse.model_validate(c) for c in competitors])

@@ -255,6 +255,7 @@ class TestCallbackEndpoint:
         mock_db_session: AsyncMock,
         mock_oauth_tokens: dict,
         mock_oauth_user_info: dict,
+        test_user_id: uuid.UUID,
     ) -> None:
         """Test that callback with valid code returns 200 OK."""
         # Mock no existing integration
@@ -265,9 +266,16 @@ class TestCallbackEndpoint:
         mock_db_session.commit = AsyncMock()
         mock_db_session.refresh = AsyncMock()
 
-        # Store a valid state first
-        from semrush_api.routers.integrations import _oauth_states, store_oauth_state
-        store_oauth_state("valid_state_token", "test-user-id", "google_search_console")
+        # Store a valid state first using the new async state manager
+        from semrush_api.routers.integrations import (
+            get_oauth_state_manager,
+            reset_oauth_state_manager,
+        )
+        reset_oauth_state_manager()  # Ensure fresh state
+        state_mgr = get_oauth_state_manager()
+        await state_mgr.generate(str(test_user_id), "google_search_console")
+        # Get the state token that was generated (stored in memory)
+        valid_state = list(state_mgr._memory_store.keys())[0]
 
         with patch(
             "semrush_api.routers.integrations.get_oauth_provider"
@@ -290,11 +298,11 @@ class TestCallbackEndpoint:
             response = await client.post(
                 "/integrations/google_search_console/callback",
                 headers=auth_headers,
-                json={"code": "valid_auth_code", "state": "valid_state_token"},
+                json={"code": "valid_auth_code", "state": valid_state},
             )
 
         # Clean up state
-        _oauth_states.clear()
+        reset_oauth_state_manager()
 
         assert response.status_code == 200
 
@@ -307,6 +315,7 @@ class TestCallbackEndpoint:
         mock_oauth_tokens: dict,
         mock_oauth_user_info: dict,
         test_integration_account_id: uuid.UUID,
+        test_user_id: uuid.UUID,
     ) -> None:
         """Test that callback response includes integration details."""
         mock_result = MagicMock()
@@ -328,9 +337,16 @@ class TestCallbackEndpoint:
 
         mock_db_session.refresh = mock_refresh
 
-        # Store a valid state first
-        from semrush_api.routers.integrations import _oauth_states, store_oauth_state
-        store_oauth_state("valid_state_token2", "test-user-id", "google_search_console")
+        # Store a valid state first using the new async state manager
+        from semrush_api.routers.integrations import (
+            get_oauth_state_manager,
+            reset_oauth_state_manager,
+        )
+        reset_oauth_state_manager()  # Ensure fresh state
+        state_mgr = get_oauth_state_manager()
+        await state_mgr.generate(str(test_user_id), "google_search_console")
+        # Get the state token that was generated (stored in memory)
+        valid_state = list(state_mgr._memory_store.keys())[0]
 
         with patch(
             "semrush_api.routers.integrations.get_oauth_provider"
@@ -353,11 +369,11 @@ class TestCallbackEndpoint:
             response = await client.post(
                 "/integrations/google_search_console/callback",
                 headers=auth_headers,
-                json={"code": "valid_auth_code", "state": "valid_state_token2"},
+                json={"code": "valid_auth_code", "state": valid_state},
             )
 
         # Clean up state
-        _oauth_states.clear()
+        reset_oauth_state_manager()
 
         data = response.json()
         assert "provider" in data
@@ -371,14 +387,16 @@ class TestCallbackEndpoint:
         auth_headers: dict,
     ) -> None:
         """Test that callback with invalid state token returns 400."""
-        with patch("semrush_api.routers.integrations.get_oauth_state") as mock_get_state:
-            mock_get_state.return_value = "different_state_token"
+        # No need to mock - the state manager uses in-memory storage in tests
+        # and an unknown state will simply not be found
+        from semrush_api.routers.integrations import reset_oauth_state_manager
+        reset_oauth_state_manager()  # Ensure clean state
 
-            response = await client.post(
-                "/integrations/google_search_console/callback",
-                headers=auth_headers,
-                json={"code": "valid_auth_code", "state": "invalid_state_token"},
-            )
+        response = await client.post(
+            "/integrations/google_search_console/callback",
+            headers=auth_headers,
+            json={"code": "valid_auth_code", "state": "invalid_state_token"},
+        )
 
         assert response.status_code == 400
 
@@ -900,13 +918,15 @@ class TestCsrfStateValidation:
         auth_headers: dict,
     ) -> None:
         """Test that callback rejects requests with invalid state token."""
-        with patch("semrush_api.routers.integrations.get_oauth_state") as mock_get_state:
-            mock_get_state.return_value = None  # No stored state
+        # No need to mock - the state manager uses in-memory storage in tests
+        # and an unknown state will simply not be found
+        from semrush_api.routers.integrations import reset_oauth_state_manager
+        reset_oauth_state_manager()  # Ensure clean state
 
-            response = await client.post(
-                "/integrations/google_search_console/callback",
-                headers=auth_headers,
-                json={"code": "valid_auth_code", "state": "unknown_state"},
-            )
+        response = await client.post(
+            "/integrations/google_search_console/callback",
+            headers=auth_headers,
+            json={"code": "valid_auth_code", "state": "unknown_state"},
+        )
 
         assert response.status_code == 400

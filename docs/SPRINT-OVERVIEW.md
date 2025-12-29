@@ -7,7 +7,7 @@ This document provides a high-level overview of all sprints required to deliver 
 | Sprint | Name | Duration | Dependencies | Status |
 |--------|------|----------|--------------|--------|
 | 0 | Foundation & Platform | 2-3 weeks | None | ✅ Complete |
-| 1 | Integrations (GSC/GA4/BWT) | 2-3 weeks | Sprint 0 | Not Started |
+| 1 | Integrations (GSC/GA4/BWT) | 2-3 weeks | Sprint 0 | ✅ Complete |
 | 2 | Hybrid Crawl & Site Audit | 3-4 weeks | Sprint 0 | ✅ Complete |
 | 3 | Backlinks & Common Crawl | 2-3 weeks | Sprint 0 | ✅ Complete |
 | 4 | Reports, Exports & Webhooks | 1-2 weeks | Sprints 1-3 | Not Started |
@@ -51,12 +51,12 @@ This document provides a high-level overview of all sprints required to deliver 
 - GSC, GA4, BWT provider adapters
 
 ### Key Metrics
-- [ ] OAuth flow completes for GSC
-- [ ] OAuth flow completes for GA4
-- [ ] OAuth flow completes for BWT
-- [ ] Properties can be mapped to projects
-- [ ] Daily sync populates fact tables
-- [ ] Backfill retrieves historical data
+- [x] OAuth flow completes for GSC
+- [x] OAuth flow completes for GA4
+- [x] OAuth flow completes for BWT
+- [x] Properties can be mapped to projects
+- [x] Daily sync populates fact tables
+- [x] Backfill retrieves historical data
 
 **Detailed Plan:** [SPRINT-1-INTEGRATIONS.md](./SPRINT-1-INTEGRATIONS.md)
 

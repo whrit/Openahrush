@@ -13,10 +13,10 @@ from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query, status
 from pydantic import BaseModel, Field
-from semrush_core.models import Alert, AlertRule, Project
+from semrush_core.models import Alert, AlertRule
 from sqlalchemy import func, select
 
-from semrush_api.deps import CurrentUser, DbSession, Pagination
+from semrush_api.deps import DbSession, Pagination, UserProject
 
 router = APIRouter(prefix="/projects", tags=["Alerts"])
 
@@ -31,7 +31,9 @@ class AlertRuleConfig(BaseModel):
 class AlertRuleCreate(BaseModel):
     """Request body for creating an alert rule."""
 
-    rule_type: str = Field(..., description="Type of rule: visibility_drop, ctr_opportunity, regression")
+    rule_type: str = Field(
+        ..., description="Type of rule: visibility_drop, ctr_opportunity, regression"
+    )
     config: AlertRuleConfig = Field(default_factory=AlertRuleConfig)
     is_enabled: bool = Field(default=True)
 
@@ -81,42 +83,6 @@ class AlertList(BaseModel):
     page_size: int
 
 
-async def get_user_project(
-    db: DbSession,
-    project_id: UUID,
-    current_user: CurrentUser,
-) -> Project:
-    """
-    Get a project owned by the current user.
-
-    Args:
-        db: Database session.
-        project_id: Project UUID.
-        current_user: Current authenticated user.
-
-    Returns:
-        Project if found and owned by user.
-
-    Raises:
-        HTTPException: 404 if project not found or not owned by user.
-    """
-    result = await db.execute(
-        select(Project).where(
-            Project.id == project_id,
-            Project.owner_id == current_user.user_id,
-        )
-    )
-    project = result.scalar_one_or_none()
-
-    if project is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Project not found",
-        )
-
-    return project
-
-
 @router.get(
     "/{project_id}/alerts",
     response_model=AlertList,
@@ -125,21 +91,21 @@ async def get_user_project(
     description="List alerts for a project with optional filters.",
 )
 async def list_alerts(
-    project_id: UUID,
     db: DbSession,
-    current_user: CurrentUser,
+    project: UserProject,
     pagination: Pagination,
     severity: str | None = Query(None, description="Filter by severity: info, warn, critical"),
-    kind: str | None = Query(None, description="Filter by kind: visibility_drop, ctr_opportunity, regression"),
+    kind: str | None = Query(
+        None, description="Filter by kind: visibility_drop, ctr_opportunity, regression"
+    ),
     is_acknowledged: bool | None = Query(None, description="Filter by acknowledgement status"),
 ) -> AlertList:
     """
     List alerts for a project.
 
     Args:
-        project_id: Project UUID.
         db: Database session.
-        current_user: Current authenticated user.
+        project: Project retrieved via dependency (validates ownership).
         pagination: Pagination parameters.
         severity: Optional severity filter.
         kind: Optional kind filter.
@@ -148,11 +114,8 @@ async def list_alerts(
     Returns:
         Paginated list of alerts.
     """
-    # Verify project ownership
-    await get_user_project(db, project_id, current_user)
-
     # Build query
-    query = select(Alert).where(Alert.project_id == project_id)
+    query = select(Alert).where(Alert.project_id == project.id)
 
     if severity is not None:
         query = query.where(Alert.severity == severity)
@@ -163,7 +126,7 @@ async def list_alerts(
 
     # Get total count
     count_result = await db.execute(
-        select(func.count(Alert.id)).where(Alert.project_id == project_id)
+        select(func.count(Alert.id)).where(Alert.project_id == project.id)
     )
     total = count_result.scalar() or 0
 
@@ -204,26 +167,21 @@ async def list_alerts(
     description="Create a new alert rule for a project.",
 )
 async def create_alert_rule(
-    project_id: UUID,
     data: AlertRuleCreate,
     db: DbSession,
-    current_user: CurrentUser,
+    project: UserProject,
 ) -> AlertRuleResponse:
     """
     Create a new alert rule.
 
     Args:
-        project_id: Project UUID.
         data: Alert rule creation data.
         db: Database session.
-        current_user: Current authenticated user.
+        project: Project retrieved via dependency (validates ownership).
 
     Returns:
         Created alert rule.
     """
-    # Verify project ownership
-    await get_user_project(db, project_id, current_user)
-
     # Validate rule type
     valid_types = ["visibility_drop", "ctr_opportunity", "regression"]
     if data.rule_type not in valid_types:
@@ -234,7 +192,7 @@ async def create_alert_rule(
 
     # Create rule
     rule = AlertRule(
-        project_id=project_id,
+        project_id=project.id,
         rule_type=data.rule_type,
         config=data.config.model_dump(),
         is_enabled=data.is_enabled,
@@ -262,28 +220,21 @@ async def create_alert_rule(
     description="List all alert rules for a project.",
 )
 async def list_alert_rules(
-    project_id: UUID,
     db: DbSession,
-    current_user: CurrentUser,
+    project: UserProject,
 ) -> AlertRuleList:
     """
     List alert rules for a project.
 
     Args:
-        project_id: Project UUID.
         db: Database session.
-        current_user: Current authenticated user.
+        project: Project retrieved via dependency (validates ownership).
 
     Returns:
         List of alert rules.
     """
-    # Verify project ownership
-    await get_user_project(db, project_id, current_user)
-
     result = await db.execute(
-        select(AlertRule)
-        .where(AlertRule.project_id == project_id)
-        .order_by(AlertRule.created_at)
+        select(AlertRule).where(AlertRule.project_id == project.id).order_by(AlertRule.created_at)
     )
     rules = result.scalars().all()
 
@@ -309,31 +260,26 @@ async def list_alert_rules(
     description="Mark an alert as acknowledged.",
 )
 async def acknowledge_alert(
-    project_id: UUID,
     alert_id: UUID,
     db: DbSession,
-    current_user: CurrentUser,
+    project: UserProject,
 ) -> None:
     """
     Acknowledge an alert.
 
     Args:
-        project_id: Project UUID.
         alert_id: Alert UUID.
         db: Database session.
-        current_user: Current authenticated user.
+        project: Project retrieved via dependency (validates ownership).
 
     Raises:
         HTTPException: 404 if alert not found.
     """
-    # Verify project ownership
-    await get_user_project(db, project_id, current_user)
-
     # Get alert
     result = await db.execute(
         select(Alert).where(
             Alert.id == alert_id,
-            Alert.project_id == project_id,
+            Alert.project_id == project.id,
         )
     )
     alert = result.scalar_one_or_none()

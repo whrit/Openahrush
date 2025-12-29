@@ -26,7 +26,7 @@ The sprint delivers the "free data moat" via Common Crawl ingestion, backlink an
 | Sprint | Name | Status |
 |--------|------|--------|
 | Sprint 0 | Foundation & Platform | ✅ Complete |
-| Sprint 1 | Integrations (GSC/GA4/BWT) | Not Started |
+| Sprint 1 | Integrations (GSC/GA4/BWT) | ✅ Complete |
 | Sprint 2 | Hybrid Crawl & Site Audit | ✅ Complete |
 | Sprint 3 | Backlinks & Common Crawl | ✅ Complete |
 | Sprint 4 | Reports, Exports & Webhooks | Not Started |
@@ -271,8 +271,8 @@ Tests should check `data["message"]` not `data["detail"]`.
 ## Outstanding Work / Next Steps
 
 ### Immediate (Sprint 4 Prerequisites)
-1. Sprint 1 (Integrations) is **not started** - Sprint 4 depends on canonical facts from GSC/GA4/BWT
-2. Consider starting Sprint 1 or Sprint 4 in parallel where possible
+1. Sprint 1 (Integrations) is **complete** - All prerequisites for Sprint 4 are now met
+2. Sprint 4 can now begin - all dependencies (Sprints 1, 2, 3) are complete
 
 ### Sprint 4: Reports, Exports & Webhooks
 - CSV/JSON export generation
@@ -366,7 +366,7 @@ Openahrush/
 2. **Git Status:** Clean (all changes committed in previous session)
 3. **Test State:** All 413 tests passing (256 API + 157 CC)
 4. **Lint State:** Zero errors
-5. **Dependencies:** Sprint 1 is the only prerequisite not complete for Sprint 4
+5. **Dependencies:** All prerequisites for Sprint 4 are now complete (Sprints 0, 1, 2, 3)
 
 ---
 
