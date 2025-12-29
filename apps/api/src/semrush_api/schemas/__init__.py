@@ -15,6 +15,19 @@ from semrush_api.schemas.auth import (
     LogoutResponse,
     UserResponse,
 )
+from semrush_api.schemas.backlinks import (
+    AnchorListResponse,
+    AnchorResponse,
+    BacklinkListResponse,
+    BacklinkOverviewResponse,
+    BacklinkResponse,
+    ImportResponse,
+    IntersectResponse,
+    NewLostResponse,
+    OverlapResponse,
+    RefDomainListResponse,
+    RefDomainResponse,
+)
 from semrush_api.schemas.integration import (
     IntegrationCallbackRequest,
     IntegrationCallbackResponse,
@@ -41,19 +54,6 @@ from semrush_api.schemas.settings import (
     ProjectSettingsSchema,
     ProjectSettingsUpdate,
     SettingsUpdateResponse,
-)
-from semrush_api.schemas.backlinks import (
-    AnchorListResponse,
-    AnchorResponse,
-    BacklinkListResponse,
-    BacklinkOverviewResponse,
-    BacklinkResponse,
-    ImportResponse,
-    IntersectResponse,
-    NewLostResponse,
-    OverlapResponse,
-    RefDomainListResponse,
-    RefDomainResponse,
 )
 
 __all__ = [
