@@ -14,9 +14,9 @@ This document tracks overall progress across all sprints. Each task references i
 | Sprint 1: Integrations | Complete | 24 | 24 | 100% |
 | Sprint 2: Crawl & Audit | Complete | 31 | 31 | 100% |
 | Sprint 3: Backlinks | Complete | 22 | 22 | 100% |
-| Sprint 4: Reports | Not Started | 22 | 0 | 0% |
+| Sprint 4: Reports | Complete | 22 | 22 | 100% |
 | Sprint 5: Hardening | Not Started | 18 | 0 | 0% |
-| **Total** | | **142** | **102** | **72%** |
+| **Total** | | **142** | **124** | **87%** |
 
 ---
 
@@ -264,52 +264,52 @@ This document tracks overall progress across all sprints. Each task references i
 
 ## Sprint 4: Reports, Exports & Webhooks
 
-**Status:** Not Started | **Doc:** [SPRINT-4-REPORTS.md](./SPRINT-4-REPORTS.md)
+**Status:** Complete | **Doc:** [SPRINT-4-REPORTS.md](./SPRINT-4-REPORTS.md)
 
 ### Epic 4.1: Export Infrastructure
 | Task | Description | Status | Assignee | Notes |
 |------|-------------|--------|----------|-------|
-| 4.1.1 | Create exports table | [ ] | | |
-| 4.1.2 | Create export_schedules table | [ ] | | |
-| 4.1.3 | Implement MinIO storage utilities | [ ] | | |
+| 4.1.1 | Create exports table | [x] | Agent | Export model, migration 008 |
+| 4.1.2 | Create export_schedules table | [x] | Agent | ExportSchedule model |
+| 4.1.3 | Implement MinIO storage utilities | [x] | Agent | MinIOStorage class (25 tests) |
 
 ### Epic 4.2: CSV/JSON Exports
 | Task | Description | Status | Assignee | Notes |
 |------|-------------|--------|----------|-------|
-| 4.2.1 | Implement export job queue | [ ] | | |
-| 4.2.2 | Implement issues CSV export | [ ] | | |
-| 4.2.3 | Implement performance CSV export | [ ] | | |
-| 4.2.4 | Implement backlinks CSV export | [ ] | | |
-| 4.2.5 | Implement JSON export format | [ ] | | |
-| 4.2.6 | Create export trigger endpoint | [ ] | | |
-| 4.2.7 | Create export list endpoint | [ ] | | |
+| 4.2.1 | Implement export job queue | [x] | Agent | ExportService |
+| 4.2.2 | Implement issues CSV export | [x] | Agent | csv_export.py |
+| 4.2.3 | Implement performance CSV export | [x] | Agent | csv_export.py |
+| 4.2.4 | Implement backlinks CSV export | [x] | Agent | csv_export.py |
+| 4.2.5 | Implement JSON export format | [x] | Agent | json_export.py |
+| 4.2.6 | Create export trigger endpoint | [x] | Agent | POST /projects/{id}/exports |
+| 4.2.7 | Create export list endpoint | [x] | Agent | GET /projects/{id}/exports (40 tests) |
 
 ### Epic 4.3: PDF Reports
 | Task | Description | Status | Assignee | Notes |
 |------|-------------|--------|----------|-------|
-| 4.3.1 | Create report templates | [ ] | | |
-| 4.3.2 | Implement template data builders | [ ] | | |
-| 4.3.3 | Implement PDF renderer | [ ] | | |
-| 4.3.4 | Implement chart generation | [ ] | | |
-| 4.3.5 | Implement PDF export job | [ ] | | |
+| 4.3.1 | Create report templates | [x] | Agent | 5 HTML templates |
+| 4.3.2 | Implement template data builders | [x] | Agent | ReportBuilder class |
+| 4.3.3 | Implement PDF renderer | [x] | Agent | PDFRenderer with WeasyPrint |
+| 4.3.4 | Implement chart generation | [x] | Agent | ChartGenerator with matplotlib |
+| 4.3.5 | Implement PDF export job | [x] | Agent | PDFReportService (142 tests) |
 
 ### Epic 4.4: Export Scheduling
 | Task | Description | Status | Assignee | Notes |
 |------|-------------|--------|----------|-------|
-| 4.4.1 | Implement schedule creation endpoint | [ ] | | |
-| 4.4.2 | Implement schedule executor | [ ] | | |
-| 4.4.3 | Implement schedule management | [ ] | | |
+| 4.4.1 | Implement schedule creation endpoint | [x] | Agent | POST /exports/schedules |
+| 4.4.2 | Implement schedule executor | [x] | Agent | croniter integration |
+| 4.4.3 | Implement schedule management | [x] | Agent | CRUD endpoints (30 tests) |
 
 ### Epic 4.5: Webhooks
 | Task | Description | Status | Assignee | Notes |
 |------|-------------|--------|----------|-------|
-| 4.5.1 | Create webhooks table | [ ] | | |
-| 4.5.2 | Implement webhook CRUD endpoints | [ ] | | |
-| 4.5.3 | Implement webhook signature | [ ] | | |
-| 4.5.4 | Implement webhook delivery queue | [ ] | | |
-| 4.5.5 | Implement webhook delivery worker | [ ] | | |
-| 4.5.6 | Implement event → webhook routing | [ ] | | |
-| 4.5.7 | Implement webhook event types | [ ] | | |
+| 4.5.1 | Create webhooks table | [x] | Agent | WebhookConfig, WebhookDelivery models |
+| 4.5.2 | Implement webhook CRUD endpoints | [x] | Agent | routers/webhooks.py |
+| 4.5.3 | Implement webhook signature | [x] | Agent | HMAC-SHA256 signature.py |
+| 4.5.4 | Implement webhook delivery queue | [x] | Agent | delivery.py |
+| 4.5.5 | Implement webhook delivery worker | [x] | Agent | Retry with backoff |
+| 4.5.6 | Implement event → webhook routing | [x] | Agent | Event routing |
+| 4.5.7 | Implement webhook event types | [x] | Agent | 5 event types (36 tests) |
 
 ---
 
@@ -344,7 +344,7 @@ This document tracks overall progress across all sprints. Each task references i
 ### Epic 5.4: Testing
 | Task | Description | Status | Assignee | Notes |
 |------|-------------|--------|----------|-------|
-| 5.4.1 | Unit test coverage | [~] | Agent | 951 tests passing |
+| 5.4.1 | Unit test coverage | [~] | Agent | 1666 tests passing |
 | 5.4.2 | Integration tests | [ ] | | |
 | 5.4.3 | End-to-end tests | [ ] | | |
 | 5.4.4 | Load testing | [ ] | | |
@@ -371,6 +371,7 @@ This document tracks overall progress across all sprints. Each task references i
 
 | Date | Change |
 |------|--------|
+| 2025-12-28 | Sprint 4 marked complete (exports, PDF reports, scheduling, webhooks - 1666 tests) |
 | 2025-12-28 | Sprint 3 marked complete (CC infrastructure, ingestion, aggregates, API) |
 | 2025-12-28 | Sprint 2 marked complete (951 tests passing) |
 | 2025-12-28 | Sprint 0 and Sprint 1 marked complete (419 tests passing) |
