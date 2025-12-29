@@ -20,6 +20,7 @@ from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 from semrush_core import get_settings
 from semrush_core.database import dispose_engine, get_engine
+from semrush_core.logging import SecretRedactingFormatter
 from semrush_core.security.jwt import TokenError
 
 from semrush_api.routers import (
@@ -38,10 +39,14 @@ from semrush_api.routers import (
     webhooks,
 )
 
-# Configure logging
+# Configure logging with secret redaction
+_log_handler = logging.StreamHandler()
+_log_handler.setFormatter(
+    SecretRedactingFormatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+)
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[_log_handler],
 )
 logger = logging.getLogger(__name__)
 

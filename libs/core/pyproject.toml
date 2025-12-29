@@ -16,6 +16,7 @@ dependencies = [
     "bcrypt>=4.0",
     "cryptography>=42.0",
     "httpx>=0.28.1",
+    "redis>=5.0",
 ]
 
 [project.optional-dependencies]
