@@ -8,8 +8,10 @@ Provides request/response validation for:
 - Project backlinks management
 """
 
+from datetime import date as date_type
 from datetime import datetime
 from typing import Any
+from uuid import UUID
 
 from pydantic import BaseModel, Field
 
@@ -160,3 +162,78 @@ class BacklinkOverviewResponse(BaseModel):
     )
 
     model_config = {"from_attributes": True}
+
+
+# =============================================================================
+# Time Series Schemas (Sprint 3)
+# =============================================================================
+
+
+class NewLostSeriesItem(BaseModel):
+    """Single time series data point for new/lost domain tracking."""
+
+    snapshot_id: UUID = Field(..., description="Snapshot ID for this data point")
+    date: date_type = Field(..., description="Date of the snapshot")
+    new_count: int = Field(..., ge=0, description="Number of new referring domains")
+    lost_count: int = Field(..., ge=0, description="Number of lost referring domains")
+
+    model_config = {"from_attributes": True}
+
+
+class NewLostSeriesResponse(BaseModel):
+    """Response schema for new/lost time series across multiple snapshots."""
+
+    domain: str = Field(..., description="Target domain being analyzed")
+    items: list[NewLostSeriesItem] = Field(
+        default_factory=list,
+        description="Time series data points ordered by date descending",
+    )
+
+
+class ProjectNewLostItem(BaseModel):
+    """Single time series data point for project new/lost backlinks."""
+
+    date: date_type = Field(..., description="Date for this data point")
+    new_count: int = Field(..., ge=0, description="Number of new backlinks discovered")
+    lost_count: int = Field(..., ge=0, description="Number of lost backlinks")
+
+    model_config = {"from_attributes": True}
+
+
+class ProjectNewLostResponse(BaseModel):
+    """Response schema for project backlink new/lost time series."""
+
+    project_id: UUID = Field(..., description="Project ID")
+    items: list[ProjectNewLostItem] = Field(
+        default_factory=list,
+        description="Time series data points ordered by date descending",
+    )
+
+
+# =============================================================================
+# Project Competitive Analysis Schemas (Sprint 3)
+# =============================================================================
+
+
+class ProjectOverlapResponse(BaseModel):
+    """Response schema for project overlap analysis using project's competitors."""
+
+    project_id: UUID = Field(..., description="Project ID")
+    domain: str = Field(..., description="Primary domain from project's site")
+    competitors: list[str] = Field(..., description="Competitor domains from project")
+    shared_ref_domains: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description="Referring domains linking to both primary and at least one competitor",
+    )
+
+
+class ProjectIntersectResponse(BaseModel):
+    """Response schema for project intersect analysis (link building opportunities)."""
+
+    project_id: UUID = Field(..., description="Project ID")
+    domain: str = Field(..., description="Primary domain from project's site")
+    competitors: list[str] = Field(..., description="Competitor domains from project")
+    intersect_ref_domains: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description="Referring domains linking to competitors but NOT to primary domain",
+    )

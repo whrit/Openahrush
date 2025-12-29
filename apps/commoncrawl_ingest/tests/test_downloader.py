@@ -11,9 +11,7 @@ Tests cover:
 from __future__ import annotations
 
 import gzip
-from collections.abc import AsyncIterator
 from typing import TYPE_CHECKING
-from unittest.mock import AsyncMock
 
 import httpx
 import pytest
@@ -224,7 +222,7 @@ class TestWatDownloader:
         downloader = WatDownloader(concurrency=2)
         files_processed = 0
 
-        async for path, content in downloader.download_all(sample_snapshot_id, limit=3):
+        async for path, _content in downloader.download_all(sample_snapshot_id, limit=3):
             files_processed += 1
             assert path in sample_wat_paths
 

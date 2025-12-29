@@ -36,6 +36,7 @@ Models are organized by domain:
 from semrush_core.models.alert import Alert, AlertEntityType, AlertKind, AlertSeverity
 from semrush_core.models.alert_rule import AlertRule, AlertRuleType
 from semrush_core.models.analytics_fact import AnalyticsFactDaily
+from semrush_core.models.base import Base, SoftDeleteMixin, TimestampMixin, UUIDMixin
 from semrush_core.models.commoncrawl import (
     CommonCrawlAnchor,
     CommonCrawlEdge,
@@ -43,7 +44,6 @@ from semrush_core.models.commoncrawl import (
     CommonCrawlSnapshot,
     SnapshotStatus,
 )
-from semrush_core.models.base import Base, SoftDeleteMixin, TimestampMixin, UUIDMixin
 from semrush_core.models.competitor import Competitor
 from semrush_core.models.crawl_page import CrawlPage, RenderMode
 from semrush_core.models.crawl_run import CrawlRun, CrawlStatus
@@ -56,6 +56,7 @@ from semrush_core.models.issue_type import MVP_ISSUE_TYPES, IssueCategory, Issue
 from semrush_core.models.link_edge import LinkEdge, LinkType
 from semrush_core.models.link_fact import LinkFact, LinkSource, RelFlag
 from semrush_core.models.project import Project
+from semrush_core.models.project_backlink import BacklinkSourceType, ProjectBacklink
 from semrush_core.models.search_fact import (
     DeviceType,
     SearchEngine,
@@ -110,6 +111,9 @@ __all__ = [
     "LinkFact",
     "LinkSource",
     "RelFlag",
+    # Project backlink models
+    "ProjectBacklink",
+    "BacklinkSourceType",
     # Alert models
     "AlertRule",
     "AlertRuleType",

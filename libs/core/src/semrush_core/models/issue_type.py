@@ -205,7 +205,6 @@ MVP_ISSUE_TYPES: list[dict] = [
         "description": "The page has very little text content (under 200 words).",
         "recommendation": "Add more valuable, relevant content to the page.",
     },
-
     # Technical Issues
     {
         "id": "slow_response",
@@ -255,7 +254,6 @@ MVP_ISSUE_TYPES: list[dict] = [
         "description": "HTTPS page loads HTTP resources.",
         "recommendation": "Update all resource URLs to use HTTPS.",
     },
-
     # Link Issues
     {
         "id": "broken_internal_link",
@@ -289,7 +287,6 @@ MVP_ISSUE_TYPES: list[dict] = [
         "description": "The page contains more than 100 internal links.",
         "recommendation": "Consider reducing the number of links for better UX.",
     },
-
     # Indexability Issues
     {
         "id": "noindex",

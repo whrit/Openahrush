@@ -10,6 +10,7 @@ Provides endpoints for:
 
 import csv
 import io
+from datetime import UTC, datetime, timedelta
 from typing import Annotated
 from urllib.parse import urlparse
 from uuid import UUID
@@ -28,7 +29,13 @@ from semrush_api.schemas.backlinks import (
     ImportResponse,
     IntersectResponse,
     NewLostResponse,
+    NewLostSeriesItem,
+    NewLostSeriesResponse,
     OverlapResponse,
+    ProjectIntersectResponse,
+    ProjectNewLostItem,
+    ProjectNewLostResponse,
+    ProjectOverlapResponse,
     RefDomainListResponse,
     RefDomainResponse,
 )
@@ -507,6 +514,105 @@ async def get_new_lost_domains(
     return NewLostResponse(new=new_items, lost=lost_items)
 
 
+@links_router.get(
+    "/domain/{domain}/new-lost/series",
+    response_model=NewLostSeriesResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get new/lost time series across snapshots",
+    description="Get time series of new/lost referring domains across multiple consecutive snapshots.",
+)
+async def get_new_lost_series(
+    domain: str,
+    db: DbSession,
+    current_user: CurrentUser,
+    limit: Annotated[
+        int,
+        Query(ge=1, le=50, description="Number of recent snapshots to include"),
+    ] = 10,
+) -> NewLostSeriesResponse:
+    """
+    Get new/lost time series across multiple snapshots.
+
+    Fetches the last N ingested snapshots and computes new/lost
+    referring domains for each consecutive pair.
+
+    Args:
+        domain: Target domain to analyze.
+        db: Database session.
+        current_user: Current authenticated user.
+        limit: Number of recent snapshots to include (default 10, max 50).
+
+    Returns:
+        Time series of new/lost referring domain counts.
+    """
+    # Get recent snapshots for this domain
+    snapshots_query = text("""
+        SELECT DISTINCT
+            snapshot_id as id,
+            DATE(first_seen) as date
+        FROM link_facts
+        WHERE target_domain = :domain
+        ORDER BY date DESC
+        LIMIT :limit
+    """)
+
+    snapshots_result = await db.execute(
+        snapshots_query,
+        {"domain": domain, "limit": limit},
+    )
+    snapshots = snapshots_result.mappings().all()
+
+    if len(snapshots) < 2:
+        # Need at least 2 snapshots to compute differences
+        return NewLostSeriesResponse(domain=domain, items=[])
+
+    # For each snapshot, get the set of referring domains
+    domain_sets: dict[str, set[str]] = {}
+
+    domains_query = text("""
+        SELECT DISTINCT source_domain
+        FROM link_facts
+        WHERE target_domain = :domain
+        AND snapshot_id = :snapshot_id
+    """)
+
+    for snapshot in snapshots:
+        snapshot_id = str(snapshot["id"])
+        result = await db.execute(
+            domains_query,
+            {"domain": domain, "snapshot_id": snapshot_id},
+        )
+        domain_sets[snapshot_id] = set(result.scalars().all())
+
+    # Compare consecutive pairs (newest to oldest)
+    items: list[NewLostSeriesItem] = []
+
+    # snapshots is ordered by date DESC, so [0] is newest
+    for i in range(len(snapshots) - 1):
+        newer_snapshot = snapshots[i]
+        older_snapshot = snapshots[i + 1]
+
+        newer_id = str(newer_snapshot["id"])
+        older_id = str(older_snapshot["id"])
+
+        newer_domains = domain_sets.get(newer_id, set())
+        older_domains = domain_sets.get(older_id, set())
+
+        new_count = len(newer_domains - older_domains)
+        lost_count = len(older_domains - newer_domains)
+
+        items.append(
+            NewLostSeriesItem(
+                snapshot_id=newer_snapshot["id"],
+                date=newer_snapshot["date"],
+                new_count=new_count,
+                lost_count=lost_count,
+            )
+        )
+
+    return NewLostSeriesResponse(domain=domain, items=items)
+
+
 # =============================================================================
 # Epic 3.6: Competitive Analysis
 # =============================================================================
@@ -775,13 +881,12 @@ async def import_backlinks_csv(
         source_domain = extract_domain(source_url)
         target_domain = extract_domain(target_url)
 
-        # Insert into database (using raw SQL for link_facts table)
-        # In production, this would use proper ORM models
+        # Insert into database with source_type = 'import'
         insert_query = text("""
             INSERT INTO project_backlinks
-            (project_id, source_url, source_domain, target_url, target_domain, anchor, created_at)
-            VALUES (:project_id, :source_url, :source_domain, :target_url, :target_domain, :anchor, NOW())
-            ON CONFLICT DO NOTHING
+            (project_id, source_url, source_domain, target_url, target_domain, anchor, source_type, discovered_at, created_at)
+            VALUES (:project_id, :source_url, :source_domain, :target_url, :target_domain, :anchor, 'import', NOW(), NOW())
+            ON CONFLICT (project_id, source_url, target_url) DO NOTHING
         """)
 
         try:
@@ -815,45 +920,124 @@ async def import_backlinks_csv(
     response_model=BacklinkOverviewResponse,
     status_code=status.HTTP_200_OK,
     summary="Get project backlink overview",
-    description="Get aggregated backlink statistics for a project.",
+    description="Get aggregated backlink statistics for a project from all sources.",
 )
 async def get_project_backlinks_overview(
     project_id: UUID,
     db: DbSession,
     current_user: CurrentUser,
+    include_commoncrawl: Annotated[
+        bool,
+        Query(description="Include Common Crawl edges for matching project domains"),
+    ] = True,
 ) -> BacklinkOverviewResponse:
     """
     Get project backlink overview.
 
-    Returns aggregated statistics from all backlink sources
-    for the project.
+    Returns aggregated statistics from all backlink sources for the project:
+    - project_backlinks: Imports, crawl discoveries, provider links
+    - commoncrawl_edges: Common Crawl data (if include_commoncrawl=True and project has sites)
+
+    Deduplication is done by (source_domain, target_url) to avoid double-counting.
 
     Args:
         project_id: Project UUID.
         db: Database session.
         current_user: Current authenticated user.
+        include_commoncrawl: Whether to include Common Crawl edges.
 
     Returns:
         Backlink overview statistics.
     """
-    # Verify project ownership
-    await get_user_project(db, project_id, current_user)
+    # Verify project ownership and get project with sites
+    project = await get_user_project(db, project_id, current_user)
 
-    # Query for aggregated stats
-    query = text("""
-        SELECT
-            COUNT(*) as total_backlinks,
-            COUNT(DISTINCT source_domain) as unique_ref_domains,
-            SUM(CASE WHEN flags->>'dofollow' = 'true' THEN 1 ELSE 0 END) as dofollow_count,
-            SUM(CASE WHEN flags->>'dofollow' = 'false' OR flags->>'nofollow' = 'true' THEN 1 ELSE 0 END) as nofollow_count,
-            MIN(first_seen) as first_seen,
-            MAX(last_seen) as last_seen
-        FROM project_backlinks
-        WHERE project_id = :project_id
-    """)
+    # Get project domains from sites
+    project_domains: list[str] = []
+    if hasattr(project, "sites") and project.sites:
+        project_domains = [site.domain.lower() for site in project.sites]
 
-    result = await db.execute(query, {"project_id": str(project_id)})
-    row = result.one_or_none()
+    # Build unified query that merges sources with deduplication
+    # Uses UNION ALL with CTE for deduplication by (source_domain, target_url)
+    if include_commoncrawl and project_domains:
+        # Merge project_backlinks with commoncrawl_edges for matching domains
+        query = text("""
+            WITH all_backlinks AS (
+                -- Project backlinks (all source types)
+                SELECT DISTINCT ON (source_domain, target_url)
+                    source_url,
+                    source_domain,
+                    target_url,
+                    target_domain,
+                    rel_flags,
+                    discovered_at as first_seen,
+                    discovered_at as last_seen
+                FROM project_backlinks
+                WHERE project_id = :project_id
+
+                UNION ALL
+
+                -- Common Crawl edges for project domains (not already in project_backlinks)
+                SELECT DISTINCT ON (source_domain, target_url)
+                    cc.source_url,
+                    cc.source_domain,
+                    cc.target_url,
+                    cc.target_domain,
+                    cc.rel_flags,
+                    cc.discovered_at as first_seen,
+                    cc.discovered_at as last_seen
+                FROM commoncrawl_edges cc
+                WHERE cc.target_domain = ANY(:project_domains)
+                AND NOT EXISTS (
+                    SELECT 1 FROM project_backlinks pb
+                    WHERE pb.project_id = :project_id
+                    AND pb.source_url = cc.source_url
+                    AND pb.target_url = cc.target_url
+                )
+            ),
+            deduplicated AS (
+                SELECT DISTINCT ON (source_domain, target_url)
+                    source_url,
+                    source_domain,
+                    target_url,
+                    target_domain,
+                    rel_flags,
+                    first_seen,
+                    last_seen
+                FROM all_backlinks
+                ORDER BY source_domain, target_url, first_seen
+            )
+            SELECT
+                COUNT(*) as total_backlinks,
+                COUNT(DISTINCT source_domain) as unique_ref_domains,
+                SUM(CASE WHEN rel_flags IS NULL OR NOT ('nofollow' = ANY(rel_flags)) THEN 1 ELSE 0 END) as dofollow_count,
+                SUM(CASE WHEN 'nofollow' = ANY(rel_flags) THEN 1 ELSE 0 END) as nofollow_count,
+                MIN(first_seen) as first_seen,
+                MAX(last_seen) as last_seen
+            FROM deduplicated
+        """)
+
+        result = await db.execute(
+            query,
+            {"project_id": str(project_id), "project_domains": project_domains},
+        )
+    else:
+        # Only project_backlinks (no Common Crawl or no project domains)
+        query = text("""
+            SELECT
+                COUNT(*) as total_backlinks,
+                COUNT(DISTINCT source_domain) as unique_ref_domains,
+                SUM(CASE WHEN rel_flags IS NULL OR NOT ('nofollow' = ANY(rel_flags)) THEN 1 ELSE 0 END) as dofollow_count,
+                SUM(CASE WHEN 'nofollow' = ANY(rel_flags) THEN 1 ELSE 0 END) as nofollow_count,
+                MIN(discovered_at) as first_seen,
+                MAX(discovered_at) as last_seen
+            FROM project_backlinks
+            WHERE project_id = :project_id
+        """)
+
+        result = await db.execute(query, {"project_id": str(project_id)})
+
+    row = result.mappings().one_or_none()
 
     if row is None:
         return BacklinkOverviewResponse(
@@ -932,3 +1116,346 @@ async def get_project_backlinks_anchors(
     ]
 
     return AnchorListResponse(items=items)
+
+
+# =============================================================================
+# Project Competitive Analysis (Sprint 3)
+# =============================================================================
+
+
+@projects_router.get(
+    "/{project_id}/backlinks/overlap",
+    response_model=ProjectOverlapResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get shared referring domains using project's competitors",
+    description="Find referring domains that link to both the project's primary site and its competitors.",
+)
+async def get_project_backlinks_overlap(
+    project_id: UUID,
+    db: DbSession,
+    current_user: CurrentUser,
+    snapshot_id: Annotated[
+        UUID | None,
+        Query(description="Filter by snapshot ID"),
+    ] = None,
+    limit: Annotated[
+        int,
+        Query(ge=1, le=10000, description="Maximum number of results"),
+    ] = 100,
+) -> ProjectOverlapResponse:
+    """
+    Get referring domains shared with project's competitors.
+
+    Uses the project's configured sites and competitors to find
+    referring domains that link to both the primary site domain
+    and at least one competitor domain.
+
+    Args:
+        project_id: Project UUID.
+        db: Database session.
+        current_user: Current authenticated user.
+        snapshot_id: Optional snapshot ID to filter by.
+        limit: Maximum number of results (default 100, max 10000).
+
+    Returns:
+        Overlap analysis with shared referring domains.
+
+    Raises:
+        HTTPException: 404 if project not found, 400 if no sites or competitors.
+    """
+    # Get project and verify ownership
+    project = await get_user_project(db, project_id, current_user)
+
+    # Validate project has sites
+    if not project.sites:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Project has no site configured. Add a site first.",
+        )
+
+    # Validate project has competitors
+    if not project.competitors:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Project has no competitors configured. Add competitors first.",
+        )
+
+    # Get primary domain from first site
+    primary_domain = project.sites[0].domain
+    competitor_domains = [c.domain for c in project.competitors]
+    all_domains = [primary_domain, *competitor_domains]
+
+    # Query for domains that link to multiple targets
+    query = text("""
+        SELECT
+            source_domain as ref_domain,
+            ARRAY_AGG(DISTINCT target_domain) as domains_linking_to,
+            SUM(backlinks) as backlinks
+        FROM (
+            SELECT
+                source_domain,
+                target_domain,
+                COUNT(*) as backlinks
+            FROM link_facts
+            WHERE target_domain = ANY(:domains)
+            AND (:snapshot_id IS NULL OR snapshot_id = :snapshot_id)
+            GROUP BY source_domain, target_domain
+        ) sub
+        GROUP BY source_domain
+        HAVING COUNT(DISTINCT target_domain) > 1
+        AND :primary_domain = ANY(ARRAY_AGG(DISTINCT target_domain))
+        ORDER BY backlinks DESC
+        LIMIT :limit
+    """)
+
+    result = await db.execute(
+        query,
+        {
+            "domains": all_domains,
+            "primary_domain": primary_domain,
+            "snapshot_id": str(snapshot_id) if snapshot_id else None,
+            "limit": limit,
+        },
+    )
+    rows = result.mappings().all()
+
+    shared_ref_domains = [
+        {
+            "ref_domain": row["ref_domain"],
+            "domains_linking_to": row["domains_linking_to"],
+            "backlinks": row["backlinks"],
+        }
+        for row in rows
+    ]
+
+    return ProjectOverlapResponse(
+        project_id=project_id,
+        domain=primary_domain,
+        competitors=competitor_domains,
+        shared_ref_domains=shared_ref_domains,
+    )
+
+
+@projects_router.get(
+    "/{project_id}/backlinks/intersect",
+    response_model=ProjectIntersectResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get link building opportunities using project's competitors",
+    description="Find referring domains that link to competitors but not to the project's primary site.",
+)
+async def get_project_backlinks_intersect(
+    project_id: UUID,
+    db: DbSession,
+    current_user: CurrentUser,
+    snapshot_id: Annotated[
+        UUID | None,
+        Query(description="Filter by snapshot ID"),
+    ] = None,
+    limit: Annotated[
+        int,
+        Query(ge=1, le=10000, description="Maximum number of results"),
+    ] = 100,
+) -> ProjectIntersectResponse:
+    """
+    Get link building opportunities from project's competitors.
+
+    Uses the project's configured sites and competitors to find
+    referring domains that link to competitor domains but do NOT
+    link to the primary site domain.
+
+    Args:
+        project_id: Project UUID.
+        db: Database session.
+        current_user: Current authenticated user.
+        snapshot_id: Optional snapshot ID to filter by.
+        limit: Maximum number of results (default 100, max 10000).
+
+    Returns:
+        Intersect analysis with link building opportunities.
+
+    Raises:
+        HTTPException: 404 if project not found, 400 if no sites or competitors.
+    """
+    # Get project and verify ownership
+    project = await get_user_project(db, project_id, current_user)
+
+    # Validate project has sites
+    if not project.sites:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Project has no site configured. Add a site first.",
+        )
+
+    # Validate project has competitors
+    if not project.competitors:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Project has no competitors configured. Add competitors first.",
+        )
+
+    # Get primary domain from first site
+    primary_domain = project.sites[0].domain
+    competitor_domains = [c.domain for c in project.competitors]
+
+    # Query for domains that link to competitors but NOT to primary domain
+    query = text("""
+        SELECT
+            source_domain as ref_domain,
+            ARRAY_AGG(DISTINCT target_domain) as links_to_competitors,
+            SUM(backlinks) as backlinks
+        FROM (
+            SELECT
+                source_domain,
+                target_domain,
+                COUNT(*) as backlinks
+            FROM link_facts
+            WHERE target_domain = ANY(:competitors)
+            AND (:snapshot_id IS NULL OR snapshot_id = :snapshot_id)
+            GROUP BY source_domain, target_domain
+        ) sub
+        WHERE source_domain NOT IN (
+            SELECT DISTINCT source_domain
+            FROM link_facts
+            WHERE target_domain = :primary_domain
+            AND (:snapshot_id IS NULL OR snapshot_id = :snapshot_id)
+        )
+        GROUP BY source_domain
+        ORDER BY backlinks DESC
+        LIMIT :limit
+    """)
+
+    result = await db.execute(
+        query,
+        {
+            "competitors": competitor_domains,
+            "primary_domain": primary_domain,
+            "snapshot_id": str(snapshot_id) if snapshot_id else None,
+            "limit": limit,
+        },
+    )
+    rows = result.mappings().all()
+
+    intersect_ref_domains = [
+        {
+            "ref_domain": row["ref_domain"],
+            "links_to_competitors": row["links_to_competitors"],
+            "backlinks": row["backlinks"],
+        }
+        for row in rows
+    ]
+
+    return ProjectIntersectResponse(
+        project_id=project_id,
+        domain=primary_domain,
+        competitors=competitor_domains,
+        intersect_ref_domains=intersect_ref_domains,
+    )
+
+
+# =============================================================================
+# Sprint 3: Project New/Lost Time Series
+# =============================================================================
+
+
+@projects_router.get(
+    "/{project_id}/backlinks/new-lost",
+    response_model=ProjectNewLostResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get project backlink new/lost time series",
+    description="Get time series of new/lost backlinks based on discovered_at timestamps.",
+)
+async def get_project_backlinks_new_lost(
+    project_id: UUID,
+    db: DbSession,
+    current_user: CurrentUser,
+    limit: Annotated[
+        int,
+        Query(ge=1, le=50, description="Maximum number of data points"),
+    ] = 10,
+    days: Annotated[
+        int,
+        Query(ge=1, le=365, description="Number of days to include"),
+    ] = 30,
+) -> ProjectNewLostResponse:
+    """
+    Get project backlink new/lost time series.
+
+    Returns time series from project_backlinks table based on discovered_at
+    timestamps. Groups by date and counts new/lost backlinks.
+
+    Args:
+        project_id: Project UUID.
+        db: Database session.
+        current_user: Current authenticated user.
+        limit: Maximum number of data points (default 10, max 50).
+        days: Number of days to include (default 30, max 365).
+
+    Returns:
+        Time series of new/lost backlink counts.
+    """
+    # Verify project ownership
+    await get_user_project(db, project_id, current_user)
+
+    # Calculate date range
+    end_date = datetime.now(UTC)
+    start_date = end_date - timedelta(days=days)
+
+    # Query for new/lost counts grouped by date
+    # New: backlinks discovered in the date range
+    # Lost: backlinks with lost_at in the date range
+    query = text("""
+        SELECT
+            date,
+            SUM(new_count) as new_count,
+            SUM(lost_count) as lost_count
+        FROM (
+            -- New backlinks (discovered_at in range)
+            SELECT
+                DATE(discovered_at) as date,
+                COUNT(*) as new_count,
+                0 as lost_count
+            FROM project_backlinks
+            WHERE project_id = :project_id
+            AND discovered_at >= :start_date
+            AND discovered_at <= :end_date
+            GROUP BY DATE(discovered_at)
+
+            UNION ALL
+
+            -- Lost backlinks (lost_at in range)
+            SELECT
+                DATE(lost_at) as date,
+                0 as new_count,
+                COUNT(*) as lost_count
+            FROM project_backlinks
+            WHERE project_id = :project_id
+            AND lost_at >= :start_date
+            AND lost_at <= :end_date
+            GROUP BY DATE(lost_at)
+        ) combined
+        GROUP BY date
+        ORDER BY date DESC
+        LIMIT :limit
+    """)
+
+    result = await db.execute(
+        query,
+        {
+            "project_id": str(project_id),
+            "start_date": start_date,
+            "end_date": end_date,
+            "limit": limit,
+        },
+    )
+    rows = result.mappings().all()
+
+    items = [
+        ProjectNewLostItem(
+            date=row["date"],
+            new_count=row["new_count"] or 0,
+            lost_count=row["lost_count"] or 0,
+        )
+        for row in rows
+    ]
+
+    return ProjectNewLostResponse(project_id=project_id, items=items)

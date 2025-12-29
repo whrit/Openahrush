@@ -326,11 +326,7 @@ class TestParseWatRecords:
         from semrush_commoncrawl.parser import parse_wat_records
 
         malformed_content = (
-            b"WARC/1.0\r\n"
-            b"WARC-Type: metadata\r\n"
-            b"Content-Length: 20\r\n"
-            b"\r\n"
-            b"{ invalid json here"
+            b"WARC/1.0\r\nWARC-Type: metadata\r\nContent-Length: 20\r\n\r\n{ invalid json here"
         )
 
         # Should not raise, should skip malformed record
@@ -399,10 +395,7 @@ class TestParseWatRecords:
         """Helper to create WARC content from a record dict."""
         json_content = json.dumps(record)
         warc_header = (
-            "WARC/1.0\r\n"
-            "WARC-Type: metadata\r\n"
-            f"Content-Length: {len(json_content)}\r\n"
-            "\r\n"
+            f"WARC/1.0\r\nWARC-Type: metadata\r\nContent-Length: {len(json_content)}\r\n\r\n"
         )
         return (warc_header + json_content + "\r\n\r\n").encode("utf-8")
 

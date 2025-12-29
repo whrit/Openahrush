@@ -143,9 +143,7 @@ class IngestionOrchestrator:
     settings: IngestionSettings = field(default_factory=IngestionSettings)
 
     # Internal state
-    _progress: IngestionProgress = field(
-        default_factory=IngestionProgress, init=False, repr=False
-    )
+    _progress: IngestionProgress = field(default_factory=IngestionProgress, init=False, repr=False)
 
     @property
     def current_progress(self) -> IngestionProgress:
@@ -197,16 +195,12 @@ class IngestionOrchestrator:
         # Fetch paths to determine total files
         try:
             all_paths = await fetch_wat_paths(snapshot_id)
-            files_to_process = (
-                all_paths[: spec.max_files] if spec.max_files else all_paths
-            )
+            files_to_process = all_paths[: spec.max_files] if spec.max_files else all_paths
             self._progress.files_total = len(files_to_process)
         except Exception as e:
             errors.append(f"Failed to fetch WAT paths: {e}")
             self._progress.is_running = False
-            return IngestionResult(
-                edges_ingested=0, files_processed=0, errors=errors
-            )
+            return IngestionResult(edges_ingested=0, files_processed=0, errors=errors)
 
         # Edge batch for efficient storage
         edge_batch: list[Edge] = []
@@ -214,9 +208,7 @@ class IngestionOrchestrator:
 
         # Process files
         try:
-            async for path, content in downloader.download_all(
-                snapshot_id, limit=spec.max_files
-            ):
+            async for path, content in downloader.download_all(snapshot_id, limit=spec.max_files):
                 if max_edges_reached:
                     break
 
@@ -255,12 +247,14 @@ class IngestionOrchestrator:
 
                 # Progress callback
                 if on_progress:
-                    on_progress({
-                        "files_processed": files_processed,
-                        "files_total": self._progress.files_total,
-                        "edges_ingested": edges_ingested,
-                        "current_file": path,
-                    })
+                    on_progress(
+                        {
+                            "files_processed": files_processed,
+                            "files_total": self._progress.files_total,
+                            "edges_ingested": edges_ingested,
+                            "current_file": path,
+                        }
+                    )
 
         except Exception as e:
             errors.append(f"Download error: {e}")

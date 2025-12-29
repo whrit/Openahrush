@@ -219,10 +219,7 @@ class CrawlPage(Base, UUIDMixin):
     @property
     def has_meta_description(self) -> bool:
         """Check if page has a meta description."""
-        return (
-            self.meta_description is not None
-            and len(self.meta_description.strip()) > 0
-        )
+        return self.meta_description is not None and len(self.meta_description.strip()) > 0
 
     @property
     def has_canonical(self) -> bool:
@@ -235,10 +232,7 @@ class CrawlPage(Base, UUIDMixin):
         if not self.has_canonical:
             return False
         # Compare normalized URLs
-        return (
-            self.canonical_url == self.url
-            or self.canonical_url == self.final_url
-        )
+        return self.canonical_url == self.url or self.canonical_url == self.final_url
 
     @property
     def is_noindex(self) -> bool:

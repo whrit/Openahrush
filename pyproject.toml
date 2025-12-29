@@ -28,6 +28,11 @@ members = [
 semrush-core = { workspace = true }
 semrush-seo = { workspace = true }
 semrush-backlinks = { workspace = true }
+semrush-api = { workspace = true }
+semrush-workers = { workspace = true }
+semrush-integrations = { workspace = true }
+semrush-reports = { workspace = true }
+semrush-commoncrawl = { workspace = true }
 
 [tool.ruff]
 target-version = "py312"

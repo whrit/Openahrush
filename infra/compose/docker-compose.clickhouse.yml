@@ -1,24 +1,56 @@
 version: "3.9"
 
-# Override file to add ClickHouse service for Common Crawl ingestion
-# Usage: docker compose -f docker-compose.yml -f docker-compose.clickhouse.yml up -d
+# Docker Compose overlay for ClickHouse
+# ======================================
+# Adds ClickHouse service for Common Crawl edge storage at scale.
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.clickhouse.yml up -d
+#
+# Or via scripts/dev.sh:
+#   scripts/dev.sh up-clickhouse
+#
+# ClickHouse is optional - use Postgres for MVP/small datasets.
+# Add ClickHouse when handling billions of Common Crawl edges.
+#
+# Schema files:
+#   - ../clickhouse/init.sql: Database creation and legacy tables
+#   - ../clickhouse/cc_schema.sql: Common Crawl edge storage schema
+#
+# Environment variables (optional overrides):
+#   CLICKHOUSE_DB: Database name (default: semrush)
+#   CLICKHOUSE_USER: Username (default: semrush)
+#   CLICKHOUSE_PASSWORD: Password (default: semrush)
 
 services:
   clickhouse:
-    image: clickhouse/clickhouse-server:latest
+    image: clickhouse/clickhouse-server:24.1
     container_name: openahrush-clickhouse
     environment:
-      CLICKHOUSE_DB: openahrush
-      CLICKHOUSE_USER: default
-      CLICKHOUSE_PASSWORD: default
+      # Database configuration
+      CLICKHOUSE_DB: ${CLICKHOUSE_DB:-semrush}
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-semrush}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-semrush}
+      # Enable default access management for creating users/databases
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
     ports:
-      - "8123:8123"  # HTTP interface
-      - "9000:9000"  # Native interface
-      - "9440:9440"  # HTTPS interface
+      # HTTP interface - used for REST API, web UI, and health checks
+      - "8123:8123"
+      # Native TCP interface - used by clickhouse-driver for high-performance operations
+      - "9000:9000"
+      # HTTPS interface (optional, for secure connections)
+      - "9440:9440"
     volumes:
+      # Persistent data storage
       - clickhouse_data:/var/lib/clickhouse
-      - ../clickhouse/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      # Initialization scripts (executed in alphabetical order on first start)
+      # init.sql runs first (creates database), then cc_schema.sql (creates tables)
+      - ../clickhouse:/docker-entrypoint-initdb.d:ro
+      # Optional: Custom configuration
+      # - ./clickhouse/config.xml:/etc/clickhouse-server/config.d/custom.xml:ro
+      # - ./clickhouse/users.xml:/etc/clickhouse-server/users.d/custom.xml:ro
     healthcheck:
+      # Check HTTP interface is responding
       test: ["CMD", "curl", "-f", "http://localhost:8123/ping"]
       interval: 10s
       timeout: 5s
@@ -27,6 +59,20 @@ services:
     networks:
       - openahrush
     restart: unless-stopped
+    # Resource limits (adjust based on available resources)
+    # Uncomment to enable:
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: '4'
+    #       memory: 8G
+    #     reservations:
+    #       cpus: '1'
+    #       memory: 2G
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
 
 volumes:
   clickhouse_data:

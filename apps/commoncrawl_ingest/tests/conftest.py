@@ -257,7 +257,7 @@ def mock_db_session() -> Any:
     Returns:
         AsyncMock configured as a database session.
     """
-    from unittest.mock import AsyncMock, MagicMock
+    from unittest.mock import AsyncMock
 
     session = AsyncMock()
     session.execute = AsyncMock()

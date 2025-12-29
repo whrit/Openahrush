@@ -54,9 +54,7 @@ class Base(DeclarativeBase):
         Returns:
             Dictionary of column names to values.
         """
-        return {
-            column.name: getattr(self, column.name) for column in self.__table__.columns
-        }
+        return {column.name: getattr(self, column.name) for column in self.__table__.columns}
 
     def __repr__(self) -> str:
         """Generate a readable string representation."""

@@ -58,9 +58,7 @@ async def fetch_wat_paths(
                 f"Failed to fetch WAT paths for {snapshot_id}: HTTP {e.response.status_code}"
             ) from e
         except httpx.RequestError as e:
-            raise DownloadError(
-                f"Failed to fetch WAT paths for {snapshot_id}: {e}"
-            ) from e
+            raise DownloadError(f"Failed to fetch WAT paths for {snapshot_id}: {e}") from e
 
     # Decompress and parse paths
     try:
@@ -165,9 +163,7 @@ class WatDownloader:
                 fails and skip_errors is False.
         """
         # Fetch paths
-        paths = await fetch_wat_paths(
-            snapshot_id, base_url=self.base_url, timeout=self.timeout
-        )
+        paths = await fetch_wat_paths(snapshot_id, base_url=self.base_url, timeout=self.timeout)
 
         if limit is not None:
             paths = paths[:limit]

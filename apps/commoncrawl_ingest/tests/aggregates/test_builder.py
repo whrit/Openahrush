@@ -60,8 +60,14 @@ class TestAggregateBuilderBuildAll:
 
         builder = AggregateBuilder(mock_db_session)
 
-        with patch.object(builder.refdomains, "build_for_snapshot", new_callable=AsyncMock) as mock_refdomains, \
-             patch.object(builder.anchors, "build_for_snapshot", new_callable=AsyncMock) as mock_anchors:
+        with (
+            patch.object(
+                builder.refdomains, "build_for_snapshot", new_callable=AsyncMock
+            ) as mock_refdomains,
+            patch.object(
+                builder.anchors, "build_for_snapshot", new_callable=AsyncMock
+            ) as mock_anchors,
+        ):
             mock_refdomains.return_value = 50
             mock_anchors.return_value = 30
 
@@ -79,8 +85,14 @@ class TestAggregateBuilderBuildAll:
         """Test that build_all returns AggregateResult with correct stats."""
         builder = AggregateBuilder(mock_db_session)
 
-        with patch.object(builder.refdomains, "build_for_snapshot", new_callable=AsyncMock) as mock_refdomains, \
-             patch.object(builder.anchors, "build_for_snapshot", new_callable=AsyncMock) as mock_anchors:
+        with (
+            patch.object(
+                builder.refdomains, "build_for_snapshot", new_callable=AsyncMock
+            ) as mock_refdomains,
+            patch.object(
+                builder.anchors, "build_for_snapshot", new_callable=AsyncMock
+            ) as mock_anchors,
+        ):
             mock_refdomains.return_value = 100
             mock_anchors.return_value = 75
 
@@ -100,8 +112,14 @@ class TestAggregateBuilderBuildAll:
         """Test that build_all calculates execution duration."""
         builder = AggregateBuilder(mock_db_session)
 
-        with patch.object(builder.refdomains, "build_for_snapshot", new_callable=AsyncMock) as mock_refdomains, \
-             patch.object(builder.anchors, "build_for_snapshot", new_callable=AsyncMock) as mock_anchors:
+        with (
+            patch.object(
+                builder.refdomains, "build_for_snapshot", new_callable=AsyncMock
+            ) as mock_refdomains,
+            patch.object(
+                builder.anchors, "build_for_snapshot", new_callable=AsyncMock
+            ) as mock_anchors,
+        ):
             mock_refdomains.return_value = 10
             mock_anchors.return_value = 5
 
@@ -123,8 +141,14 @@ class TestAggregateBuilderBuildAll:
 
         builder = AggregateBuilder(mock_db_session)
 
-        with patch.object(builder.refdomains, "build_for_snapshot", new_callable=AsyncMock) as mock_refdomains, \
-             patch.object(builder.anchors, "build_for_snapshot", new_callable=AsyncMock) as mock_anchors:
+        with (
+            patch.object(
+                builder.refdomains, "build_for_snapshot", new_callable=AsyncMock
+            ) as mock_refdomains,
+            patch.object(
+                builder.anchors, "build_for_snapshot", new_callable=AsyncMock
+            ) as mock_anchors,
+        ):
             mock_refdomains.return_value = 20
             mock_anchors.return_value = 15
 
@@ -182,7 +206,9 @@ class TestAggregateBuilderErrorHandling:
         """Test that errors in refdomains aggregation are propagated."""
         builder = AggregateBuilder(mock_db_session)
 
-        with patch.object(builder.refdomains, "build_for_snapshot", new_callable=AsyncMock) as mock_refdomains:
+        with patch.object(
+            builder.refdomains, "build_for_snapshot", new_callable=AsyncMock
+        ) as mock_refdomains:
             mock_refdomains.side_effect = Exception("RefDomains aggregation failed")
 
             with pytest.raises(Exception) as exc_info:
@@ -199,8 +225,14 @@ class TestAggregateBuilderErrorHandling:
         """Test that errors in anchors aggregation are propagated."""
         builder = AggregateBuilder(mock_db_session)
 
-        with patch.object(builder.refdomains, "build_for_snapshot", new_callable=AsyncMock) as mock_refdomains, \
-             patch.object(builder.anchors, "build_for_snapshot", new_callable=AsyncMock) as mock_anchors:
+        with (
+            patch.object(
+                builder.refdomains, "build_for_snapshot", new_callable=AsyncMock
+            ) as mock_refdomains,
+            patch.object(
+                builder.anchors, "build_for_snapshot", new_callable=AsyncMock
+            ) as mock_anchors,
+        ):
             mock_refdomains.return_value = 50
             mock_anchors.side_effect = Exception("Anchors aggregation failed")
 
@@ -251,8 +283,14 @@ class TestAggregateBuilderSnapshotUpdate:
 
         builder = AggregateBuilder(mock_db_session)
 
-        with patch.object(builder.refdomains, "build_for_snapshot", new_callable=AsyncMock) as mock_refdomains, \
-             patch.object(builder.anchors, "build_for_snapshot", new_callable=AsyncMock) as mock_anchors:
+        with (
+            patch.object(
+                builder.refdomains, "build_for_snapshot", new_callable=AsyncMock
+            ) as mock_refdomains,
+            patch.object(
+                builder.anchors, "build_for_snapshot", new_callable=AsyncMock
+            ) as mock_anchors,
+        ):
             mock_refdomains.return_value = 100
             mock_anchors.return_value = 50
 
@@ -273,8 +311,14 @@ class TestAggregateBuilderSnapshotUpdate:
 
         builder = AggregateBuilder(mock_db_session)
 
-        with patch.object(builder.refdomains, "build_for_snapshot", new_callable=AsyncMock) as mock_refdomains, \
-             patch.object(builder.anchors, "build_for_snapshot", new_callable=AsyncMock) as mock_anchors:
+        with (
+            patch.object(
+                builder.refdomains, "build_for_snapshot", new_callable=AsyncMock
+            ) as mock_refdomains,
+            patch.object(
+                builder.anchors, "build_for_snapshot", new_callable=AsyncMock
+            ) as mock_anchors,
+        ):
             mock_refdomains.return_value = 100
             mock_anchors.return_value = 75
 
@@ -295,8 +339,14 @@ class TestAggregateBuilderSnapshotUpdate:
 
         builder = AggregateBuilder(mock_db_session)
 
-        with patch.object(builder.refdomains, "build_for_snapshot", new_callable=AsyncMock) as mock_refdomains, \
-             patch.object(builder.anchors, "build_for_snapshot", new_callable=AsyncMock) as mock_anchors:
+        with (
+            patch.object(
+                builder.refdomains, "build_for_snapshot", new_callable=AsyncMock
+            ) as mock_refdomains,
+            patch.object(
+                builder.anchors, "build_for_snapshot", new_callable=AsyncMock
+            ) as mock_anchors,
+        ):
             mock_refdomains.return_value = 10
             mock_anchors.return_value = 5
 

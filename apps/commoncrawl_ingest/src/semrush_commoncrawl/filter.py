@@ -103,9 +103,7 @@ class DomainFilter:
                 # *.example.com matches sub.example.com, www.example.com, etc.
                 base_domain = domain[2:]  # Remove *.
                 # Create regex pattern that matches the domain in a URL
-                pattern = re.compile(
-                    rf"(?:^|\.){re.escape(base_domain)}$", re.IGNORECASE
-                )
+                pattern = re.compile(rf"(?:^|\.){re.escape(base_domain)}$", re.IGNORECASE)
                 self._patterns.append((domain, True, pattern))
             else:
                 # Exact domain match

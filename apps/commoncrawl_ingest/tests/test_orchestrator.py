@@ -13,17 +13,15 @@ from __future__ import annotations
 
 import gzip
 import json
-import uuid
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
-from unittest.mock import AsyncMock, MagicMock, patch
 
+import httpx
 import pytest
 import respx
-import httpx
 
 if TYPE_CHECKING:
-    from semrush_commoncrawl.orchestrator import IngestionOrchestrator
+    pass
 
 
 # ============================================================================
@@ -173,9 +171,9 @@ class TestIngestionOrchestratorIngest:
         """ingest_snapshot should return an IngestionResult."""
         from semrush_commoncrawl.orchestrator import (
             IngestionOrchestrator,
+            IngestionResult,
             IngestionSettings,
             IngestSpec,
-            IngestionResult,
         )
 
         # Mock HTTP requests
@@ -242,7 +240,7 @@ class TestIngestionOrchestratorIngest:
             f"Content-Length: {len(json_content)}\r\n"
             f"\r\n"
             f"{json_content}\r\n\r\n"
-        ).encode("utf-8")
+        ).encode()
         gzipped_content = gzip.compress(warc_content)
 
         paths = ["crawl-data/test.warc.wat.gz"]
@@ -349,7 +347,7 @@ class TestIngestionOrchestratorIngest:
             f"Content-Length: {len(json_content)}\r\n"
             f"\r\n"
             f"{json_content}\r\n\r\n"
-        ).encode("utf-8")
+        ).encode()
         gzipped_content = gzip.compress(warc_content)
 
         paths = ["crawl-data/test.warc.wat.gz"]
@@ -413,7 +411,7 @@ class TestIngestionOrchestratorIngest:
             f"Content-Length: {len(json_content)}\r\n"
             f"\r\n"
             f"{json_content}\r\n\r\n"
-        ).encode("utf-8")
+        ).encode()
         gzipped_content = gzip.compress(warc_content)
 
         paths = ["crawl-data/test.warc.wat.gz"]
@@ -482,9 +480,7 @@ class TestIngestionOrchestratorProgress:
             progress_updates.append(update)
 
         spec = IngestSpec(max_files=2)
-        await orchestrator.ingest_snapshot(
-            sample_snapshot_id, spec, on_progress=on_progress
-        )
+        await orchestrator.ingest_snapshot(sample_snapshot_id, spec, on_progress=on_progress)
 
         # Should have received progress updates
         assert len(progress_updates) >= 2
@@ -546,7 +542,11 @@ class TestIngestionOrchestratorErrorHandling:
                     "HTTP-Response-Metadata": {
                         "HTML-Metadata": {
                             "Links": [
-                                {"url": "https://target.com/page", "path": "A@/href", "text": "Link"},
+                                {
+                                    "url": "https://target.com/page",
+                                    "path": "A@/href",
+                                    "text": "Link",
+                                },
                             ],
                         },
                     },
@@ -560,7 +560,7 @@ class TestIngestionOrchestratorErrorHandling:
             f"Content-Length: {len(json_content)}\r\n"
             f"\r\n"
             f"{json_content}\r\n\r\n"
-        ).encode("utf-8")
+        ).encode()
         good_content = gzip.compress(warc_content)
 
         paths_url = f"https://data.commoncrawl.org/crawl-data/{sample_snapshot_id}/wat.paths.gz"
@@ -643,7 +643,11 @@ class TestIngestionOrchestratorErrorHandling:
                     "HTTP-Response-Metadata": {
                         "HTML-Metadata": {
                             "Links": [
-                                {"url": "https://target.com/page", "path": "A@/href", "text": "Link"},
+                                {
+                                    "url": "https://target.com/page",
+                                    "path": "A@/href",
+                                    "text": "Link",
+                                },
                             ],
                         },
                     },
@@ -657,7 +661,7 @@ class TestIngestionOrchestratorErrorHandling:
             f"Content-Length: {len(json_content)}\r\n"
             f"\r\n"
             f"{json_content}\r\n\r\n"
-        ).encode("utf-8")
+        ).encode()
         gzipped_content = gzip.compress(warc_content)
 
         paths = ["crawl-data/test.warc.wat.gz"]

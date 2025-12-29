@@ -130,9 +130,37 @@ Responsibilities:
   - export jobs
 
 ### 3.4 ClickHouse (Recommended for MVP when enabling Common Crawl at meaningful scale)
-- Raw edge table(s) (domain/url-level link edges)
-- Aggregate tables (ref domains, anchors, overlap/intersect)
-- Time-series rollups (optional)
+
+Schema defined in `infra/clickhouse/cc_schema.sql`:
+
+**Tables:**
+- `cc_edges`: Raw link edges from Common Crawl (billions of rows)
+  - Columns: snapshot_id, source_url, source_domain, target_url, target_domain, anchor, rel_nofollow, rel_ugc, rel_sponsored, discovered_at
+  - Engine: MergeTree()
+  - Partition: (snapshot_id, substring(target_domain, 1, 2))
+  - Order: (target_domain, source_domain, source_url)
+
+- `cc_snapshots`: Snapshot registry and status tracking
+  - Engine: ReplacingMergeTree(updated_at)
+
+**Materialized Views (auto-updated on insert):**
+- `cc_refdomains_mv`: Referring domain aggregates per target domain
+  - Engine: SummingMergeTree()
+- `cc_anchors_mv`: Anchor text distribution per target domain
+  - Engine: SummingMergeTree()
+- `cc_domain_stats_mv`: Quick domain-level stats (total backlinks, unique ref domains)
+  - Engine: SummingMergeTree()
+
+**Helper Views:**
+- `cc_top_refdomains`: Top referring domains by backlink count
+- `cc_top_anchors`: Top anchor texts by usage count
+- `cc_domain_overview`: Aggregated domain stats across snapshots
+
+**Design Rationale:**
+- LowCardinality(String) for domains: Dictionary encoding for repeated values
+- SummingMergeTree for aggregates: Automatic incremental aggregation on merge
+- Partition by snapshot + domain prefix: Efficient pruning and parallel processing
+- Order by target_domain first: Optimized for "backlinks to domain X" queries
 
 ---
 

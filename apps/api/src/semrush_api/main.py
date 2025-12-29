@@ -26,6 +26,7 @@ from semrush_api.routers import (
     alerts,
     auth,
     backlinks,
+    commoncrawl,
     diffs,
     health,
     integrations,
@@ -238,6 +239,9 @@ def register_routers(app: FastAPI) -> None:
 
     # Backlinks - Project Backlinks (/projects/{id}/backlinks/...)
     app.include_router(backlinks.projects_router, tags=["Project Backlinks"])
+
+    # Common Crawl (/commoncrawl/...)
+    app.include_router(commoncrawl.router, tags=["Common Crawl"])
 
 
 # Create the application instance
