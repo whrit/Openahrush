@@ -9,7 +9,6 @@ from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-
 from semrush_reports.json_export import JSONEncoder, JSONExporter
 
 
@@ -218,3 +217,160 @@ class TestJSONExporter:
             data = json.loads(line)
             assert "url" in data
             assert "issue_type_id" in data
+
+
+class TestJSONEmptyDataHandling:
+    """Tests for JSON export with empty data."""
+
+    @pytest.mark.asyncio
+    async def test_export_issues_empty_returns_empty_items(
+        self,
+        mock_db_session: AsyncMock,
+        test_project_id: uuid.UUID,
+    ) -> None:
+        """Test issues export with no data returns empty items array."""
+        mock_result = MagicMock()
+        mock_result.scalars.return_value.all.return_value = []
+        mock_db_session.execute.return_value = mock_result
+
+        exporter = JSONExporter()
+        result = await exporter.export_issues(mock_db_session, test_project_id)
+
+        data = json.loads(result.decode("utf-8"))
+
+        assert data["export_type"] == "issues"
+        assert data["total_count"] == 0
+        assert data["items"] == []
+
+    @pytest.mark.asyncio
+    async def test_export_backlinks_empty_returns_empty_items(
+        self,
+        mock_db_session: AsyncMock,
+        test_project_id: uuid.UUID,
+    ) -> None:
+        """Test backlinks export with no data returns empty items array."""
+        mock_result = MagicMock()
+        mock_result.scalars.return_value.all.return_value = []
+        mock_db_session.execute.return_value = mock_result
+
+        exporter = JSONExporter()
+        result = await exporter.export_backlinks(mock_db_session, test_project_id)
+
+        data = json.loads(result.decode("utf-8"))
+
+        assert data["export_type"] == "backlinks"
+        assert data["total_count"] == 0
+        assert data["items"] == []
+
+    @pytest.mark.asyncio
+    async def test_export_pages_empty_returns_empty_items(
+        self,
+        mock_db_session: AsyncMock,
+        test_crawl_run_id: uuid.UUID,
+    ) -> None:
+        """Test pages export with no data returns empty items array."""
+        mock_result = MagicMock()
+        mock_result.scalars.return_value.all.return_value = []
+        mock_db_session.execute.return_value = mock_result
+
+        exporter = JSONExporter()
+        result = await exporter.export_pages(mock_db_session, test_crawl_run_id)
+
+        data = json.loads(result.decode("utf-8"))
+
+        assert data["export_type"] == "pages"
+        assert data["total_count"] == 0
+        assert data["items"] == []
+
+
+class TestJSONStreamingExport:
+    """Tests for JSON Lines streaming export."""
+
+    @pytest.mark.asyncio
+    async def test_export_backlinks_jsonl_yields_chunks(
+        self,
+        mock_db_session: AsyncMock,
+        mock_backlinks: list[MagicMock],
+        test_project_id: uuid.UUID,
+    ) -> None:
+        """Test backlinks JSONL streaming export yields chunks."""
+        mock_result_with_data = MagicMock()
+        mock_result_with_data.scalars.return_value.all.return_value = mock_backlinks
+
+        mock_result_empty = MagicMock()
+        mock_result_empty.scalars.return_value.all.return_value = []
+
+        mock_db_session.execute.side_effect = [mock_result_with_data, mock_result_empty]
+
+        exporter = JSONExporter()
+        chunks = []
+        async for chunk in exporter.export_backlinks_jsonl(
+            mock_db_session,
+            test_project_id,
+            batch_size=10,
+        ):
+            chunks.append(chunk)
+
+        assert len(chunks) >= 1
+
+        # Parse first chunk as JSON lines
+        content = chunks[0].decode("utf-8")
+        lines = [line for line in content.strip().split("\n") if line]
+
+        for line in lines:
+            data = json.loads(line)
+            assert "source_url" in data
+            assert "source_domain" in data
+
+    @pytest.mark.asyncio
+    async def test_export_issues_jsonl_empty_yields_nothing(
+        self,
+        mock_db_session: AsyncMock,
+        test_project_id: uuid.UUID,
+    ) -> None:
+        """Test JSONL streaming with no data yields no chunks."""
+        mock_result_empty = MagicMock()
+        mock_result_empty.scalars.return_value.all.return_value = []
+        mock_db_session.execute.return_value = mock_result_empty
+
+        exporter = JSONExporter()
+        chunks = []
+        async for chunk in exporter.export_issues_jsonl(
+            mock_db_session,
+            test_project_id,
+        ):
+            chunks.append(chunk)
+
+        # Should yield no chunks when no data
+        assert len(chunks) == 0
+
+
+class TestJSONPrettyPrint:
+    """Tests for JSON pretty print formatting."""
+
+    def test_pretty_print_contains_newlines(self) -> None:
+        """Test pretty print mode adds newlines and indentation."""
+        exporter = JSONExporter(pretty=True)
+        result = exporter._dumps({"key": "value", "nested": {"a": 1, "b": 2}})
+
+        # Pretty print should have newlines
+        assert "\n" in result
+        # Should have proper indentation
+        assert "  " in result
+
+    def test_compact_print_no_newlines(self) -> None:
+        """Test compact mode has no newlines."""
+        exporter = JSONExporter(pretty=False)
+        result = exporter._dumps({"key": "value", "nested": {"a": 1, "b": 2}})
+
+        # Compact should not have newlines
+        assert "\n" not in result
+
+    def test_unicode_preserved(self) -> None:
+        """Test unicode characters are preserved without escaping."""
+        exporter = JSONExporter()
+        result = exporter._dumps({"emoji": "\U0001f4c8", "japanese": "\u65e5\u672c\u8a9e"})
+
+        # Unicode should be preserved, not escaped
+        assert "\U0001f4c8" in result
+        assert "\u65e5\u672c\u8a9e" in result

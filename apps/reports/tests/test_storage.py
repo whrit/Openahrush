@@ -3,12 +3,10 @@ Tests for MinIO storage service.
 """
 
 import uuid
-from datetime import timedelta
 from unittest.mock import MagicMock, patch
 
 import pytest
-
-from semrush_reports.storage import ExportStorage, MinIOStorage, StorageError
+from semrush_reports.storage import ExportStorage, MinIOStorage
 
 
 class TestMinIOStorage:
@@ -34,7 +32,7 @@ class TestMinIOStorage:
         mock_client.bucket_exists.return_value = True
         mock_minio_class.return_value = mock_client
 
-        storage = MinIOStorage()
+        MinIOStorage()  # Instantiate to test initialization
 
         mock_minio_class.assert_called_once_with(
             "localhost:9000",
@@ -63,7 +61,7 @@ class TestMinIOStorage:
         mock_client.bucket_exists.return_value = False
         mock_minio_class.return_value = mock_client
 
-        storage = MinIOStorage()
+        MinIOStorage()  # Instantiate to trigger bucket creation
 
         mock_client.make_bucket.assert_called_once_with("test-bucket")
 
@@ -189,9 +187,7 @@ class TestMinIOStorage:
 
         mock_client = MagicMock()
         mock_client.bucket_exists.return_value = True
-        mock_client.stat_object.side_effect = S3Error(
-            "NoSuchKey", "NoSuchKey", "", "", "", ""
-        )
+        mock_client.stat_object.side_effect = S3Error("NoSuchKey", "NoSuchKey", "", "", "", "")
         mock_minio_class.return_value = mock_client
 
         storage = MinIOStorage()
@@ -243,9 +239,7 @@ class TestExportStorage:
         export_id = uuid.UUID("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")
         data = b"test export data"
 
-        key, size, url = await storage.store_export(
-            project_id, export_id, "csv", data
-        )
+        key, size, url = await storage.store_export(project_id, export_id, "csv", data)
 
         assert key == f"exports/{project_id}/{export_id}.csv"
         assert size == len(data)

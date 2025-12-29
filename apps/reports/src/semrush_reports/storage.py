@@ -16,7 +16,6 @@ from uuid import UUID
 
 from minio import Minio
 from minio.error import S3Error
-
 from semrush_core import get_settings
 
 

@@ -275,7 +275,7 @@ class TestCallbackEndpoint:
         state_mgr = get_oauth_state_manager()
         await state_mgr.generate(str(test_user_id), "google_search_console")
         # Get the state token that was generated (stored in memory)
-        valid_state = list(state_mgr._memory_store.keys())[0]
+        valid_state = next(iter(state_mgr._memory_store.keys()))
 
         with patch(
             "semrush_api.routers.integrations.get_oauth_provider"
@@ -346,7 +346,7 @@ class TestCallbackEndpoint:
         state_mgr = get_oauth_state_manager()
         await state_mgr.generate(str(test_user_id), "google_search_console")
         # Get the state token that was generated (stored in memory)
-        valid_state = list(state_mgr._memory_store.keys())[0]
+        valid_state = next(iter(state_mgr._memory_store.keys()))
 
         with patch(
             "semrush_api.routers.integrations.get_oauth_provider"

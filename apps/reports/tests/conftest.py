@@ -11,11 +11,9 @@ import os
 import uuid
 from datetime import UTC, datetime
 from decimal import Decimal
-from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-import pytest_asyncio
 from sqlalchemy.ext.asyncio import AsyncSession
 
 # Set test environment variables before importing app
@@ -156,9 +154,11 @@ def mock_crawl_pages(test_crawl_run_id: uuid.UUID) -> list[MagicMock]:
         page.title = f"Page {i} Title"
         page.meta_description = f"Description for page {i}"
         page.canonical_url = f"https://example.com/page-{i}"
+        page.meta_robots = None
         page.h1_count = 1
         page.first_h1 = f"Heading {i}"
         page.word_count = 500 + i * 100
+        page.text_length = 2000 + i * 100
         page.render_mode = "html"
         page.was_rendered = False
         pages.append(page)

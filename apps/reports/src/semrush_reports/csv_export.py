@@ -17,10 +17,9 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
+from semrush_core.models import CrawlPage, IssueInstance, ProjectBacklink
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from semrush_core.models import CrawlPage, IssueInstance, ProjectBacklink
 
 
 class CSVExporter:

@@ -6,11 +6,9 @@ import csv
 import io
 import uuid
 from datetime import UTC, datetime
-from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-
 from semrush_reports.csv_export import CSVExporter, format_datetime, format_list
 
 
@@ -223,3 +221,198 @@ class TestHelperFunctions:
         """Test list formatting with empty list."""
         result = format_list([])
         assert result == ""
+
+
+class TestCSVStreamingExport:
+    """Tests for streaming CSV export functionality."""
+
+    @pytest.mark.asyncio
+    async def test_export_issues_streaming_yields_chunks(
+        self,
+        mock_db_session: AsyncMock,
+        mock_issues: list[MagicMock],
+        test_project_id: uuid.UUID,
+    ) -> None:
+        """Test issues streaming export yields multiple chunks."""
+        # Setup mock to return data on first call, empty on second
+        mock_result_with_data = MagicMock()
+        mock_result_with_data.scalars.return_value.all.return_value = mock_issues
+
+        mock_result_empty = MagicMock()
+        mock_result_empty.scalars.return_value.all.return_value = []
+
+        mock_db_session.execute.side_effect = [mock_result_with_data, mock_result_empty]
+
+        exporter = CSVExporter()
+        chunks = []
+        async for chunk in exporter.export_issues_streaming(
+            mock_db_session,
+            test_project_id,
+            batch_size=10,
+        ):
+            chunks.append(chunk)
+
+        # Should have at least header chunk and data chunk
+        assert len(chunks) >= 1
+
+        # First chunk should contain header with BOM
+        first_chunk = chunks[0].decode("utf-8")
+        assert first_chunk.startswith("\ufeff")
+        assert "URL" in first_chunk
+
+    @pytest.mark.asyncio
+    async def test_export_issues_streaming_header_only_when_no_data(
+        self,
+        mock_db_session: AsyncMock,
+        test_project_id: uuid.UUID,
+    ) -> None:
+        """Test streaming export yields only header when no data exists."""
+        mock_result_empty = MagicMock()
+        mock_result_empty.scalars.return_value.all.return_value = []
+        mock_db_session.execute.return_value = mock_result_empty
+
+        exporter = CSVExporter()
+        chunks = []
+        async for chunk in exporter.export_issues_streaming(
+            mock_db_session,
+            test_project_id,
+        ):
+            chunks.append(chunk)
+
+        # Should have exactly one chunk (header only)
+        assert len(chunks) == 1
+        header = chunks[0].decode("utf-8")
+        assert "URL" in header
+
+    @pytest.mark.asyncio
+    async def test_export_backlinks_streaming_yields_chunks(
+        self,
+        mock_db_session: AsyncMock,
+        mock_backlinks: list[MagicMock],
+        test_project_id: uuid.UUID,
+    ) -> None:
+        """Test backlinks streaming export yields chunks."""
+        mock_result_with_data = MagicMock()
+        mock_result_with_data.scalars.return_value.all.return_value = mock_backlinks
+
+        mock_result_empty = MagicMock()
+        mock_result_empty.scalars.return_value.all.return_value = []
+
+        mock_db_session.execute.side_effect = [mock_result_with_data, mock_result_empty]
+
+        exporter = CSVExporter()
+        chunks = []
+        async for chunk in exporter.export_backlinks_streaming(
+            mock_db_session,
+            test_project_id,
+            batch_size=10,
+        ):
+            chunks.append(chunk)
+
+        assert len(chunks) >= 1
+        first_chunk = chunks[0].decode("utf-8")
+        assert "Source URL" in first_chunk
+
+
+class TestCSVEmptyDataHandling:
+    """Tests for CSV export with empty data."""
+
+    @pytest.mark.asyncio
+    async def test_export_issues_empty_returns_headers_only(
+        self,
+        mock_db_session: AsyncMock,
+        test_project_id: uuid.UUID,
+    ) -> None:
+        """Test issues export with no data returns only headers."""
+        mock_result = MagicMock()
+        mock_result.scalars.return_value.all.return_value = []
+        mock_db_session.execute.return_value = mock_result
+
+        exporter = CSVExporter()
+        result = await exporter.export_issues(mock_db_session, test_project_id)
+
+        content = result.decode("utf-8")
+        if content.startswith("\ufeff"):
+            content = content[1:]
+
+        reader = csv.reader(io.StringIO(content))
+        rows = list(reader)
+
+        # Should have only header row
+        assert len(rows) == 1
+        assert "URL" in rows[0]
+
+    @pytest.mark.asyncio
+    async def test_export_backlinks_empty_returns_headers_only(
+        self,
+        mock_db_session: AsyncMock,
+        test_project_id: uuid.UUID,
+    ) -> None:
+        """Test backlinks export with no data returns only headers."""
+        mock_result = MagicMock()
+        mock_result.scalars.return_value.all.return_value = []
+        mock_db_session.execute.return_value = mock_result
+
+        exporter = CSVExporter()
+        result = await exporter.export_backlinks(mock_db_session, test_project_id)
+
+        content = result.decode("utf-8")
+        if content.startswith("\ufeff"):
+            content = content[1:]
+
+        reader = csv.reader(io.StringIO(content))
+        rows = list(reader)
+
+        assert len(rows) == 1
+        assert "Source URL" in rows[0]
+
+    @pytest.mark.asyncio
+    async def test_export_pages_empty_returns_headers_only(
+        self,
+        mock_db_session: AsyncMock,
+        test_crawl_run_id: uuid.UUID,
+    ) -> None:
+        """Test pages export with no data returns only headers."""
+        mock_result = MagicMock()
+        mock_result.scalars.return_value.all.return_value = []
+        mock_db_session.execute.return_value = mock_result
+
+        exporter = CSVExporter()
+        result = await exporter.export_pages(mock_db_session, test_crawl_run_id)
+
+        content = result.decode("utf-8")
+        if content.startswith("\ufeff"):
+            content = content[1:]
+
+        reader = csv.reader(io.StringIO(content))
+        rows = list(reader)
+
+        assert len(rows) == 1
+        assert "URL" in rows[0]
+
+
+class TestCSVEncodingAndSpecialCharacters:
+    """Tests for CSV export encoding and special character handling."""
+
+    def test_utf8_bom_constant(self) -> None:
+        """Test UTF-8 BOM constant is correct."""
+        assert CSVExporter.UTF8_BOM == "\ufeff"
+
+    def test_special_characters_in_data(self) -> None:
+        """Test CSV properly escapes special characters."""
+        exporter = CSVExporter(include_bom=False)
+        buffer = io.StringIO()
+        rows = [
+            ["value with, comma", 'value with "quotes"', "normal value"],
+            ["line\nbreak", "tab\there", "emoji \U0001f4c8"],
+        ]
+        exporter._write_rows(buffer, rows)
+
+        content = buffer.getvalue()
+        reader = csv.reader(io.StringIO(content))
+        read_rows = list(reader)
+
+        # Verify special characters are preserved
+        assert read_rows[0][0] == "value with, comma"
+        assert read_rows[0][1] == 'value with "quotes"'
+        assert read_rows[1][2] == "emoji \U0001f4c8"

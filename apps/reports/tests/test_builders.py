@@ -3,12 +3,11 @@ Tests for report context builders.
 """
 
 import uuid
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-
 from semrush_reports.builders import (
     build_audit_context,
     build_backlinks_context,
@@ -33,7 +32,7 @@ class TestBuildAuditContext:
 
         project_id = uuid.uuid4()
 
-        with pytest.raises(ValueError, match="Project .* not found"):
+        with pytest.raises(ValueError, match=r"Project .* not found"):
             await build_audit_context(mock_db_session, project_id)
 
     @pytest.mark.asyncio
@@ -78,9 +77,7 @@ class TestBuildAuditContext:
 
         # Issues query returns tuples of (issue, issue_type)
         mock_issues_result = MagicMock()
-        mock_issues_result.all.return_value = [
-            (issue, issue.issue_type) for issue in mock_issues
-        ]
+        mock_issues_result.all.return_value = [(issue, issue.issue_type) for issue in mock_issues]
 
         mock_pages_result = MagicMock()
         mock_pages_result.scalars.return_value.all.return_value = mock_crawl_pages
@@ -119,9 +116,7 @@ class TestBuildAuditContext:
         mock_crawl_result.scalar_one_or_none.return_value = mock_crawl_run
 
         mock_issues_result = MagicMock()
-        mock_issues_result.all.return_value = [
-            (issue, issue.issue_type) for issue in mock_issues
-        ]
+        mock_issues_result.all.return_value = [(issue, issue.issue_type) for issue in mock_issues]
 
         mock_pages_result = MagicMock()
         mock_pages_result.scalars.return_value.all.return_value = mock_crawl_pages
@@ -160,7 +155,7 @@ class TestBuildPerformanceContext:
 
         project_id = uuid.uuid4()
 
-        with pytest.raises(ValueError, match="Project .* not found"):
+        with pytest.raises(ValueError, match=r"Project .* not found"):
             await build_performance_context(mock_db_session, project_id)
 
     @pytest.mark.asyncio
@@ -276,7 +271,7 @@ class TestBuildBacklinksContext:
 
         project_id = uuid.uuid4()
 
-        with pytest.raises(ValueError, match="Project .* not found"):
+        with pytest.raises(ValueError, match=r"Project .* not found"):
             await build_backlinks_context(mock_db_session, project_id)
 
     @pytest.mark.asyncio
@@ -342,7 +337,7 @@ class TestBuildOverviewContext:
 
         project_id = uuid.uuid4()
 
-        with pytest.raises(ValueError, match="Project .* not found"):
+        with pytest.raises(ValueError, match=r"Project .* not found"):
             await build_overview_context(mock_db_session, project_id)
 
     @pytest.mark.asyncio
@@ -372,9 +367,7 @@ class TestBuildOverviewContext:
         mock_crawl_result.scalar_one_or_none.return_value = mock_crawl_run
 
         mock_issues_result = MagicMock()
-        mock_issues_result.all.return_value = [
-            (issue, issue.issue_type) for issue in mock_issues
-        ]
+        mock_issues_result.all.return_value = [(issue, issue.issue_type) for issue in mock_issues]
 
         mock_pages_result = MagicMock()
         mock_pages_result.scalars.return_value.all.return_value = mock_crawl_pages

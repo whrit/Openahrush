@@ -186,6 +186,21 @@ class AsyncOAuthStateManager:
         self._memory_store: dict[str, dict[str, Any]] = {}
         self._use_memory = redis_client is None
 
+    @property
+    def _redis_client(self) -> Any:
+        """
+        Get the Redis client with type narrowing.
+
+        Returns:
+            The Redis client instance.
+
+        Raises:
+            RuntimeError: If called when in memory-only mode.
+        """
+        if self._redis is None:
+            raise RuntimeError("Redis client not available in memory-only mode")
+        return self._redis
+
     async def generate(
         self,
         user_id: str,
@@ -219,7 +234,7 @@ class AsyncOAuthStateManager:
         else:
             try:
                 key = f"{self.KEY_PREFIX}{state}"
-                await self._redis.setex(key, self._ttl, json.dumps(data))
+                await self._redis_client.setex(key, self._ttl, json.dumps(data))
             except Exception as e:
                 # Fall back to in-memory if Redis fails
                 logger.warning(f"Redis unavailable, falling back to in-memory: {e}")
@@ -253,16 +268,17 @@ class AsyncOAuthStateManager:
 
         try:
             key = f"{self.KEY_PREFIX}{state}"
+            redis = self._redis_client
 
             # Use GETDEL for atomic get-and-delete (Redis 6.2+)
             # Falls back to GET + DELETE if GETDEL not available
             try:
-                raw_data = await self._redis.getdel(key)
+                raw_data = await redis.getdel(key)
             except Exception:
                 # Fallback for older Redis versions
-                raw_data = await self._redis.get(key)
+                raw_data = await redis.get(key)
                 if raw_data:
-                    await self._redis.delete(key)
+                    await redis.delete(key)
 
             if raw_data:
                 result: dict[str, Any] = json.loads(raw_data)
@@ -295,6 +311,6 @@ class AsyncOAuthStateManager:
 
         try:
             key = f"{self.KEY_PREFIX}{state}"
-            return bool(await self._redis.exists(key))
+            return bool(await self._redis_client.exists(key))
         except Exception:
             return state in self._memory_store

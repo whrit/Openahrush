@@ -17,10 +17,9 @@ from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
+from semrush_core.models import CrawlPage, IssueInstance, Project, ProjectBacklink
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from semrush_core.models import CrawlPage, IssueInstance, Project, ProjectBacklink
 
 
 class JSONEncoder(json.JSONEncoder):

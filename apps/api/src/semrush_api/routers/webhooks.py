@@ -28,7 +28,7 @@ from semrush_core.security.encryption import (
 )
 from sqlalchemy import func, select
 
-from semrush_api.deps import CurrentUser, DbSession, Pagination, UserProject
+from semrush_api.deps import DbSession, Pagination, UserProject
 
 router = APIRouter(prefix="/projects", tags=["Webhooks"])
 

@@ -345,17 +345,17 @@ async def get_download_url(
             file_size_bytes=export.file_size_bytes,
             content_type=_get_content_type(export.format),
         )
-    except ImportError:
+    except ImportError as err:
         # Storage module not available
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Storage service not available",
-        )
+        ) from err
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to generate download URL: {str(e)}",
-        )
+            detail=f"Failed to generate download URL: {e}",
+        ) from e
 
 
 @router.post(

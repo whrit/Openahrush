@@ -11,8 +11,7 @@ from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, Field
-
-from semrush_core.models.export import ExportFormat, ExportResource, ExportStatus
+from semrush_core.models.export import ExportFormat, ExportResource
 
 
 class ExportCreate(BaseModel):

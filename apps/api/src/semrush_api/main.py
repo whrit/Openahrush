@@ -33,6 +33,7 @@ from semrush_api.routers import (
     integrations,
     issues,
     projects,
+    schedules,
     settings,
     webhooks,
 )
@@ -247,6 +248,10 @@ def register_routers(app: FastAPI) -> None:
 
     # Webhooks (/projects/{id}/webhooks/...)
     app.include_router(webhooks.router, tags=["Webhooks"])
+
+    # Export Schedules (/projects/{id}/exports/schedules/...)
+    # NOTE: Must be registered BEFORE exports router to avoid route conflict
+    app.include_router(schedules.router, tags=["Schedules"])
 
     # Exports (/projects/{id}/exports/...)
     app.include_router(exports.router, tags=["Exports"])

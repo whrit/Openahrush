@@ -12,11 +12,9 @@ Covers all functions in semrush_seo.url module:
 """
 
 import pytest
-
 from semrush_seo.url import (
     KEEP_PARAMS,
     TRACKING_PARAMS,
-    URLInfo,
     canonicalize_url,
     extract_domain,
     get_url_path_parts,
@@ -25,7 +23,6 @@ from semrush_seo.url import (
     parse_url,
     urls_are_equivalent,
 )
-
 
 # =============================================================================
 # normalize_url Tests

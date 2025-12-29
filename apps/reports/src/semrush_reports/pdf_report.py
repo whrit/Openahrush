@@ -9,8 +9,6 @@ Provides PDF generation for:
 
 from __future__ import annotations
 
-import base64
-import io
 from collections import Counter
 from datetime import UTC, datetime
 from pathlib import Path
@@ -18,9 +16,6 @@ from typing import Any
 from uuid import UUID
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
-from sqlalchemy import func, select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from semrush_core.models import (
     CrawlPage,
     CrawlRun,
@@ -28,8 +23,9 @@ from semrush_core.models import (
     IssueType,
     Project,
     ProjectBacklink,
-    Site,
 )
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 # Template directory relative to this file
 TEMPLATE_DIR = Path(__file__).parent / "templates"
@@ -389,10 +385,7 @@ class ReportBuilder:
             reverse=True,
         )
 
-        # New backlinks (last 30 days)
-        thirty_days_ago = datetime.now(UTC).replace(
-            hour=0, minute=0, second=0, microsecond=0
-        )
+        # New backlinks (most recent 20)
         new_backlinks = [
             {
                 "source_url": bl.source_url,

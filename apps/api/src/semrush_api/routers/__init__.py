@@ -12,6 +12,7 @@ Contains all FastAPI routers organized by resource:
 - crawls: Site crawl operations
 - reports: Report generation and export
 - webhooks: Webhook configuration and delivery
+- schedules: Export schedule management
 """
 
 from semrush_api.routers import (
@@ -22,6 +23,7 @@ from semrush_api.routers import (
     integrations,
     issues,
     projects,
+    schedules,
     settings,
     webhooks,
 )
@@ -34,6 +36,7 @@ __all__ = [
     "integrations",
     "issues",
     "projects",
+    "schedules",
     "settings",
     "webhooks",
 ]

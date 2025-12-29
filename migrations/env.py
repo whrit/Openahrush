@@ -12,14 +12,12 @@ import os
 from logging.config import fileConfig
 
 from alembic import context
-from sqlalchemy import pool
-from sqlalchemy.ext.asyncio import async_engine_from_config
 
 # Import Base metadata and all models for autogenerate
-from semrush_core.models import Base
 from semrush_core.models import (  # noqa: F401 - imports needed for autogenerate
     # Core models
     AnalyticsFactDaily,
+    Base,
     Competitor,
     IntegrationAccount,
     IntegrationMapping,
@@ -33,6 +31,8 @@ from semrush_core.models import (  # noqa: F401 - imports needed for autogenerat
     SyncRun,
     User,
 )
+from sqlalchemy import pool
+from sqlalchemy.ext.asyncio import async_engine_from_config
 
 # Alembic Config object
 config = context.config

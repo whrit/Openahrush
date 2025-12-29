@@ -9,12 +9,8 @@ from __future__ import annotations
 
 from collections import Counter
 from datetime import UTC, datetime, timedelta
-from decimal import Decimal
 from typing import Any
 from uuid import UUID
-
-from sqlalchemy import and_, func, select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from semrush_core.models import (
     CrawlPage,
@@ -25,6 +21,8 @@ from semrush_core.models import (
     ProjectBacklink,
     SearchFactDaily,
 )
+from sqlalchemy import and_, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def build_audit_context(
@@ -943,8 +941,7 @@ def _calculate_health_score(
     score -= issues["medium"] * 0.5
     score -= issues["low"] * 0.1
 
-    # Add points for backlinks
-    backlinks = backlinks_ctx["summary"]["total_backlinks"]
+    # Add points for backlinks (using referring domains as key metric)
     domains = backlinks_ctx["summary"]["referring_domains"]
     if domains > 100:
         score += 10

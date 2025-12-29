@@ -75,7 +75,7 @@ def generate_pie_chart(
     values = list(data.values())
 
     # Create pie chart
-    wedges, texts, autotexts = ax.pie(
+    _wedges, texts, autotexts = ax.pie(
         values,
         labels=labels,
         colors=colors,

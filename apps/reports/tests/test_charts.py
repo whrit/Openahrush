@@ -3,9 +3,6 @@ Tests for chart generation module.
 """
 
 import base64
-from io import BytesIO
-
-import pytest
 
 from semrush_reports.charts import (
     ChartGenerator,
@@ -237,3 +234,168 @@ class TestChartGenerator:
         assert "high" in colors
         assert "medium" in colors
         assert "low" in colors
+
+    def test_severity_colors_contains_info(self) -> None:
+        """Test severity color mapping contains info level."""
+        generator = ChartGenerator()
+        colors = generator.get_severity_colors()
+
+        assert "info" in colors
+
+    def test_default_colors_is_copy(self) -> None:
+        """Test get_default_colors returns a copy, not the original."""
+        colors1 = ChartGenerator.get_default_colors()
+        colors2 = ChartGenerator.get_default_colors()
+
+        # They should be equal but not the same object
+        assert colors1 == colors2
+        colors1.append("#000000")
+        assert colors1 != colors2
+
+    def test_severity_colors_is_copy(self) -> None:
+        """Test get_severity_colors returns a copy, not the original."""
+        colors1 = ChartGenerator.get_severity_colors()
+        colors2 = ChartGenerator.get_severity_colors()
+
+        assert colors1 == colors2
+        colors1["test"] = "#000000"
+        assert colors1 != colors2
+
+
+class TestBase64EncodingWithEmptyData:
+    """Tests for base64 encoding methods with empty data."""
+
+    def test_generate_pie_chart_base64_empty_data_returns_empty_string(self) -> None:
+        """Test pie chart base64 with empty data returns empty string."""
+        generator = ChartGenerator()
+        data: dict[str, int] = {}
+        result = generator.generate_pie_chart_base64(data, "Empty Chart")
+
+        assert result == ""
+
+    def test_generate_line_chart_base64_empty_data_returns_empty_string(self) -> None:
+        """Test line chart base64 with empty data returns empty string."""
+        generator = ChartGenerator()
+        data = {"labels": [], "values": []}
+        result = generator.generate_line_chart_base64(data, "Empty Chart")
+
+        assert result == ""
+
+    def test_generate_bar_chart_base64_empty_data_returns_empty_string(self) -> None:
+        """Test bar chart base64 with empty data returns empty string."""
+        generator = ChartGenerator()
+        data = {"labels": [], "values": []}
+        result = generator.generate_bar_chart_base64(data, "Empty Chart")
+
+        assert result == ""
+
+    def test_generate_line_chart_base64_no_values_returns_empty_string(self) -> None:
+        """Test line chart base64 with labels but no values returns empty string."""
+        generator = ChartGenerator()
+        data = {"labels": ["A", "B", "C"]}  # Missing values
+        result = generator.generate_line_chart_base64(data, "No Values")
+
+        assert result == ""
+
+
+class TestChartGeneratorWithStyle:
+    """Tests for ChartGenerator with style configuration."""
+
+    def test_apply_style_with_none(self) -> None:
+        """Test chart generator with no style applies no style."""
+        generator = ChartGenerator(style=None)
+        # Should not raise an error
+        generator._apply_style()
+
+    def test_charts_with_custom_figsize(self) -> None:
+        """Test charts with custom figure size."""
+        generator = ChartGenerator()
+        data = {"A": 10, "B": 20}
+
+        # Custom figsize
+        result = generator.generate_pie_chart(data, "Test", figsize=(10, 10))
+        assert len(result) > 0
+
+    def test_bar_chart_with_custom_colors(self) -> None:
+        """Test bar chart with custom colors."""
+        generator = ChartGenerator()
+        data = {"labels": ["A", "B", "C"], "values": [10, 20, 30]}
+        colors = ["#ff0000", "#00ff00", "#0000ff"]
+
+        result = generator.generate_bar_chart(data, "Custom Colors", colors=colors)
+        assert isinstance(result, bytes)
+        assert len(result) > 0
+
+
+class TestLineChartEdgeCases:
+    """Tests for line chart edge cases."""
+
+    def test_line_chart_no_labels_returns_empty(self) -> None:
+        """Test line chart with no labels returns empty bytes."""
+        data = {"values": [10, 20, 30]}  # Missing labels
+        result = generate_line_chart(data, "No Labels")
+
+        assert result == b""
+
+    def test_line_chart_labels_but_no_values_or_series(self) -> None:
+        """Test line chart with labels but no values or series returns empty."""
+        data = {"labels": ["A", "B", "C"]}  # No values or series
+        result = generate_line_chart(data, "No Data")
+
+        assert result == b""
+
+
+class TestBarChartEdgeCases:
+    """Tests for bar chart edge cases."""
+
+    def test_bar_chart_no_labels_returns_empty(self) -> None:
+        """Test bar chart with no labels returns empty bytes."""
+        data = {"values": [10, 20, 30]}  # Missing labels
+        result = generate_bar_chart(data, "No Labels")
+
+        assert result == b""
+
+    def test_bar_chart_no_values_returns_empty(self) -> None:
+        """Test bar chart with labels but no values returns empty bytes."""
+        data = {"labels": ["A", "B", "C"]}  # Missing values
+        result = generate_bar_chart(data, "No Values")
+
+        assert result == b""
+
+    def test_bar_chart_with_axis_labels(self) -> None:
+        """Test bar chart with custom axis labels."""
+        data = {"labels": ["A", "B", "C"], "values": [10, 20, 30]}
+        result = generate_bar_chart(
+            data,
+            "Axis Labels",
+            x_label="Categories",
+            y_label="Values",
+        )
+
+        assert isinstance(result, bytes)
+        assert len(result) > 0
+
+    def test_bar_chart_horizontal_with_axis_labels(self) -> None:
+        """Test horizontal bar chart with axis labels."""
+        data = {"labels": ["A", "B", "C"], "values": [10, 20, 30]}
+        result = generate_bar_chart(
+            data,
+            "Horizontal",
+            x_label="Values",
+            y_label="Categories",
+            horizontal=True,
+        )
+
+        assert isinstance(result, bytes)
+        assert len(result) > 0
+
+    def test_bar_chart_many_labels_rotates_ticks(self) -> None:
+        """Test bar chart with many labels rotates x-axis ticks."""
+        data = {
+            "labels": [f"Label {i}" for i in range(10)],
+            "values": [i * 10 for i in range(10)],
+        }
+        result = generate_bar_chart(data, "Many Labels")
+
+        assert isinstance(result, bytes)
+        assert len(result) > 0
