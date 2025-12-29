@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import UTC, datetime
-from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -60,7 +60,7 @@ class TestBudgetService:
         mock_session.execute.return_value = mock_result
 
         service = BudgetService()
-        budget = await service.get_or_create_budget(
+        await service.get_or_create_budget(
             session=mock_session,
             project_id=uuid.uuid4(),
         )

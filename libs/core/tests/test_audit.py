@@ -14,12 +14,10 @@ Tests cover:
 
 import uuid
 from datetime import UTC, datetime
-from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
-
 
 # =============================================================================
 # AuditLog Model Tests
@@ -538,7 +536,7 @@ class TestAuditServiceQueries:
 
         service = AuditService(mock_session)
 
-        result = await service.get_logs_by_action(
+        await service.get_logs_by_action(
             AuditAction.LOGIN_SUCCESS, limit=100
         )
 
@@ -557,7 +555,7 @@ class TestAuditServiceQueries:
         service = AuditService(mock_session)
 
         resource_id = uuid.uuid4()
-        result = await service.get_logs_by_resource(
+        await service.get_logs_by_resource(
             resource_type="project",
             resource_id=resource_id,
         )
@@ -579,7 +577,7 @@ class TestAuditServiceQueries:
         from_date = datetime(2024, 1, 1, tzinfo=UTC)
         to_date = datetime(2024, 12, 31, tzinfo=UTC)
 
-        result = await service.get_logs(
+        await service.get_logs(
             from_date=from_date,
             to_date=to_date,
             limit=100,
@@ -599,7 +597,7 @@ class TestAuditServiceQueries:
 
         service = AuditService(mock_session)
 
-        result = await service.get_recent_login_attempts(
+        await service.get_recent_login_attempts(
             email="test@example.com",
             limit=10,
         )

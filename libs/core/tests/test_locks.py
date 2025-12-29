@@ -6,7 +6,6 @@ Uses TDD approach - tests are written first to define expected behavior.
 
 from __future__ import annotations
 
-import asyncio
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -321,7 +320,7 @@ class TestJobLimiter:
             mock_redis_class.from_url.return_value = mock_client
 
             limiter = JobLimiter(redis_url="redis://localhost:6379/0")
-            acquired, job_id = await limiter.acquire_cc_ingestion_slot()
+            acquired, _job_id = await limiter.acquire_cc_ingestion_slot()
 
             assert acquired is True
             # Should use a global key, not per-project

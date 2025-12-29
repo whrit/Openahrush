@@ -156,7 +156,7 @@ class TestRateLimitBackend:
             mock_redis_class.from_url.return_value = mock_client
 
             backend = RateLimitBackend(redis_url="redis://localhost:6379/0")
-            allowed, remaining, reset_at = await backend.is_allowed(
+            allowed, remaining, _reset_at = await backend.is_allowed(
                 key="user:123",
                 limit=5,
                 window_seconds=60,
@@ -179,7 +179,7 @@ class TestRateLimitBackend:
             mock_redis_class.from_url.return_value = mock_client
 
             backend = RateLimitBackend(redis_url="redis://localhost:6379/0")
-            allowed, remaining, reset_at = await backend.is_allowed(
+            allowed, remaining, _reset_at = await backend.is_allowed(
                 key="user:123",
                 limit=5,
                 window_seconds=60,

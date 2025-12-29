@@ -1,8 +1,6 @@
 """Tests for logging."""
 import logging
 import re
-from io import StringIO
-import pytest
 
 
 class TestJWTTokenRedaction:

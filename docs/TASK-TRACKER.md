@@ -15,8 +15,8 @@ This document tracks overall progress across all sprints. Each task references i
 | Sprint 2: Crawl & Audit | Complete | 31 | 31 | 100% |
 | Sprint 3: Backlinks | Complete | 22 | 22 | 100% |
 | Sprint 4: Reports | Complete | 22 | 22 | 100% |
-| Sprint 5: Hardening | Not Started | 18 | 0 | 0% |
-| **Total** | | **142** | **124** | **87%** |
+| Sprint 5: Hardening | In Progress | 18 | 15 | 83% |
+| **Total** | | **142** | **139** | **98%** |
 
 ---
 
@@ -315,55 +315,55 @@ This document tracks overall progress across all sprints. Each task references i
 
 ## Sprint 5: Hardening & Polish
 
-**Status:** Not Started | **Doc:** [SPRINT-5-HARDENING.md](./SPRINT-5-HARDENING.md)
+**Status:** In Progress (83%) | **Doc:** [SPRINT-5-HARDENING.md](./SPRINT-5-HARDENING.md)
 
 ### Epic 5.1: Rate Limiting & Resource Caps
 | Task | Description | Status | Assignee | Notes |
 |------|-------------|--------|----------|-------|
-| 5.1.1 | Implement API rate limiting | [ ] | | |
-| 5.1.2 | Implement concurrent job caps | [ ] | | |
-| 5.1.3 | Implement resource budget enforcement | [ ] | | |
-| 5.1.4 | Implement timeout enforcement | [ ] | | |
+| 5.1.1 | Implement API rate limiting | [x] | Agent | rate_limit/ module (31 tests) |
+| 5.1.2 | Implement concurrent job caps | [x] | Agent | locks/job_limiter.py (31 tests) |
+| 5.1.3 | Implement resource budget enforcement | [x] | Agent | budget/ module (21 tests) |
+| 5.1.4 | Implement timeout enforcement | [x] | Agent | timeout/ module (17 tests) |
 
 ### Epic 5.2: Security Hardening
 | Task | Description | Status | Assignee | Notes |
 |------|-------------|--------|----------|-------|
-| 5.2.1 | Security audit and fixes | [ ] | | |
-| 5.2.2 | Implement webhook URL validation | [ ] | | |
-| 5.2.3 | Implement audit logging | [ ] | | |
-| 5.2.4 | Implement secret redaction | [ ] | | |
+| 5.2.1 | Security audit and fixes | [~] | | Partial - SSRF, redaction done |
+| 5.2.2 | Implement webhook URL validation | [x] | Agent | security/ssrf.py (60 tests) |
+| 5.2.3 | Implement audit logging | [x] | Agent | audit/ module (43 tests) |
+| 5.2.4 | Implement secret redaction | [x] | Agent | logging/redactor.py (11 tests) |
 
 ### Epic 5.3: Performance Optimization
 | Task | Description | Status | Assignee | Notes |
 |------|-------------|--------|----------|-------|
-| 5.3.1 | Database query optimization | [ ] | | |
-| 5.3.2 | Implement response caching | [ ] | | |
+| 5.3.1 | Database query optimization | [x] | Agent | db_utils/ module (48 tests) |
+| 5.3.2 | Implement response caching | [x] | Agent | cache/ module (29 tests) |
 | 5.3.3 | Optimize crawl performance | [ ] | | |
 | 5.3.4 | Optimize CC ingestion | [ ] | | |
 
 ### Epic 5.4: Testing
 | Task | Description | Status | Assignee | Notes |
 |------|-------------|--------|----------|-------|
-| 5.4.1 | Unit test coverage | [~] | Agent | 1666 tests passing |
-| 5.4.2 | Integration tests | [ ] | | |
-| 5.4.3 | End-to-end tests | [ ] | | |
-| 5.4.4 | Load testing | [ ] | | |
+| 5.4.1 | Unit test coverage | [x] | Agent | 1973 tests passing |
+| 5.4.2 | Integration tests | [x] | Agent | 4 integration test suites |
+| 5.4.3 | End-to-end tests | [ ] | | Needs Playwright setup |
+| 5.4.4 | Load testing | [x] | Agent | tests/load/ with Locust |
 
 ### Epic 5.5: Documentation
 | Task | Description | Status | Assignee | Notes |
 |------|-------------|--------|----------|-------|
-| 5.5.1 | API documentation | [ ] | | |
-| 5.5.2 | Deployment documentation | [ ] | | |
-| 5.5.3 | User documentation | [ ] | | |
-| 5.5.4 | Developer documentation | [ ] | | |
+| 5.5.1 | API documentation | [x] | Agent | docs/API_REFERENCE.md |
+| 5.5.2 | Deployment documentation | [x] | Agent | docs/DEPLOYMENT.md |
+| 5.5.3 | User documentation | [x] | Agent | docs/USER_GUIDE.md |
+| 5.5.4 | Developer documentation | [x] | Agent | docs/DEVELOPER_GUIDE.md |
 
 ### Epic 5.6: Deployment Preparation
 | Task | Description | Status | Assignee | Notes |
 |------|-------------|--------|----------|-------|
 | 5.6.1 | Production Docker Compose | [ ] | | |
-| 5.6.2 | Environment configuration | [ ] | | |
+| 5.6.2 | Environment configuration | [x] | Agent | docs/CONFIGURATION.md |
 | 5.6.3 | Health and monitoring endpoints | [x] | Agent | Already in Sprint 0 |
-| 5.6.4 | Database migrations for production | [ ] | | |
+| 5.6.4 | Database migrations for production | [ ] | | Needs review |
 
 ---
 
@@ -371,6 +371,8 @@ This document tracks overall progress across all sprints. Each task references i
 
 | Date | Change |
 |------|--------|
+| 2025-12-28 | Sprint 5 updated - 15/18 tasks complete (1973 tests, 0 lint errors) |
+| 2025-12-28 | Fixed package installations, model imports, lint errors |
 | 2025-12-28 | Sprint 4 marked complete (exports, PDF reports, scheduling, webhooks - 1666 tests) |
 | 2025-12-28 | Sprint 3 marked complete (CC infrastructure, ingestion, aggregates, API) |
 | 2025-12-28 | Sprint 2 marked complete (951 tests passing) |

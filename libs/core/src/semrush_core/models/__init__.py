@@ -37,6 +37,8 @@ Models are organized by domain:
 - AuditLog: Security audit logging (imported from semrush_core.audit)
 """
 
+# Import budget model early to ensure SQLAlchemy can resolve relationships
+from semrush_core.budget.models import ProjectBudget
 from semrush_core.models.alert import Alert, AlertEntityType, AlertKind, AlertSeverity
 from semrush_core.models.alert_rule import AlertRule, AlertRuleType
 from semrush_core.models.analytics_fact import AnalyticsFactDaily
@@ -155,6 +157,8 @@ __all__ = [
     "WebhookDelivery",
     "DeliveryStatus",
     "VALID_WEBHOOK_EVENTS",
+    # Budget model
+    "ProjectBudget",
     # NOTE: AuditLog and AuditAction are in semrush_core.audit module
     # to avoid circular imports. Import them from there:
     # from semrush_core.audit import AuditLog, AuditAction

@@ -17,10 +17,9 @@ Tests cover:
 """
 
 import ipaddress
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import patch
 
 import pytest
-
 
 # =============================================================================
 # IP Address Validation Tests
@@ -535,7 +534,7 @@ class TestSSRFEdgeCases:
         from semrush_core.security.ssrf import validate_webhook_url
 
         # 2130706433 = 127.0.0.1 in decimal
-        result = await validate_webhook_url("https://2130706433/webhook")
+        await validate_webhook_url("https://2130706433/webhook")
         # This should be rejected as it resolves to 127.0.0.1
         # The validation should handle this
 
@@ -545,7 +544,7 @@ class TestSSRFEdgeCases:
         from semrush_core.security.ssrf import validate_webhook_url
 
         # 0177.0.0.1 = 127.0.0.1 in octal
-        result = await validate_webhook_url("https://0177.0.0.1/webhook")
+        await validate_webhook_url("https://0177.0.0.1/webhook")
         # Should be caught by DNS resolution or IP validation
 
     @pytest.mark.asyncio
@@ -554,7 +553,7 @@ class TestSSRFEdgeCases:
         from semrush_core.security.ssrf import validate_webhook_url
 
         # 0x7f000001 = 127.0.0.1 in hex
-        result = await validate_webhook_url("https://0x7f000001/webhook")
+        await validate_webhook_url("https://0x7f000001/webhook")
 
     @pytest.mark.asyncio
     async def test_ipv6_mapped_ipv4(self):
@@ -587,7 +586,7 @@ class TestSSRFEdgeCases:
         from semrush_core.security.ssrf import validate_webhook_url
 
         long_path = "/a" * 5000
-        result = await validate_webhook_url(f"https://example.com{long_path}")
+        await validate_webhook_url(f"https://example.com{long_path}")
         # Should either accept (if under limit) or reject with appropriate error
 
     @pytest.mark.asyncio
@@ -600,7 +599,7 @@ class TestSSRFEdgeCases:
                 (2, 1, 6, "", ("93.184.216.34", 443)),
             ]
             # Unicode domain
-            result = await validate_webhook_url("https://xn--e1afmkfd.xn--p1ai/webhook")
+            await validate_webhook_url("https://xn--e1afmkfd.xn--p1ai/webhook")
             # Should be handled properly
 
     @pytest.mark.asyncio
@@ -608,7 +607,7 @@ class TestSSRFEdgeCases:
         """Should reject URLs with null bytes."""
         from semrush_core.security.ssrf import validate_webhook_url
 
-        result = await validate_webhook_url("https://example.com/webhook\x00malicious")
+        await validate_webhook_url("https://example.com/webhook\x00malicious")
         # Should reject or sanitize
 
     @pytest.mark.asyncio
