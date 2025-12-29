@@ -27,11 +27,22 @@ Models are organized by domain:
 - LinkFact: Backlink data from multiple sources
 - AlertRule: User-configured alert rules
 - Alert: Generated alerts
+- CommonCrawlSnapshot: Common Crawl snapshot tracking
+- CommonCrawlEdge: Raw backlink edges from Common Crawl
+- CommonCrawlRefDomain: Aggregated referring domain data
+- CommonCrawlAnchor: Aggregated anchor text data
 """
 
 from semrush_core.models.alert import Alert, AlertEntityType, AlertKind, AlertSeverity
 from semrush_core.models.alert_rule import AlertRule, AlertRuleType
 from semrush_core.models.analytics_fact import AnalyticsFactDaily
+from semrush_core.models.commoncrawl import (
+    CommonCrawlAnchor,
+    CommonCrawlEdge,
+    CommonCrawlRefDomain,
+    CommonCrawlSnapshot,
+    SnapshotStatus,
+)
 from semrush_core.models.base import Base, SoftDeleteMixin, TimestampMixin, UUIDMixin
 from semrush_core.models.competitor import Competitor
 from semrush_core.models.crawl_page import CrawlPage, RenderMode
@@ -106,4 +117,10 @@ __all__ = [
     "AlertKind",
     "AlertSeverity",
     "AlertEntityType",
+    # Common Crawl models
+    "CommonCrawlSnapshot",
+    "CommonCrawlEdge",
+    "CommonCrawlRefDomain",
+    "CommonCrawlAnchor",
+    "SnapshotStatus",
 ]

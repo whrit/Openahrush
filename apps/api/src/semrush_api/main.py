@@ -25,6 +25,7 @@ from semrush_core.security.jwt import TokenError
 from semrush_api.routers import (
     alerts,
     auth,
+    backlinks,
     diffs,
     health,
     integrations,
@@ -231,6 +232,12 @@ def register_routers(app: FastAPI) -> None:
 
     # Alerts (no prefix - /projects/{id}/alerts)
     app.include_router(alerts.router, tags=["Alerts"])
+
+    # Backlinks - Domain Explorer (/links/domain/...)
+    app.include_router(backlinks.links_router, tags=["Backlinks"])
+
+    # Backlinks - Project Backlinks (/projects/{id}/backlinks/...)
+    app.include_router(backlinks.projects_router, tags=["Project Backlinks"])
 
 
 # Create the application instance

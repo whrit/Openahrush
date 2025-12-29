@@ -83,3 +83,10 @@ filterwarnings = [
   "error::DeprecationWarning:.*semrush_.*",
   "ignore::DeprecationWarning",
 ]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "respx>=0.22.0",
+    "ruff>=0.14.10",
+]

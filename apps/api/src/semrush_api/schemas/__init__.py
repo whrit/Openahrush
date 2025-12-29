@@ -6,6 +6,7 @@ Organized by domain:
 - project: Project, Site, and Competitor schemas
 - settings: Project settings schemas
 - integration: OAuth integration schemas (connect, callback, status)
+- backlinks: Backlinks API schemas (domain explorer, competitive analysis)
 """
 
 from semrush_api.schemas.auth import (
@@ -41,6 +42,19 @@ from semrush_api.schemas.settings import (
     ProjectSettingsUpdate,
     SettingsUpdateResponse,
 )
+from semrush_api.schemas.backlinks import (
+    AnchorListResponse,
+    AnchorResponse,
+    BacklinkListResponse,
+    BacklinkOverviewResponse,
+    BacklinkResponse,
+    ImportResponse,
+    IntersectResponse,
+    NewLostResponse,
+    OverlapResponse,
+    RefDomainListResponse,
+    RefDomainResponse,
+)
 
 __all__ = [
     # Auth schemas
@@ -72,4 +86,16 @@ __all__ = [
     "IntegrationListResponse",
     "IntegrationDisconnectResponse",
     "IntegrationProvider",
+    # Backlinks schemas
+    "RefDomainResponse",
+    "RefDomainListResponse",
+    "BacklinkResponse",
+    "BacklinkListResponse",
+    "AnchorResponse",
+    "AnchorListResponse",
+    "NewLostResponse",
+    "OverlapResponse",
+    "IntersectResponse",
+    "ImportResponse",
+    "BacklinkOverviewResponse",
 ]
