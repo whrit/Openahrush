@@ -16,6 +16,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from semrush_core.models.base import Base, TimestampMixin, UUIDMixin
 
 if TYPE_CHECKING:
+    from semrush_core.budget.models import ProjectBudget
     from semrush_core.models.alert import Alert
     from semrush_core.models.alert_rule import AlertRule
     from semrush_core.models.competitor import Competitor
@@ -53,6 +54,7 @@ class Project(Base, UUIDMixin, TimestampMixin):
         webhook_configs: Webhook configurations for this project.
         exports: Export jobs for this project.
         export_schedules: Scheduled export configurations for this project.
+        budget: Resource budget tracking for this project.
     """
 
     __tablename__ = "projects"
@@ -114,6 +116,12 @@ class Project(Base, UUIDMixin, TimestampMixin):
     )
     export_schedules: Mapped[list[ExportSchedule]] = relationship(
         back_populates="project",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
+    budget: Mapped[ProjectBudget | None] = relationship(
+        back_populates="project",
+        uselist=False,
         cascade="all, delete-orphan",
         lazy="selectin",
     )

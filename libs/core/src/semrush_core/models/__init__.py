@@ -34,6 +34,7 @@ Models are organized by domain:
 - Export: Export job tracking for CSV/JSON/PDF generation
 - WebhookConfig: Per-project webhook configuration
 - WebhookDelivery: Webhook delivery tracking with retry support
+- AuditLog: Security audit logging (imported from semrush_core.audit)
 """
 
 from semrush_core.models.alert import Alert, AlertEntityType, AlertKind, AlertSeverity
@@ -154,4 +155,7 @@ __all__ = [
     "WebhookDelivery",
     "DeliveryStatus",
     "VALID_WEBHOOK_EVENTS",
+    # NOTE: AuditLog and AuditAction are in semrush_core.audit module
+    # to avoid circular imports. Import them from there:
+    # from semrush_core.audit import AuditLog, AuditAction
 ]

@@ -6,6 +6,22 @@ Provides:
 - Async session factory for dependency injection
 - Context manager for session handling
 - Table creation utilities for testing/development
+- Connection pool health monitoring
+
+Connection Pool Configuration:
+    The connection pool is configured via environment variables:
+    - DATABASE_POOL_SIZE: Number of connections to keep open (default: 5)
+    - DATABASE_MAX_OVERFLOW: Extra connections allowed above pool_size (default: 10)
+    - DATABASE_POOL_TIMEOUT: Seconds to wait for a connection (default: 30)
+
+    For asyncpg, the pool is managed by SQLAlchemy's QueuePool:
+    - pool_pre_ping: Validates connections before use (enabled)
+    - pool_recycle: Recreates connections after 1 hour (enabled)
+
+    Recommended settings by workload:
+    - Light: pool_size=5, max_overflow=5
+    - Medium: pool_size=10, max_overflow=20
+    - Heavy: pool_size=20, max_overflow=30 (requires DB connection limit increase)
 """
 
 from collections.abc import AsyncGenerator
@@ -224,3 +240,73 @@ def reset_engine() -> None:
     global _engine, _async_session_factory
     _engine = None
     _async_session_factory = None
+
+
+def get_pool_status() -> dict[str, int | str]:
+    """
+    Get the current connection pool status.
+
+    Returns connection pool metrics for monitoring and debugging.
+    Returns empty dict if engine is not initialized or using NullPool.
+
+    Returns:
+        Dictionary with pool metrics:
+        - pool_size: Configured pool size
+        - checked_in: Number of connections available in pool
+        - checked_out: Number of connections currently in use
+        - overflow: Number of overflow connections currently active
+        - total: Total connections (checked_in + checked_out)
+
+    Example:
+        >>> status = get_pool_status()
+        >>> print(f"Connections in use: {status.get('checked_out', 0)}")
+    """
+    if _engine is None:
+        return {"status": "not_initialized"}
+
+    pool = _engine.pool
+
+    # NullPool doesn't have these attributes
+    if isinstance(pool, NullPool):
+        return {"status": "null_pool"}
+
+    # Check if pool has the status methods (QueuePool and similar)
+    if hasattr(pool, "size") and hasattr(pool, "checkedin"):
+        checked_in: int = pool.checkedin()  # type: ignore[attr-defined]
+        checked_out: int = pool.checkedout()  # type: ignore[attr-defined]
+        return {
+            "status": "active",
+            "pool_size": pool.size(),  # type: ignore[attr-defined]
+            "checked_in": checked_in,
+            "checked_out": checked_out,
+            "overflow": pool.overflow(),  # type: ignore[attr-defined]
+            "total": checked_in + checked_out,
+        }
+
+    return {"status": "unknown_pool_type"}
+
+
+async def check_database_connection() -> bool:
+    """
+    Verify the database connection is working.
+
+    Executes a simple query to check connectivity.
+    Useful for health checks and startup verification.
+
+    Returns:
+        True if connection is successful, False otherwise.
+
+    Example:
+        if not await check_database_connection():
+            logger.error("Database connection failed!")
+            sys.exit(1)
+    """
+    try:
+        from sqlalchemy import text
+
+        engine = get_engine()
+        async with engine.connect() as conn:
+            await conn.execute(text("SELECT 1"))
+        return True
+    except Exception:
+        return False

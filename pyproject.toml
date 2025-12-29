@@ -93,6 +93,7 @@ filterwarnings = [
 dev = [
     "fakeredis>=2.33.0",
     "httpx>=0.28.1",
+    "locust>=2.42.6",
     "minio>=7.2.20",
     "respx>=0.22.0",
     "ruff>=0.14.10",
