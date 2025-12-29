@@ -6,10 +6,10 @@ This document provides a high-level overview of all sprints required to deliver 
 
 | Sprint | Name | Duration | Dependencies | Status |
 |--------|------|----------|--------------|--------|
-| 0 | Foundation & Platform | 2-3 weeks | None | Not Started |
+| 0 | Foundation & Platform | 2-3 weeks | None | ✅ Complete |
 | 1 | Integrations (GSC/GA4/BWT) | 2-3 weeks | Sprint 0 | Not Started |
-| 2 | Hybrid Crawl & Site Audit | 3-4 weeks | Sprint 0 | Not Started |
-| 3 | Backlinks & Common Crawl | 2-3 weeks | Sprint 0 | Not Started |
+| 2 | Hybrid Crawl & Site Audit | 3-4 weeks | Sprint 0 | ✅ Complete |
+| 3 | Backlinks & Common Crawl | 2-3 weeks | Sprint 0 | ✅ Complete |
 | 4 | Reports, Exports & Webhooks | 1-2 weeks | Sprints 1-3 | Not Started |
 | 5 | Hardening & Polish | 1-2 weeks | Sprints 0-4 | Not Started |
 
@@ -104,13 +104,13 @@ This document provides a high-level overview of all sprints required to deliver 
 - CSV import for additional backlink sources
 
 ### Key Metrics
-- [ ] Snapshot registry lists available CC snapshots
-- [ ] Ingestion pipeline processes WAT files
-- [ ] Ref domains endpoint returns data
-- [ ] Backlinks endpoint with pagination works
-- [ ] Anchors distribution computed
-- [ ] New/lost comparison between snapshots works
-- [ ] Overlap/intersect with competitors works
+- [x] Snapshot registry lists available CC snapshots
+- [x] Ingestion pipeline processes WAT files
+- [x] Ref domains endpoint returns data
+- [x] Backlinks endpoint with pagination works
+- [x] Anchors distribution computed
+- [x] New/lost comparison between snapshots works
+- [x] Overlap/intersect with competitors works
 
 **Detailed Plan:** [SPRINT-3-BACKLINKS.md](./SPRINT-3-BACKLINKS.md)
 

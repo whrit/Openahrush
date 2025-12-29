@@ -2,7 +2,7 @@
 
 **Duration:** 2-3 weeks
 **Dependencies:** Sprint 0 (Foundation)
-**Status:** Not Started
+**Status:** ✅ Complete
 
 This sprint implements the "free data moat" via Common Crawl ingestion for backlink analysis, plus CSV import and competitive link intelligence.
 
@@ -51,10 +51,10 @@ CREATE INDEX idx_cc_snapshots_id ON commoncrawl_snapshots(snapshot_id);
 ```
 
 **Acceptance Criteria:**
-- [ ] Migration creates table
-- [ ] Status tracks ingestion lifecycle
-- [ ] Spec stores subset configuration for reproducibility
-- [ ] Stats track progress and completion
+- [x] Migration creates table
+- [x] Status tracks ingestion lifecycle
+- [x] Spec stores subset configuration for reproducibility
+- [x] Stats track progress and completion
 
 ---
 
@@ -86,9 +86,9 @@ CREATE INDEX idx_cc_edges_target_domain_snapshot ON commoncrawl_edges(target_dom
 **Note:** For scale, ClickHouse is recommended. See Task 3.1.3.
 
 **Acceptance Criteria:**
-- [ ] Migration creates table with indexes
-- [ ] Indexes optimized for domain lookups
-- [ ] Foreign key to snapshots table
+- [x] Migration creates table with indexes
+- [x] Indexes optimized for domain lookups
+- [x] Foreign key to snapshots table
 
 ---
 
@@ -153,10 +153,10 @@ infra/clickhouse/
 ```
 
 **Acceptance Criteria:**
-- [ ] ClickHouse schema files created
-- [ ] Tables partition by snapshot + domain prefix
-- [ ] Materialized views for ref domains and anchors
-- [ ] Docker Compose overlay includes ClickHouse
+- [x] ClickHouse schema files created
+- [x] Tables partition by snapshot + domain prefix
+- [x] Materialized views for ref domains and anchors
+- [x] Docker Compose overlay includes ClickHouse
 
 ---
 
@@ -165,11 +165,11 @@ infra/clickhouse/
 **Description:** Abstract storage layer for Postgres/ClickHouse.
 
 **Acceptance Criteria:**
-- [ ] `apps/commoncrawl_ingest/src/semrush_commoncrawl/storage/base.py` created
-- [ ] Protocol defines: insert_edges, query_refdomains, query_backlinks, query_anchors
-- [ ] PostgresStorage implementation
-- [ ] ClickHouseStorage implementation (optional)
-- [ ] Storage backend selectable via config
+- [x] `apps/commoncrawl_ingest/src/semrush_commoncrawl/storage/base.py` created
+- [x] Protocol defines: insert_edges, query_refdomains, query_backlinks, query_anchors
+- [x] PostgresStorage implementation
+- [x] ClickHouseStorage implementation (optional)
+- [x] Storage backend selectable via config
 
 **Interface:**
 ```python
@@ -195,10 +195,10 @@ class EdgeStorage(Protocol):
 **Description:** Manage known Common Crawl snapshots.
 
 **Acceptance Criteria:**
-- [ ] `GET /commoncrawl/snapshots` lists snapshots
-- [ ] Returns snapshot_id, status, date_range, ingested_at
-- [ ] Can seed known snapshots from CC index
-- [ ] Tracks ingestion status per snapshot
+- [x] `GET /commoncrawl/snapshots` lists snapshots
+- [x] Returns snapshot_id, status, date_range, ingested_at
+- [x] Can seed known snapshots from CC index
+- [x] Tracks ingestion status per snapshot
 
 ---
 
@@ -207,12 +207,12 @@ class EdgeStorage(Protocol):
 **Description:** Download WAT metadata files from Common Crawl.
 
 **Acceptance Criteria:**
-- [ ] `apps/commoncrawl_ingest/src/semrush_commoncrawl/downloader.py` created
-- [ ] Fetches wat.paths.gz for snapshot
-- [ ] Streams individual WAT files from S3
-- [ ] Supports domain filtering to reduce data
-- [ ] Handles gzip decompression
-- [ ] Parallel download with configurable concurrency
+- [x] `apps/commoncrawl_ingest/src/semrush_commoncrawl/downloader.py` created
+- [x] Fetches wat.paths.gz for snapshot
+- [x] Streams individual WAT files from S3
+- [x] Supports domain filtering to reduce data
+- [x] Handles gzip decompression
+- [x] Parallel download with configurable concurrency
 
 **Common Crawl Structure:**
 ```
@@ -229,13 +229,13 @@ s3://commoncrawl/crawl-data/CC-MAIN-YYYY-WW/segments/{segment}/wat/{file}.warc.w
 **Description:** Parse WAT files to extract link edges.
 
 **Acceptance Criteria:**
-- [ ] `apps/commoncrawl_ingest/src/semrush_commoncrawl/parser.py` created
-- [ ] Parses WARC-formatted WAT records
-- [ ] Extracts Links metadata from JSON payloads
-- [ ] Normalizes source/target URLs
-- [ ] Extracts anchor text and rel flags
-- [ ] Filters to links with anchor (optional)
-- [ ] Yields Edge objects
+- [x] `apps/commoncrawl_ingest/src/semrush_commoncrawl/parser.py` created
+- [x] Parses WARC-formatted WAT records
+- [x] Extracts Links metadata from JSON payloads
+- [x] Normalizes source/target URLs
+- [x] Extracts anchor text and rel flags
+- [x] Filters to links with anchor (optional)
+- [x] Yields Edge objects
 
 **WAT Record Format:**
 ```json
@@ -261,10 +261,10 @@ s3://commoncrawl/crawl-data/CC-MAIN-YYYY-WW/segments/{segment}/wat/{file}.warc.w
 **Description:** Filter edges to target domains of interest.
 
 **Acceptance Criteria:**
-- [ ] Supports allowlist of target domains
-- [ ] Supports domain pattern matching (*.example.com)
-- [ ] Reduces storage by 99%+ when focused
-- [ ] Configurable in ingestion spec
+- [x] Supports allowlist of target domains
+- [x] Supports domain pattern matching (*.example.com)
+- [x] Reduces storage by 99%+ when focused
+- [x] Configurable in ingestion spec
 
 **Subset Strategy (MVP):**
 - Focus on user's project domains + competitors
@@ -278,14 +278,14 @@ s3://commoncrawl/crawl-data/CC-MAIN-YYYY-WW/segments/{segment}/wat/{file}.warc.w
 **Description:** Coordinate download, parse, store pipeline.
 
 **Acceptance Criteria:**
-- [ ] `apps/commoncrawl_ingest/src/semrush_commoncrawl/orchestrator.py` created
-- [ ] Loads subset spec from request/config
-- [ ] Downloads WAT segments in parallel
-- [ ] Parses and filters edges
-- [ ] Batches inserts to storage
-- [ ] Tracks progress in commoncrawl_snapshots
-- [ ] Emits events: `commoncrawl.ingest_progress`, `commoncrawl.ingest_completed`
-- [ ] Handles failures gracefully with retry
+- [x] `apps/commoncrawl_ingest/src/semrush_commoncrawl/orchestrator.py` created
+- [x] Loads subset spec from request/config
+- [x] Downloads WAT segments in parallel
+- [x] Parses and filters edges
+- [x] Batches inserts to storage
+- [x] Tracks progress in commoncrawl_snapshots
+- [x] Emits events: `commoncrawl.ingest_progress`, `commoncrawl.ingest_completed`
+- [x] Handles failures gracefully with retry
 
 **Orchestration Flow:**
 1. Create/update snapshot record (status=ingesting)
@@ -305,12 +305,12 @@ s3://commoncrawl/crawl-data/CC-MAIN-YYYY-WW/segments/{segment}/wat/{file}.warc.w
 **Description:** API endpoint to start ingestion.
 
 **Acceptance Criteria:**
-- [ ] `POST /commoncrawl/ingest` triggers ingestion
-- [ ] Accepts snapshot_id and subset spec
-- [ ] Validates snapshot exists
-- [ ] Returns 202 Accepted with job info
-- [ ] Admin/operator only (protected endpoint)
-- [ ] Rate limited to prevent abuse
+- [x] `POST /commoncrawl/ingest` triggers ingestion
+- [x] Accepts snapshot_id and subset spec
+- [x] Validates snapshot exists
+- [x] Returns 202 Accepted with job info
+- [x] Admin/operator only (protected endpoint)
+- [x] Rate limited to prevent abuse
 
 **Request Body:**
 ```json
@@ -334,11 +334,11 @@ s3://commoncrawl/crawl-data/CC-MAIN-YYYY-WW/segments/{segment}/wat/{file}.warc.w
 **Description:** Compute referring domains per target domain.
 
 **Acceptance Criteria:**
-- [ ] Groups edges by (target_domain, source_domain)
-- [ ] Counts backlinks per ref domain
-- [ ] Tracks first_seen/last_seen
-- [ ] Stores in `commoncrawl_refdomains` table or ClickHouse MV
-- [ ] Updates incrementally after ingestion
+- [x] Groups edges by (target_domain, source_domain)
+- [x] Counts backlinks per ref domain
+- [x] Tracks first_seen/last_seen
+- [x] Stores in `commoncrawl_refdomains` table or ClickHouse MV
+- [x] Updates incrementally after ingestion
 
 **Schema (Postgres fallback):**
 ```sql
@@ -363,11 +363,11 @@ CREATE INDEX idx_cc_refdomains_target ON commoncrawl_refdomains(target_domain, s
 **Description:** Compute anchor text distribution per domain.
 
 **Acceptance Criteria:**
-- [ ] Groups edges by (target_domain, anchor)
-- [ ] Counts occurrences per anchor
-- [ ] Normalizes anchor text (trim, lowercase optional)
-- [ ] Stores in `commoncrawl_anchors` table or ClickHouse MV
-- [ ] Top-N anchors queryable
+- [x] Groups edges by (target_domain, anchor)
+- [x] Counts occurrences per anchor
+- [x] Normalizes anchor text (trim, lowercase optional)
+- [x] Stores in `commoncrawl_anchors` table or ClickHouse MV
+- [x] Top-N anchors queryable
 
 **Schema (Postgres fallback):**
 ```sql
@@ -390,11 +390,11 @@ CREATE INDEX idx_cc_anchors_target ON commoncrawl_anchors(target_domain, snapsho
 **Description:** Background job to build aggregates after ingestion.
 
 **Acceptance Criteria:**
-- [ ] Runs automatically after ingestion completes
-- [ ] Can be triggered manually
-- [ ] Builds ref domains and anchors aggregates
-- [ ] Updates snapshot record with completion
-- [ ] Works for both Postgres and ClickHouse
+- [x] Runs automatically after ingestion completes
+- [x] Can be triggered manually
+- [x] Builds ref domains and anchors aggregates
+- [x] Updates snapshot record with completion
+- [x] Works for both Postgres and ClickHouse
 
 ---
 
@@ -405,11 +405,11 @@ CREATE INDEX idx_cc_anchors_target ON commoncrawl_anchors(target_domain, snapsho
 **Description:** API to get referring domains for a domain.
 
 **Acceptance Criteria:**
-- [ ] `GET /links/domain/{domain}/refdomains` returns ref domains
-- [ ] Supports optional snapshot_id (defaults to latest)
-- [ ] Supports limit parameter (default 100, max 10000)
-- [ ] Returns: ref_domain, backlinks count, first_seen, last_seen
-- [ ] Sorted by backlink count descending
+- [x] `GET /links/domain/{domain}/refdomains` returns ref domains
+- [x] Supports optional snapshot_id (defaults to latest)
+- [x] Supports limit parameter (default 100, max 10000)
+- [x] Returns: ref_domain, backlinks count, first_seen, last_seen
+- [x] Sorted by backlink count descending
 
 **Response:**
 ```json
@@ -432,11 +432,11 @@ CREATE INDEX idx_cc_anchors_target ON commoncrawl_anchors(target_domain, snapsho
 **Description:** API to get individual backlinks for a domain.
 
 **Acceptance Criteria:**
-- [ ] `GET /links/domain/{domain}/backlinks` returns backlinks
-- [ ] Supports pagination (limit, offset)
-- [ ] Supports filter by source_domain
-- [ ] Returns: source_url, source_domain, target_url, anchor, flags
-- [ ] Sorted by source_domain, source_url
+- [x] `GET /links/domain/{domain}/backlinks` returns backlinks
+- [x] Supports pagination (limit, offset)
+- [x] Supports filter by source_domain
+- [x] Returns: source_url, source_domain, target_url, anchor, flags
+- [x] Sorted by source_domain, source_url
 
 **Response:**
 ```json
@@ -461,10 +461,10 @@ CREATE INDEX idx_cc_anchors_target ON commoncrawl_anchors(target_domain, snapsho
 **Description:** API to get anchor distribution for a domain.
 
 **Acceptance Criteria:**
-- [ ] `GET /links/domain/{domain}/anchors` returns anchor distribution
-- [ ] Supports limit parameter
-- [ ] Returns: anchor, count
-- [ ] Sorted by count descending
+- [x] `GET /links/domain/{domain}/anchors` returns anchor distribution
+- [x] Supports limit parameter
+- [x] Returns: anchor, count
+- [x] Sorted by count descending
 
 **Response:**
 ```json
@@ -485,11 +485,11 @@ CREATE INDEX idx_cc_anchors_target ON commoncrawl_anchors(target_domain, snapsho
 **Description:** Compare edges between two snapshots.
 
 **Acceptance Criteria:**
-- [ ] `GET /links/domain/{domain}/new-lost?snapshot_a=...&snapshot_b=...`
-- [ ] Returns new ref domains (in B, not in A)
-- [ ] Returns lost ref domains (in A, not in B)
-- [ ] Works at ref-domain level (not individual links)
-- [ ] Efficient query using aggregate tables
+- [x] `GET /links/domain/{domain}/new-lost?snapshot_a=...&snapshot_b=...`
+- [x] Returns new ref domains (in B, not in A)
+- [x] Returns lost ref domains (in A, not in B)
+- [x] Works at ref-domain level (not individual links)
+- [x] Efficient query using aggregate tables
 
 **Algorithm:**
 ```python
@@ -513,9 +513,9 @@ async def compute_new_lost(domain: str, snapshot_a: str, snapshot_b: str):
 **Description:** Track new/lost over multiple snapshots.
 
 **Acceptance Criteria:**
-- [ ] Computes new/lost between consecutive snapshots
-- [ ] Returns series: date, new_count, lost_count
-- [ ] Requires multiple ingested snapshots
+- [x] Computes new/lost between consecutive snapshots
+- [x] Returns series: date, new_count, lost_count
+- [x] Requires multiple ingested snapshots
 
 ---
 
@@ -526,10 +526,10 @@ async def compute_new_lost(domain: str, snapshot_a: str, snapshot_b: str):
 **Description:** Find shared referring domains between domain and competitors.
 
 **Acceptance Criteria:**
-- [ ] `GET /links/domain/{domain}/overlap?competitors=a.com,b.com`
-- [ ] Returns ref domains linking to both domain and any competitor
-- [ ] Shows which domains each ref_domain links to
-- [ ] Useful for competitive positioning
+- [x] `GET /links/domain/{domain}/overlap?competitors=a.com,b.com`
+- [x] Returns ref domains linking to both domain and any competitor
+- [x] Shows which domains each ref_domain links to
+- [x] Useful for competitive positioning
 
 **Algorithm:**
 ```python
@@ -573,10 +573,10 @@ async def compute_overlap(domain: str, competitors: list[str], snapshot_id: str)
 **Description:** Find referring domains linking to competitors but not to you.
 
 **Acceptance Criteria:**
-- [ ] `GET /links/domain/{domain}/intersect?competitors=a.com,b.com`
-- [ ] Returns ref domains that link to at least one competitor but NOT to domain
-- [ ] Shows which competitors each ref_domain links to
-- [ ] Useful for link building opportunities
+- [x] `GET /links/domain/{domain}/intersect?competitors=a.com,b.com`
+- [x] Returns ref domains that link to at least one competitor but NOT to domain
+- [x] Shows which competitors each ref_domain links to
+- [x] Useful for link building opportunities
 
 **Algorithm:**
 ```python
@@ -605,10 +605,10 @@ async def compute_intersect(domain: str, competitors: list[str], snapshot_id: st
 **Description:** Use project competitors for overlap/intersect.
 
 **Acceptance Criteria:**
-- [ ] `GET /projects/{id}/backlinks/overlap` uses project's competitors
-- [ ] `GET /projects/{id}/backlinks/intersect` uses project's competitors
-- [ ] Automatically includes project's primary site domain
-- [ ] Merges with other backlink sources (not just CC)
+- [x] `GET /projects/{id}/backlinks/overlap` uses project's competitors
+- [x] `GET /projects/{id}/backlinks/intersect` uses project's competitors
+- [x] Automatically includes project's primary site domain
+- [x] Merges with other backlink sources (not just CC)
 
 ---
 
@@ -619,12 +619,12 @@ async def compute_intersect(domain: str, competitors: list[str], snapshot_id: st
 **Description:** Import backlinks from CSV file.
 
 **Acceptance Criteria:**
-- [ ] `POST /projects/{id}/backlinks/import` accepts CSV file
-- [ ] Parses CSV with columns: source_url, target_url, anchor (optional)
-- [ ] Validates URL formats
-- [ ] Stores in link_facts table with source='import'
-- [ ] Supports multiple import sources (label in request)
-- [ ] Returns import stats (rows imported, errors)
+- [x] `POST /projects/{id}/backlinks/import` accepts CSV file
+- [x] Parses CSV with columns: source_url, target_url, anchor (optional)
+- [x] Validates URL formats
+- [x] Stores in link_facts table with source='import'
+- [x] Supports multiple import sources (label in request)
+- [x] Returns import stats (rows imported, errors)
 
 **CSV Format:**
 ```csv
@@ -640,10 +640,10 @@ https://news.site.com/article,https://example.com/product,Click Here
 **Description:** Merge backlinks from all sources for project view.
 
 **Acceptance Criteria:**
-- [ ] `GET /projects/{id}/backlinks/targets` aggregates all sources
-- [ ] Sources: commoncrawl, import, provider (GSC/BWT links), crawl
-- [ ] Deduplicates by (source_domain, target_url)
-- [ ] Returns unified view sorted by backlink count
+- [x] `GET /projects/{id}/backlinks/targets` aggregates all sources
+- [x] Sources: commoncrawl, import, provider (GSC/BWT links), crawl
+- [x] Deduplicates by (source_domain, target_url)
+- [x] Returns unified view sorted by backlink count
 
 ---
 
@@ -652,9 +652,9 @@ https://news.site.com/article,https://example.com/product,Click Here
 **Description:** New/lost across all project sources.
 
 **Acceptance Criteria:**
-- [ ] `GET /projects/{id}/backlinks/new_lost` returns time series
-- [ ] Aggregates from all sources with timestamps
-- [ ] Returns date, new, lost series
+- [x] `GET /projects/{id}/backlinks/new-lost` returns time series
+- [x] Aggregates from all sources with timestamps
+- [x] Returns date, new, lost series
 
 ---
 
@@ -663,40 +663,40 @@ https://news.site.com/article,https://example.com/product,Click Here
 **Description:** Anchor distribution across all sources.
 
 **Acceptance Criteria:**
-- [ ] `GET /projects/{id}/backlinks/anchors` returns distribution
-- [ ] Merges anchors from all sources
-- [ ] Returns anchor, count pairs
+- [x] `GET /projects/{id}/backlinks/anchors` returns distribution
+- [x] Merges anchors from all sources
+- [x] Returns anchor, count pairs
 
 ---
 
 ## Verification Checklist
 
 ### Common Crawl Infrastructure
-- [ ] Snapshot registry lists available snapshots
-- [ ] WAT files download correctly
-- [ ] WAT parser extracts edges
-- [ ] Domain filtering reduces volume
-- [ ] Edges stored in Postgres (or ClickHouse)
+- [x] Snapshot registry lists available snapshots
+- [x] WAT files download correctly
+- [x] WAT parser extracts edges
+- [x] Domain filtering reduces volume
+- [x] Edges stored in Postgres (or ClickHouse)
 
 ### Ingestion Pipeline
-- [ ] Ingest endpoint triggers job
-- [ ] Progress tracked in database
-- [ ] Aggregates built after ingestion
-- [ ] Completion event emitted
+- [x] Ingest endpoint triggers job
+- [x] Progress tracked in database
+- [x] Aggregates built after ingestion
+- [x] Completion event emitted
 
 ### Domain Explorer
-- [ ] Ref domains endpoint returns data
-- [ ] Backlinks endpoint with pagination
-- [ ] Anchors endpoint returns distribution
-- [ ] New/lost comparison works
-- [ ] Overlap analysis works
-- [ ] Intersect analysis works
+- [x] Ref domains endpoint returns data
+- [x] Backlinks endpoint with pagination
+- [x] Anchors endpoint returns distribution
+- [x] New/lost comparison works
+- [x] Overlap analysis works
+- [x] Intersect analysis works
 
 ### Project Backlinks
-- [ ] CSV import works
-- [ ] Multi-source merge works
-- [ ] Project overlap uses competitors
-- [ ] Project intersect uses competitors
+- [x] CSV import works
+- [x] Multi-source merge works
+- [x] Project overlap uses competitors
+- [x] Project intersect uses competitors
 
 ---
 
