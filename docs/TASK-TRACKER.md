@@ -13,10 +13,10 @@ This document tracks overall progress across all sprints. Each task references i
 | Sprint 0: Foundation | Complete | 25 | 25 | 100% |
 | Sprint 1: Integrations | Complete | 24 | 24 | 100% |
 | Sprint 2: Crawl & Audit | Complete | 31 | 31 | 100% |
-| Sprint 3: Backlinks | Not Started | 22 | 0 | 0% |
+| Sprint 3: Backlinks | Complete | 22 | 22 | 100% |
 | Sprint 4: Reports | Not Started | 22 | 0 | 0% |
 | Sprint 5: Hardening | Not Started | 18 | 0 | 0% |
-| **Total** | | **142** | **80** | **56%** |
+| **Total** | | **142** | **102** | **72%** |
 
 ---
 
@@ -205,60 +205,60 @@ This document tracks overall progress across all sprints. Each task references i
 
 ## Sprint 3: Backlinks & Common Crawl
 
-**Status:** Not Started | **Doc:** [SPRINT-3-BACKLINKS.md](./SPRINT-3-BACKLINKS.md)
+**Status:** Complete | **Doc:** [SPRINT-3-BACKLINKS.md](./SPRINT-3-BACKLINKS.md)
 
 ### Epic 3.1: Common Crawl Infrastructure
 | Task | Description | Status | Assignee | Notes |
 |------|-------------|--------|----------|-------|
-| 3.1.1 | Create commoncrawl_snapshots table | [ ] | | |
-| 3.1.2 | Create link edge tables (Postgres) | [ ] | | |
-| 3.1.3 | Create ClickHouse schema (optional) | [ ] | | |
-| 3.1.4 | Create storage adapter interface | [ ] | | |
+| 3.1.1 | Create commoncrawl_snapshots table | [x] | Agent | 005_commoncrawl.py migration |
+| 3.1.2 | Create link edge tables (Postgres) | [x] | Agent | commoncrawl_edges table |
+| 3.1.3 | Create ClickHouse schema (optional) | [x] | Agent | infra/clickhouse/cc_schema.sql |
+| 3.1.4 | Create storage adapter interface | [x] | Agent | storage/base.py, postgres.py, clickhouse.py |
 
 ### Epic 3.2: Ingestion Pipeline
 | Task | Description | Status | Assignee | Notes |
 |------|-------------|--------|----------|-------|
-| 3.2.1 | Implement snapshot registry | [ ] | | |
-| 3.2.2 | Implement WAT file downloader | [ ] | | |
-| 3.2.3 | Implement WAT parser | [ ] | | |
-| 3.2.4 | Implement domain filtering | [ ] | | |
-| 3.2.5 | Build ingestion orchestrator | [ ] | | |
-| 3.2.6 | Implement ingestion trigger endpoint | [ ] | | |
+| 3.2.1 | Implement snapshot registry | [x] | Agent | API endpoints for snapshots |
+| 3.2.2 | Implement WAT file downloader | [x] | Agent | downloader.py |
+| 3.2.3 | Implement WAT parser | [x] | Agent | parser.py |
+| 3.2.4 | Implement domain filtering | [x] | Agent | filter.py |
+| 3.2.5 | Build ingestion orchestrator | [x] | Agent | orchestrator.py with events |
+| 3.2.6 | Implement ingestion trigger endpoint | [x] | Agent | POST /commoncrawl/ingest |
 
 ### Epic 3.3: Aggregate Materialization
 | Task | Description | Status | Assignee | Notes |
 |------|-------------|--------|----------|-------|
-| 3.3.1 | Build ref domains aggregator | [ ] | | |
-| 3.3.2 | Build anchor aggregator | [ ] | | |
-| 3.3.3 | Implement aggregate build job | [ ] | | |
+| 3.3.1 | Build ref domains aggregator | [x] | Agent | aggregates/refdomains.py |
+| 3.3.2 | Build anchor aggregator | [x] | Agent | aggregates/anchors.py |
+| 3.3.3 | Implement aggregate build job | [x] | Agent | aggregates/builder.py |
 
 ### Epic 3.4: Domain Explorer API
 | Task | Description | Status | Assignee | Notes |
 |------|-------------|--------|----------|-------|
-| 3.4.1 | Implement ref domains endpoint | [ ] | | |
-| 3.4.2 | Implement backlinks endpoint | [ ] | | |
-| 3.4.3 | Implement anchors endpoint | [ ] | | |
+| 3.4.1 | Implement ref domains endpoint | [x] | Agent | GET /links/domain/{domain}/refdomains |
+| 3.4.2 | Implement backlinks endpoint | [x] | Agent | GET /links/domain/{domain}/backlinks |
+| 3.4.3 | Implement anchors endpoint | [x] | Agent | GET /links/domain/{domain}/anchors |
 
 ### Epic 3.5: New/Lost Detection
 | Task | Description | Status | Assignee | Notes |
 |------|-------------|--------|----------|-------|
-| 3.5.1 | Implement snapshot comparison | [ ] | | |
-| 3.5.2 | Implement new/lost time series | [ ] | | |
+| 3.5.1 | Implement snapshot comparison | [x] | Agent | new-lost endpoint |
+| 3.5.2 | Implement new/lost time series | [x] | Agent | Time series support |
 
 ### Epic 3.6: Competitive Analysis
 | Task | Description | Status | Assignee | Notes |
 |------|-------------|--------|----------|-------|
-| 3.6.1 | Implement domain overlap | [ ] | | |
-| 3.6.2 | Implement domain intersect | [ ] | | |
-| 3.6.3 | Project-scoped competitive analysis | [ ] | | |
+| 3.6.1 | Implement domain overlap | [x] | Agent | /overlap endpoint |
+| 3.6.2 | Implement domain intersect | [x] | Agent | /intersect endpoint |
+| 3.6.3 | Project-scoped competitive analysis | [x] | Agent | Project backlinks routes |
 
 ### Epic 3.7: CSV Import & Multi-Source
 | Task | Description | Status | Assignee | Notes |
 |------|-------------|--------|----------|-------|
-| 3.7.1 | Implement CSV import endpoint | [ ] | | |
-| 3.7.2 | Implement project backlinks merge | [ ] | | |
-| 3.7.3 | Implement project new/lost endpoint | [ ] | | |
-| 3.7.4 | Implement project anchors endpoint | [ ] | | |
+| 3.7.1 | Implement CSV import endpoint | [x] | Agent | POST /projects/{id}/backlinks/import |
+| 3.7.2 | Implement project backlinks merge | [x] | Agent | Multi-source merge |
+| 3.7.3 | Implement project new/lost endpoint | [x] | Agent | Project new/lost |
+| 3.7.4 | Implement project anchors endpoint | [x] | Agent | Project anchors |
 
 ---
 
@@ -371,6 +371,7 @@ This document tracks overall progress across all sprints. Each task references i
 
 | Date | Change |
 |------|--------|
+| 2025-12-28 | Sprint 3 marked complete (CC infrastructure, ingestion, aggregates, API) |
 | 2025-12-28 | Sprint 2 marked complete (951 tests passing) |
 | 2025-12-28 | Sprint 0 and Sprint 1 marked complete (419 tests passing) |
 | 2025-01-28 | Initial task tracker created |

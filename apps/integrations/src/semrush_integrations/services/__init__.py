@@ -2,7 +2,8 @@
 Integration services for Openahrush.
 
 Provides:
-- TokenService: OAuth token storage, retrieval, and refresh
+- AsyncTokenService: Async OAuth token storage, retrieval, and refresh (preferred)
+- TokenService: Sync OAuth token storage (deprecated, use AsyncTokenService)
 - IntegrationHealthService: Sync status and data freshness monitoring
 - PropertyService: Property discovery from OAuth providers
 - PropertyMappingService: Property-to-project mappings
@@ -21,9 +22,10 @@ from semrush_integrations.services.property_service import (
     PropertyMappingService,
     PropertyService,
 )
-from semrush_integrations.services.token_service import TokenService
+from semrush_integrations.services.token_service import AsyncTokenService, TokenService
 
 __all__ = [
+    "AsyncTokenService",
     "PROVIDER_DATA_LAG_DAYS",
     "DataFreshness",
     "DataSyncService",

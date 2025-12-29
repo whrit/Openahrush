@@ -19,7 +19,6 @@ from pydantic import BaseModel, Field, HttpUrl
 from semrush_core.models import (
     VALID_WEBHOOK_EVENTS,
     DeliveryStatus,
-    Project,
     WebhookConfig,
     WebhookDelivery,
 )
@@ -29,7 +28,7 @@ from semrush_core.security.encryption import (
 )
 from sqlalchemy import func, select
 
-from semrush_api.deps import CurrentUser, DbSession, Pagination
+from semrush_api.deps import CurrentUser, DbSession, Pagination, UserProject
 
 router = APIRouter(prefix="/projects", tags=["Webhooks"])
 
@@ -167,42 +166,6 @@ class ValidEventsResponse(BaseModel):
 # =============================================================================
 
 
-async def get_user_project(
-    db: DbSession,
-    project_id: uuid.UUID,
-    current_user: CurrentUser,
-) -> Project:
-    """
-    Get a project owned by the current user.
-
-    Args:
-        db: Database session.
-        project_id: Project UUID.
-        current_user: Current authenticated user.
-
-    Returns:
-        Project if found and owned by user.
-
-    Raises:
-        HTTPException: 404 if project not found or not owned by user.
-    """
-    result = await db.execute(
-        select(Project).where(
-            Project.id == project_id,
-            Project.owner_id == current_user.user_id,
-        )
-    )
-    project = result.scalar_one_or_none()
-
-    if project is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Project not found",
-        )
-
-    return project
-
-
 async def get_webhook_config(
     db: DbSession,
     project_id: uuid.UUID,
@@ -292,26 +255,21 @@ async def list_valid_events() -> ValidEventsResponse:
     "The secret is returned only once on creation.",
 )
 async def create_webhook(
-    project_id: uuid.UUID,
+    project: UserProject,
     data: WebhookCreate,
     db: DbSession,
-    current_user: CurrentUser,
 ) -> WebhookWithSecretResponse:
     """
     Create a new webhook configuration.
 
     Args:
-        project_id: Project UUID.
+        project: Validated project owned by current user.
         data: Webhook creation data.
         db: Database session.
-        current_user: Current authenticated user.
 
     Returns:
         Created webhook configuration with secret.
     """
-    # Verify project ownership
-    await get_user_project(db, project_id, current_user)
-
     # Validate event types
     validate_events(data.enabled_events)
 
@@ -320,7 +278,7 @@ async def create_webhook(
 
     # Create webhook config with encrypted secret
     webhook = WebhookConfig(
-        project_id=project_id,
+        project_id=project.id,
         url=str(data.url),
         secret=encrypt_token(secret),
         enabled_events=data.enabled_events,
@@ -351,36 +309,31 @@ async def create_webhook(
     description="List all webhook configurations for a project.",
 )
 async def list_webhooks(
-    project_id: uuid.UUID,
+    project: UserProject,
     db: DbSession,
-    current_user: CurrentUser,
     pagination: Pagination,
 ) -> WebhookList:
     """
     List all webhook configurations for a project.
 
     Args:
-        project_id: Project UUID.
+        project: Validated project owned by current user.
         db: Database session.
-        current_user: Current authenticated user.
         pagination: Pagination parameters.
 
     Returns:
         Paginated list of webhook configurations.
     """
-    # Verify project ownership
-    await get_user_project(db, project_id, current_user)
-
     # Get total count
     count_result = await db.execute(
-        select(func.count(WebhookConfig.id)).where(WebhookConfig.project_id == project_id)
+        select(func.count(WebhookConfig.id)).where(WebhookConfig.project_id == project.id)
     )
     total = count_result.scalar() or 0
 
     # Get paginated webhooks
     result = await db.execute(
         select(WebhookConfig)
-        .where(WebhookConfig.project_id == project_id)
+        .where(WebhookConfig.project_id == project.id)
         .order_by(WebhookConfig.created_at.desc())
         .offset(pagination.offset)
         .limit(pagination.limit)
@@ -414,28 +367,23 @@ async def list_webhooks(
     description="Get a specific webhook configuration.",
 )
 async def get_webhook(
-    project_id: uuid.UUID,
+    project: UserProject,
     webhook_id: uuid.UUID,
     db: DbSession,
-    current_user: CurrentUser,
 ) -> WebhookResponse:
     """
     Get a specific webhook configuration.
 
     Args:
-        project_id: Project UUID.
+        project: Validated project owned by current user.
         webhook_id: Webhook config UUID.
         db: Database session.
-        current_user: Current authenticated user.
 
     Returns:
         Webhook configuration details.
     """
-    # Verify project ownership
-    await get_user_project(db, project_id, current_user)
-
     # Get webhook
-    webhook = await get_webhook_config(db, project_id, webhook_id)
+    webhook = await get_webhook_config(db, project.id, webhook_id)
 
     return WebhookResponse(
         id=str(webhook.id),
@@ -457,30 +405,25 @@ async def get_webhook(
     "a new secret will be generated and returned.",
 )
 async def update_webhook(
-    project_id: uuid.UUID,
+    project: UserProject,
     webhook_id: uuid.UUID,
     data: WebhookUpdate,
     db: DbSession,
-    current_user: CurrentUser,
 ) -> WebhookResponse | WebhookWithSecretResponse:
     """
     Update a webhook configuration.
 
     Args:
-        project_id: Project UUID.
+        project: Validated project owned by current user.
         webhook_id: Webhook config UUID.
         data: Fields to update.
         db: Database session.
-        current_user: Current authenticated user.
 
     Returns:
         Updated webhook configuration (with secret if regenerated).
     """
-    # Verify project ownership
-    await get_user_project(db, project_id, current_user)
-
     # Get webhook
-    webhook = await get_webhook_config(db, project_id, webhook_id)
+    webhook = await get_webhook_config(db, project.id, webhook_id)
 
     # Validate new event types if provided
     if data.enabled_events is not None:
@@ -534,25 +477,20 @@ async def update_webhook(
     description="Delete a webhook configuration and all its delivery history.",
 )
 async def delete_webhook(
-    project_id: uuid.UUID,
+    project: UserProject,
     webhook_id: uuid.UUID,
     db: DbSession,
-    current_user: CurrentUser,
 ) -> None:
     """
     Delete a webhook configuration.
 
     Args:
-        project_id: Project UUID.
+        project: Validated project owned by current user.
         webhook_id: Webhook config UUID.
         db: Database session.
-        current_user: Current authenticated user.
     """
-    # Verify project ownership
-    await get_user_project(db, project_id, current_user)
-
     # Get webhook
-    webhook = await get_webhook_config(db, project_id, webhook_id)
+    webhook = await get_webhook_config(db, project.id, webhook_id)
 
     # Delete (cascades to deliveries)
     await db.delete(webhook)
@@ -567,10 +505,9 @@ async def delete_webhook(
     description="List delivery history for a webhook with optional status filter.",
 )
 async def list_deliveries(
-    project_id: uuid.UUID,
+    project: UserProject,
     webhook_id: uuid.UUID,
     db: DbSession,
-    current_user: CurrentUser,
     pagination: Pagination,
     delivery_status: str | None = Query(
         None,
@@ -582,21 +519,17 @@ async def list_deliveries(
     List delivery history for a webhook.
 
     Args:
-        project_id: Project UUID.
+        project: Validated project owned by current user.
         webhook_id: Webhook config UUID.
         db: Database session.
-        current_user: Current authenticated user.
         pagination: Pagination parameters.
         delivery_status: Optional status filter.
 
     Returns:
         Paginated list of delivery records.
     """
-    # Verify project ownership
-    await get_user_project(db, project_id, current_user)
-
     # Verify webhook exists
-    await get_webhook_config(db, project_id, webhook_id)
+    await get_webhook_config(db, project.id, webhook_id)
 
     # Build query
     query = select(WebhookDelivery).where(WebhookDelivery.webhook_config_id == webhook_id)
@@ -658,11 +591,10 @@ async def list_deliveries(
     description="Send a test event to the webhook endpoint.",
 )
 async def test_webhook(
-    project_id: uuid.UUID,
+    project: UserProject,
     webhook_id: uuid.UUID,
     data: WebhookTestRequest,
     db: DbSession,
-    current_user: CurrentUser,
 ) -> WebhookTestResponse:
     """
     Send a test event to a webhook.
@@ -670,22 +602,18 @@ async def test_webhook(
     Creates a delivery record and attempts immediate delivery.
 
     Args:
-        project_id: Project UUID.
+        project: Validated project owned by current user.
         webhook_id: Webhook config UUID.
         data: Test request data.
         db: Database session.
-        current_user: Current authenticated user.
 
     Returns:
         Test result with delivery ID.
     """
     from datetime import UTC
 
-    # Verify project ownership
-    await get_user_project(db, project_id, current_user)
-
     # Get webhook
-    webhook = await get_webhook_config(db, project_id, webhook_id)
+    webhook = await get_webhook_config(db, project.id, webhook_id)
 
     if not webhook.is_enabled:
         raise HTTPException(
@@ -699,7 +627,7 @@ async def test_webhook(
         "event_id": str(uuid.uuid4()),
         "event_type": data.event_type,
         "occurred_at": now.isoformat(),
-        "project_id": str(project_id),
+        "project_id": str(project.id),
         "delivery_id": str(uuid.uuid4()),
         "payload": {
             "message": "This is a test webhook delivery",
