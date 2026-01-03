@@ -267,14 +267,27 @@ app = create_app()
 
 
 def run() -> None:
-    """Run the API server using uvicorn."""
+    """Run the API server using uvicorn with uvloop for performance."""
     settings = get_settings()
+
+    # Use uvloop for improved async performance on Unix systems
+    # uvloop is 2-4x faster than the default asyncio event loop
+    loop: str = "auto"
+    try:
+        import uvloop  # noqa: F401
+
+        loop = "uvloop"
+        logger.info("Using uvloop for improved async performance")
+    except ImportError:
+        logger.info("uvloop not available, using default asyncio loop")
+
     uvicorn.run(
         "semrush_api.main:app",
         host=settings.api_host,
         port=settings.api_port,
         reload=settings.debug,
         log_level="debug" if settings.debug else "info",
+        loop=loop,
     )
 
 

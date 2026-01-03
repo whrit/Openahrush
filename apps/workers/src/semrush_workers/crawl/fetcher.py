@@ -42,6 +42,12 @@ class FetcherSettings:
         max_redirects: Maximum number of redirects to follow.
         timeout_seconds: Request timeout in seconds.
         max_concurrent: Maximum concurrent requests allowed.
+        max_keepalive_connections: Maximum keepalive connections in pool.
+        keepalive_expiry_seconds: Keepalive connection expiry time.
+        connect_timeout_seconds: Connection timeout (separate from read).
+        read_timeout_seconds: Read timeout for response body.
+        pool_timeout_seconds: Timeout waiting for connection from pool.
+        http2: Enable HTTP/2 support.
     """
 
     user_agent: str = "Openahrush/1.0"
@@ -49,6 +55,14 @@ class FetcherSettings:
     max_redirects: int = 5
     timeout_seconds: int = 30
     max_concurrent: int = 10
+    # Connection pooling settings for high-throughput crawling
+    max_keepalive_connections: int = 100
+    keepalive_expiry_seconds: float = 30.0
+    connect_timeout_seconds: float = 10.0
+    read_timeout_seconds: float = 30.0
+    pool_timeout_seconds: float = 10.0
+    # HTTP/2 support - requires httpx[http2] (h2 package)
+    http2: bool = False
 
 
 @dataclass
@@ -126,15 +140,28 @@ class Fetcher:
         self._semaphore = asyncio.Semaphore(self.settings.max_concurrent)
 
     async def __aenter__(self) -> Fetcher:
-        """Enter async context and create HTTP client."""
+        """Enter async context and create HTTP client with optimized pooling."""
+        # Configure granular timeouts for better control
+        timeout = httpx.Timeout(
+            connect=self.settings.connect_timeout_seconds,
+            read=self.settings.read_timeout_seconds,
+            write=self.settings.timeout_seconds,
+            pool=self.settings.pool_timeout_seconds,
+        )
+
+        # Configure connection pool limits for high-throughput crawling
+        limits = httpx.Limits(
+            max_keepalive_connections=self.settings.max_keepalive_connections,
+            max_connections=self.settings.max_concurrent + 50,
+            keepalive_expiry=self.settings.keepalive_expiry_seconds,
+        )
+
         self._client = httpx.AsyncClient(
             follow_redirects=True,
             max_redirects=self.settings.max_redirects,
-            timeout=httpx.Timeout(self.settings.timeout_seconds),
-            limits=httpx.Limits(
-                max_keepalive_connections=20,
-                max_connections=self.settings.max_concurrent + 10,
-            ),
+            timeout=timeout,
+            limits=limits,
+            http2=self.settings.http2,
         )
         return self
 
