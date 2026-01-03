@@ -30,6 +30,8 @@ from semrush_commoncrawl.aggregates import (
     AnchorsAggregator,
     RefDomainsAggregator,
 )
+from semrush_commoncrawl.batch_inserter import BatchInserter
+from semrush_commoncrawl.checkpoint import IngestionCheckpoint
 
 # Pipeline components
 from semrush_commoncrawl.downloader import (
@@ -39,6 +41,12 @@ from semrush_commoncrawl.downloader import (
     fetch_wat_paths,
 )
 from semrush_commoncrawl.filter import DomainFilter, FilterStats
+from semrush_commoncrawl.optimized_orchestrator import (
+    OptimizedIngestionOrchestrator,
+    OptimizedIngestionResult,
+    OptimizedIngestionSettings,
+    OptimizedIngestSpec,
+)
 from semrush_commoncrawl.orchestrator import (
     IngestionOrchestrator,
     IngestionProgress,
@@ -46,6 +54,7 @@ from semrush_commoncrawl.orchestrator import (
     IngestionSettings,
     IngestSpec,
 )
+from semrush_commoncrawl.parallel import ProcessingResult, process_wat_files_parallel
 from semrush_commoncrawl.parser import Edge as ParsedEdge  # Renamed to avoid conflict
 from semrush_commoncrawl.parser import parse_rel_flags, parse_wat_records
 from semrush_commoncrawl.storage import (
@@ -58,6 +67,11 @@ from semrush_commoncrawl.storage import (
     RefDomain,
     get_storage,
 )
+from semrush_commoncrawl.storage.clickhouse_async import (
+    ClickHouseAsyncConfig,
+    ClickHouseAsyncStorage,
+)
+from semrush_commoncrawl.streaming import stream_parse_wat, stream_parse_wat_batched
 
 
 class IngestStatus(StrEnum):
@@ -116,4 +130,22 @@ __all__ = [
     "IngestionProgress",
     "IngestionSettings",
     "IngestionOrchestrator",
+    # Optimized Orchestrator
+    "OptimizedIngestionOrchestrator",
+    "OptimizedIngestionResult",
+    "OptimizedIngestionSettings",
+    "OptimizedIngestSpec",
+    # Batch Inserter
+    "BatchInserter",
+    # Checkpoint
+    "IngestionCheckpoint",
+    # Streaming
+    "stream_parse_wat",
+    "stream_parse_wat_batched",
+    # Parallel Processing
+    "ProcessingResult",
+    "process_wat_files_parallel",
+    # ClickHouse Async
+    "ClickHouseAsyncConfig",
+    "ClickHouseAsyncStorage",
 ]

@@ -260,3 +260,278 @@ class TestProcessWatFilesParallel:
         results = [r async for r in process_wat_files_parallel(["a.gz", "fail.gz"], dl, 2)]
         assert len(results) == 2
         assert sum(1 for r in results if not r.success) == 1
+
+
+class TestCheckpointPendingFiles:
+    @pytest.mark.asyncio
+    async def test_get_pending_files_all_pending(self) -> None:
+        from semrush_commoncrawl.checkpoint import IngestionCheckpoint
+
+        checkpoint = IngestionCheckpoint(redis=MockRedis(), job_id="test")
+        all_files = ["a.gz", "b.gz", "c.gz"]
+        pending = await checkpoint.get_pending_files(all_files)
+        assert pending == all_files
+
+    @pytest.mark.asyncio
+    async def test_get_pending_files_some_complete(self) -> None:
+        from semrush_commoncrawl.checkpoint import IngestionCheckpoint
+
+        checkpoint = IngestionCheckpoint(redis=MockRedis(), job_id="test")
+        await checkpoint.mark_file_complete("a.gz")
+        await checkpoint.mark_file_complete("c.gz")
+        pending = await checkpoint.get_pending_files(["a.gz", "b.gz", "c.gz"])
+        assert pending == ["b.gz"]
+
+    @pytest.mark.asyncio
+    async def test_get_pending_files_all_complete(self) -> None:
+        from semrush_commoncrawl.checkpoint import IngestionCheckpoint
+
+        checkpoint = IngestionCheckpoint(redis=MockRedis(), job_id="test")
+        for f in ["a.gz", "b.gz"]:
+            await checkpoint.mark_file_complete(f)
+        pending = await checkpoint.get_pending_files(["a.gz", "b.gz"])
+        assert pending == []
+
+
+class TestCheckpointCompletedCount:
+    @pytest.mark.asyncio
+    async def test_completed_count_zero(self) -> None:
+        from semrush_commoncrawl.checkpoint import IngestionCheckpoint
+
+        checkpoint = IngestionCheckpoint(redis=MockRedis(), job_id="test")
+        count = await checkpoint.get_completed_count()
+        assert count == 0
+
+    @pytest.mark.asyncio
+    async def test_completed_count_after_marking(self) -> None:
+        from semrush_commoncrawl.checkpoint import IngestionCheckpoint
+
+        checkpoint = IngestionCheckpoint(redis=MockRedis(), job_id="test")
+        await checkpoint.mark_file_complete("a.gz")
+        await checkpoint.mark_file_complete("b.gz")
+        await checkpoint.mark_file_complete("c.gz")
+        count = await checkpoint.get_completed_count()
+        assert count == 3
+
+
+class TestStreamParseWatBatched:
+    @pytest.mark.asyncio
+    async def test_batched_parsing(self) -> None:
+        from semrush_commoncrawl.streaming import stream_parse_wat_batched
+
+        batches = [b async for b in stream_parse_wat_batched(create_mock_wat_content(10), batch_size=3)]
+        # 10 edges with batch_size=3 = 4 batches (3+3+3+1)
+        assert len(batches) == 4
+        assert len(batches[0]) == 3
+        assert len(batches[-1]) == 1
+
+    @pytest.mark.asyncio
+    async def test_batched_empty_content(self) -> None:
+        from semrush_commoncrawl.streaming import stream_parse_wat_batched
+
+        batches = [b async for b in stream_parse_wat_batched(b"", batch_size=5)]
+        assert len(batches) == 0
+
+
+class TestBatchInserterAddBatch:
+    @pytest.mark.asyncio
+    async def test_add_batch_triggers_flush(self) -> None:
+        from semrush_commoncrawl.batch_inserter import BatchInserter
+
+        storage = MockBatchStorage()
+        inserter = BatchInserter(storage=storage, batch_size=5)
+        edges = [create_sample_edge(f"https://src{i}.com") for i in range(12)]
+        await inserter.add_batch(edges)
+        # 12 edges with batch_size=5: 2 full batches (5+5) + 2 pending
+        assert inserter.pending_count == 2
+        assert len(storage.insert_calls) == 2
+        assert sum(storage.insert_calls) == 10
+
+
+class TestBatchInserterGetStats:
+    @pytest.mark.asyncio
+    async def test_get_stats(self) -> None:
+        from semrush_commoncrawl.batch_inserter import BatchInserter
+
+        storage = MockBatchStorage()
+        inserter = BatchInserter(storage=storage, batch_size=10)
+        for i in range(15):
+            await inserter.add(create_sample_edge(f"https://src{i}.com"))
+        stats = inserter.get_stats()
+        assert stats["total_inserted"] == 10
+        assert stats["pending_count"] == 5
+        assert stats["flush_count"] == 1
+        assert stats["batch_size"] == 10
+
+
+class TestOptimizedIngestSpec:
+    def test_valid_sample_rate(self) -> None:
+        from semrush_commoncrawl.optimized_orchestrator import OptimizedIngestSpec
+
+        spec = OptimizedIngestSpec(sample_rate=0.5)
+        assert spec.sample_rate == 0.5
+
+    def test_invalid_sample_rate_raises(self) -> None:
+        from semrush_commoncrawl.optimized_orchestrator import OptimizedIngestSpec
+
+        with pytest.raises(ValueError):
+            OptimizedIngestSpec(sample_rate=1.5)
+
+
+class TestOptimizedIngestionResult:
+    def test_success_with_no_errors(self) -> None:
+        from semrush_commoncrawl.optimized_orchestrator import OptimizedIngestionResult
+
+        result = OptimizedIngestionResult(
+            edges_ingested=1000,
+            files_processed=10,
+            files_skipped=5,
+        )
+        assert result.success
+
+    def test_failure_with_errors(self) -> None:
+        from semrush_commoncrawl.optimized_orchestrator import OptimizedIngestionResult
+
+        result = OptimizedIngestionResult(
+            edges_ingested=500,
+            files_processed=5,
+            errors=["Download error"],
+        )
+        assert not result.success
+
+
+class TestOptimizedIngestionSettings:
+    def test_default_batch_size_10k(self) -> None:
+        from semrush_commoncrawl.optimized_orchestrator import OptimizedIngestionSettings
+
+        settings = OptimizedIngestionSettings()
+        assert settings.batch_size == 10000
+
+    def test_default_concurrency(self) -> None:
+        from semrush_commoncrawl.optimized_orchestrator import OptimizedIngestionSettings
+
+        settings = OptimizedIngestionSettings()
+        assert settings.concurrency == 8
+
+
+class TestClickHouseAsyncConfig:
+    def test_default_async_insert_enabled(self) -> None:
+        from semrush_commoncrawl.storage.clickhouse_async import ClickHouseAsyncConfig
+
+        config = ClickHouseAsyncConfig()
+        assert config.async_insert is True
+
+    def test_default_batch_size_50k(self) -> None:
+        from semrush_commoncrawl.storage.clickhouse_async import ClickHouseAsyncConfig
+
+        config = ClickHouseAsyncConfig()
+        assert config.insert_batch_size == 50000
+
+
+class TestClickHouseAsyncStorage:
+    @pytest.mark.asyncio
+    async def test_insert_edges_with_mock_client(self) -> None:
+        from semrush_commoncrawl.storage.clickhouse_async import (
+            ClickHouseAsyncConfig,
+            ClickHouseAsyncStorage,
+            MockClickHouseClient,
+        )
+
+        config = ClickHouseAsyncConfig(insert_batch_size=100)
+        storage = ClickHouseAsyncStorage(config=config)
+        storage.client = MockClickHouseClient()
+
+        edges = [create_sample_edge(f"https://src{i}.com") for i in range(50)]
+        count = await storage.insert_edges(edges)
+
+        assert count == 50
+        assert storage.stats.total_rows == 50
+        assert storage.stats.total_batches == 1
+
+    @pytest.mark.asyncio
+    async def test_insert_edges_chunks_large_batches(self) -> None:
+        from semrush_commoncrawl.storage.clickhouse_async import (
+            ClickHouseAsyncConfig,
+            ClickHouseAsyncStorage,
+            MockClickHouseClient,
+        )
+
+        config = ClickHouseAsyncConfig(insert_batch_size=10)
+        storage = ClickHouseAsyncStorage(config=config)
+        storage.client = MockClickHouseClient()
+
+        edges = [create_sample_edge(f"https://src{i}.com") for i in range(25)]
+        count = await storage.insert_edges(edges)
+
+        assert count == 25
+        # 25 edges with batch_size=10 = 3 batches (10+10+5)
+        assert storage.stats.total_batches == 3
+
+    @pytest.mark.asyncio
+    async def test_get_stats(self) -> None:
+        from semrush_commoncrawl.storage.clickhouse_async import (
+            ClickHouseAsyncConfig,
+            ClickHouseAsyncStorage,
+            MockClickHouseClient,
+        )
+
+        config = ClickHouseAsyncConfig(insert_batch_size=100)
+        storage = ClickHouseAsyncStorage(config=config)
+        storage.client = MockClickHouseClient()
+
+        edges = [create_sample_edge(f"https://src{i}.com") for i in range(10)]
+        await storage.insert_edges(edges)
+
+        stats = storage.get_stats()
+        assert stats["total_rows"] == 10
+        assert stats["total_batches"] == 1
+        assert stats["failed_batches"] == 0
+
+    @pytest.mark.asyncio
+    async def test_insert_empty_edges_returns_zero(self) -> None:
+        from semrush_commoncrawl.storage.clickhouse_async import (
+            ClickHouseAsyncConfig,
+            ClickHouseAsyncStorage,
+            MockClickHouseClient,
+        )
+
+        storage = ClickHouseAsyncStorage(config=ClickHouseAsyncConfig())
+        storage.client = MockClickHouseClient()
+
+        count = await storage.insert_edges([])
+        assert count == 0
+
+    @pytest.mark.asyncio
+    async def test_insert_without_client_raises(self) -> None:
+        from semrush_commoncrawl.storage.clickhouse_async import (
+            ClickHouseAsyncConfig,
+            ClickHouseAsyncStorage,
+        )
+
+        storage = ClickHouseAsyncStorage(config=ClickHouseAsyncConfig())
+
+        with pytest.raises(RuntimeError, match="not connected"):
+            await storage.insert_edges([create_sample_edge()])
+
+
+class TestMockClickHouseClient:
+    @pytest.mark.asyncio
+    async def test_execute_tracks_queries(self) -> None:
+        from semrush_commoncrawl.storage.clickhouse_async import MockClickHouseClient
+
+        client = MockClickHouseClient()
+        await client.execute("SELECT 1", None)
+        await client.execute("INSERT INTO test VALUES", [(1, 2), (3, 4)])
+
+        assert len(client.executed_queries) == 2
+        assert client.row_count == 2
+
+    @pytest.mark.asyncio
+    async def test_count_query_returns_row_count(self) -> None:
+        from semrush_commoncrawl.storage.clickhouse_async import MockClickHouseClient
+
+        client = MockClickHouseClient()
+        await client.execute("INSERT", [(1,), (2,), (3,)])
+        result = await client.execute("SELECT count() FROM table", None)
+
+        assert result == [[3]]

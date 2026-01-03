@@ -146,3 +146,26 @@ class IngestionCheckpoint:
     async def clear(self) -> None:
         """Remove all checkpoint data for this job."""
         await self.redis.delete(self._progress_key(), self._completed_files_key())
+
+    async def get_pending_files(self, all_files: list[str]) -> list[str]:
+        """
+        Get files that have not been completed yet.
+
+        Args:
+            all_files: List of all file paths to check.
+
+        Returns:
+            List of file paths that are not marked as complete.
+        """
+        completed = await self.get_completed_files()
+        return [f for f in all_files if f not in completed]
+
+    async def get_completed_count(self) -> int:
+        """
+        Get count of completed files.
+
+        Returns:
+            Number of files marked as complete.
+        """
+        completed = await self.get_completed_files()
+        return len(completed)
